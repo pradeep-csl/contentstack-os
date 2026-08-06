@@ -60,6 +60,26 @@ When using `CF_AI_GATEWAY*` in local development, start the server with
 conversion still has a `WORKERS_AI` binding. (Inference itself no longer uses the binding; it goes
 over HTTPS with the tokens above.)
 
+### OpenRouter gateway
+
+OpenRouter is a peer of the Cloudflare AI Gateway: set its key and its models appear as built-ins
+alongside (or instead of) the Cloudflare ones, served with the deployment's own key.
+
+```
+OPENROUTER_API_KEY=sk-or-v1-...          # presence enables the gateway
+OPENROUTER_MODELS=id1,id2                # optional; overrides the curated built-ins
+OPENROUTER_QUICK_MODEL=anthropic/claude-haiku-4.5   # optional
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1    # optional; for proxies
+```
+
+Independent of `CF_AI_GATEWAY*` — enable either, both, or neither. With both, model lists merge
+(Cloudflare first) and each built-in shows the gateway serving it. There is no per-user OpenRouter
+credential: every OpenRouter request uses `OPENROUTER_API_KEY`.
+
+Per-turn cost for OpenRouter models is priced from pi's model catalog rather than read from an AI
+Gateway log, so it is an estimate that can drift from OpenRouter's actual charges; refresh it by
+bumping `@earendil-works/pi-ai`.
+
 Each gatekeeper's OAuth app must be registered with that gatekeeper's redirect URI (replace the host
 with `PUBLIC_BASE_URL`):
 

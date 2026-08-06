@@ -20,6 +20,13 @@ turn, the overseer calls `checkUsageAndBalance`:
 - **Free tier exhausted, no Cloudflare account connected** → blocked, with a prompt to connect.
 - **Free tier exhausted, connected but balance below `$2`** → blocked, with a prompt to add credits.
 
+**OpenRouter models** are always served with the platform's `OPENROUTER_API_KEY`: Cloudflare
+unified billing cannot route them, so a connected+funded user's BYOK routing is ignored for them
+and the request goes out on the platform key. With `ENABLE_CLOUDFLARE_LIMITS` on, that means
+OpenRouter turns taken by a funded user do not consume the daily free-tier counter. This is
+intentional for a deployment where the company funds both keys; making the counter model-aware is
+the follow-up if per-user metering is ever needed.
+
 The balance shown to users is read live from their Cloudflare AI Gateway billing
 (`/ai-gateway-billing/credit_balance`), cached for 5 minutes. Topping up means adding credits in the
 [Cloudflare dashboard](https://dash.cloudflare.com/?to=/:account/ai/ai-gateway) — the platform never
