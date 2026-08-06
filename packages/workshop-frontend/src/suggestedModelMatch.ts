@@ -26,7 +26,7 @@ export function findSuggestedModelId(
   const pick = (candidates: AiModelInfo[]): string | null => {
     if (candidates.length === 0) return null;
     if (candidates.length === 1) return candidates[0].id;
-    const sorted = [...candidates].sort((a, b) => rank(a) - rank(b));
+    const sorted = candidates.toSorted((a, b) => rank(a) - rank(b));
     return rank(sorted[0]) < rank(sorted[1]) ? sorted[0].id : null;
   };
 

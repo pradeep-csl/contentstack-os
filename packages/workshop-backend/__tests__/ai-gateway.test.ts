@@ -150,8 +150,8 @@ describe("gateway registry", () => {
   });
 
   it("honors OPENROUTER_MODELS as an override", () => {
-    const env = { OPENROUTER_API_KEY: "k", OPENROUTER_MODELS: "z-ai/glm-4.7, deepseek/deepseek-r1" } as Cloudflare.Env;
-    const list = getActiveGateways(env)[0].getModelList();
+    const overrideEnv = { OPENROUTER_API_KEY: "k", OPENROUTER_MODELS: "z-ai/glm-4.7, deepseek/deepseek-r1" } as Cloudflare.Env;
+    const list = getActiveGateways(overrideEnv)[0].getModelList();
     expect(list.map(m => m.id)).toEqual(["z-ai/glm-4.7", "deepseek/deepseek-r1"]);
     // An id outside SUGGESTED_MODELS still gets a usable display name.
     expect(list[1].name).toBe("deepseek/deepseek-r1");
@@ -160,7 +160,7 @@ describe("gateway registry", () => {
   it("never tags a resolveModel profile (it lands in the chat log)", () => {
     const record = resolveGatewayModel(OR_ENV, "anthropic/claude-sonnet-5");
     expect(record?.config.provider).toBe("openrouter");
-    expect(Object.keys(record!.profile).sort()).toEqual(["id", "name", "type"]);
+    expect(Object.keys(record!.profile).toSorted()).toEqual(["id", "name", "type"]);
   });
 
   it("prefers the Cloudflare quick model when both gateways are live", () => {
