@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AiGatewayLogRetryableError,
-  getActiveGateways, getAiGatewayLogCost, getGatewayForProvider, mergeModelLists,
+  aiGatewayInfo, getActiveGateways, getAiGatewayLogCost, getGatewayForProvider, mergeModelLists,
   resolveGatewayModel,
 } from "../src/ai-gateway.js";
 
@@ -177,5 +177,22 @@ describe("gateway registry", () => {
       {type: "agent", id: "a", name: "A", gateway: "openrouter"},
       {type: "agent", id: "b", name: "B"},
     ]);
+  });
+});
+
+describe("aiGatewayInfo", () => {
+  it("reports disabled when no gateway is configured", () => {
+    expect(aiGatewayInfo({} as Cloudflare.Env)).toEqual({ enabled: false });
+  });
+
+  it("reports the union of providers and both gateway labels", () => {
+    expect(aiGatewayInfo(BOTH_ENV)).toEqual({
+      enabled: true,
+      enabledProviders: ["anthropic", "cloudflare", "openrouter"],
+      gateways: [
+        { id: "cloudflare", label: "Cloudflare AI Gateway" },
+        { id: "openrouter", label: "OpenRouter" },
+      ],
+    });
   });
 });

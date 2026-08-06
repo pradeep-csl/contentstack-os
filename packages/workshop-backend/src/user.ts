@@ -1,12 +1,13 @@
 import { RpcStub } from "capnweb";
-import { GadgetMetadataWithTimestamps, AiChatAuthorInfo, AiModelConfig, SUGGESTED_MODELS, CollaboratorRole, ConnectedAccountsSubscriber, ConnectedAccountsFilter, GatekeeperVendorFilter, GadgetMetadata, BlueprintMetadata, BlueprintLibrarySummary, BlueprintSource, BlueprintUserSummary, BLUEPRINT_SCREENSHOT_R2_PREFIX, GatekeeperVendorInfo, BlueprintOutput, OutputSummary, WorkpieceId, ListOutputsResult } from '@gadgets/workshop-shared/api';
+import { GadgetMetadataWithTimestamps, AiChatAuthorInfo, AiModelConfig, AiModelInfo, CollaboratorRole, ConnectedAccountsSubscriber, ConnectedAccountsFilter, GatekeeperVendorFilter, GadgetMetadata, BlueprintMetadata, BlueprintLibrarySummary, BlueprintSource, BlueprintUserSummary, BLUEPRINT_SCREENSHOT_R2_PREFIX, GatekeeperVendorInfo, BlueprintOutput, OutputSummary, WorkpieceId, ListOutputsResult } from '@gadgets/workshop-shared/api';
 import { Gatekeeper, GatekeeperUser, GatekeeperUserVerifier, GatekeeperVendor, AccountDescription, VendorDescription, GatekeeperConnectCallback, SupportedResource, ResourceConfiguratorFrame, AppUiContext, GatekeeperUiFrame } from "@gadgets/workshop-shared/gatekeeper";
 import { shouldAutoProvisionAccount, ambientGatekeeperMode } from "./provisioning-policy.js";
 import { CloudflareGatekeeperUser } from "@gadgets/workshop-shared/cloudflare-gatekeeper";
 import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
 import { createTypedStorage, collection } from "@gadgets/typed-storage";
 import { createWorkshopLogger } from "./observability";
-import { getAiGatewayConfig } from "./ai-gateway.js";
+import { getActiveGateways, getGatewayQuickModelConfig, mergeModelLists, resolveGatewayModel }
+  from "./ai-gateway.js";
 import { utcDayKey, nextUtcMidnightIso, DailyQuotaResult } from "./ai-gateway-billing/limits/config.js";
 import type { AdminSettings } from "./admin-settings.js";
 import { isReservedBlueprintKey, readBlueprintKvRecord } from "./blueprint-archive.js";
@@ -502,31 +503,20 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     this.storage.profile.put(profile);
   }
 
-  async listModels(): Promise<AiChatAuthorInfo[]> {
-    let result: AiChatAuthorInfo[] = [];
-
-    // When AI Gateway mode is active, include all suggested models for enabled providers.
-    let gwConfig = getAiGatewayConfig(this.env);
-    let gwModelIds = new Set<string>();
-    if (gwConfig) {
-      for (let entry of gwConfig.getModelList()) {
-        result.push(entry);
-        gwModelIds.add(entry.id);
-      }
+  async listModels(): Promise<AiModelInfo[]> {
+    // Built-ins from every active gateway (Cloudflare first, then OpenRouter), each tagged with
+    // the gateway that serves it so the UI can show its origin.
+    let gatewayEntries: AiModelInfo[] = [];
+    for (let gateway of getActiveGateways(this.env)) {
+      gatewayEntries.push(...gateway.getModelList());
     }
-
-    // Also include user-configured models, skipping any that duplicate a gateway model.
-    for (let model of this.storage.aiModels.list()) {
-      if (!gwModelIds.has(model.profile.id)) {
-        result.push(model.profile);
-      }
-    }
-    return result;
+    let stored: AiModelInfo[] = [...this.storage.aiModels.list()].map(model => model.profile);
+    return mergeModelLists(gatewayEntries, stored);
   }
 
   async addModel(profile: AiChatAuthorInfo, config: AiModelConfig): Promise<void> {
-    let gwConfig = getAiGatewayConfig(this.env);
-    if (gwConfig && !gwConfig.providers.has(config.provider)) {
+    let gateways = getActiveGateways(this.env);
+    if (gateways.length > 0 && !gateways.some(gw => gw.providers.has(config.provider))) {
       throw new Error(`Provider "${config.provider}" is not available in AI Gateway mode.`);
     }
 
@@ -535,14 +525,10 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
   }
 
   async deleteModel(id: string): Promise<void> {
-    // In AI Gateway mode, don't allow deleting built-in suggested models.
-    let gwConfig = getAiGatewayConfig(this.env);
-    if (gwConfig) {
-      for (let [provider, models] of Object.entries(SUGGESTED_MODELS)) {
-        if (gwConfig.providers.has(provider) && id in models) {
-          throw new Error(`Cannot delete built-in model "${models[id].name}".`);
-        }
-      }
+    // Built-in models belong to the deployment, not the user.
+    let builtIn = resolveGatewayModel(this.env, id);
+    if (builtIn) {
+      throw new Error(`Cannot delete built-in model "${builtIn.profile.name}".`);
     }
 
     this.storage.aiModels.delete(id);
@@ -568,8 +554,7 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
   async setPreferredModel(id: string | null): Promise<void> {
     if (id !== null) {
       // Validate that the model exists in the user's configured models or as a gateway model.
-      let gwConfig = getAiGatewayConfig(this.env);
-      let exists = !!this.storage.aiModels.get(id) || !!gwConfig?.resolveModel(id);
+      let exists = !!this.storage.aiModels.get(id) || !!resolveGatewayModel(this.env, id);
       if (!exists) {
         throw new Error(`No such model: ${id}`);
       }
@@ -664,16 +649,12 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
 
   // DO NOT MAKE PUBLIC -- returns API keys.
   async getChatContext(modelId: string | null): Promise<UserChatContext> {
-    let gwConfig = getAiGatewayConfig(this.env);
-
     let result: UserChatContext = {
       profile: this.storage.profile.get()
     };
     if (modelId) {
       // In AI Gateway mode, resolve gateway models first.
-      if (gwConfig) {
-        result.aiModel = gwConfig.resolveModel(modelId);
-      }
+      result.aiModel = resolveGatewayModel(this.env, modelId);
       if (!result.aiModel) {
         result.aiModel = this.storage.aiModels.get(modelId);
       }
@@ -681,10 +662,8 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     }
 
     // Resolve the quick model (used for lightweight tasks like title generation).
-    if (gwConfig) {
-      // In AI Gateway mode, always use the hardcoded quick model.
-      result.quickModel = gwConfig.getQuickModelConfig();
-    } else {
+    result.quickModel = getGatewayQuickModelConfig(this.env);
+    if (!result.quickModel) {
       let quickModelId = this.storage.quickModel.get();
       if (quickModelId) {
         let quickModel = this.storage.aiModels.get(quickModelId);

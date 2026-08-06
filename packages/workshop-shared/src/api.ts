@@ -1791,7 +1791,7 @@ export type AiChatAuthorInfo = {
 //
 // IMPORTANT: only `listModels()` returns this. AiChatAuthorInfo is embedded in every chat
 // message and stays lightweight, so a gateway-tagged profile must never reach the chat log --
-// in particular AiGatewayConfig.resolveModel() keeps returning a bare AiChatAuthorInfo.
+// in particular CloudflareModelGateway.resolveModel() keeps returning a bare AiChatAuthorInfo.
 export type AiModelInfo = AiChatAuthorInfo & {
   gateway?: AiGatewayId;
 };

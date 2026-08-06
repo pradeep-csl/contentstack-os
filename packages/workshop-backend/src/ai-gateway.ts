@@ -1,4 +1,4 @@
-import { AiGatewayId, AiModelConfig, AiModelInfo, AiModelProvider, SUGGESTED_MODELS }
+import { AiGatewayId, AiGatewayInfo, AiModelConfig, AiModelInfo, AiModelProvider, SUGGESTED_MODELS }
   from "@gadgets/workshop-shared/api";
 import { UserAiModelRecord } from "./user.js";
 
@@ -236,6 +236,24 @@ export function mergeModelLists(gatewayEntries: AiModelInfo[], stored: AiModelIn
     : AiModelInfo[] {
   let ids = new Set(gatewayEntries.map(entry => entry.id));
   return [...gatewayEntries, ...stored.filter(entry => !ids.has(entry.id))];
+}
+
+/**
+ * The client-visible AI configuration: whether any gateway is active, the union of providers they
+ * serve (used to filter the Add-Model picker), and the gateways themselves in routing order.
+ */
+export function aiGatewayInfo(env: Cloudflare.Env): AiGatewayInfo {
+  let gateways = getActiveGateways(env);
+  if (gateways.length === 0) return { enabled: false };
+  let providers = new Set<string>();
+  for (let gateway of gateways) {
+    for (let provider of gateway.providers) providers.add(provider);
+  }
+  return {
+    enabled: true,
+    enabledProviders: [...providers] as AiModelProvider[],
+    gateways: gateways.map(gateway => ({ id: gateway.id, label: gateway.label })),
+  };
 }
 
 /** Identifies the Gateway and credentials needed to retrieve an inference log. */
