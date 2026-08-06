@@ -39,3 +39,8 @@ wrangler.dev.jsonc
 .dev.vars.*
 **/.dev.vars
 **/.dev.vars.*
+
+.superpowers/
+.code-review-graph/
+docs/superpowers/
+
