@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Dialog, Button, Input, Select, SensitiveInput, Collapsible, useKumoToastManager } from '@cloudflare/kumo'
+import { Dialog, Button, Input, Combobox, SensitiveInput, Collapsible, useKumoToastManager } from '@cloudflare/kumo'
 import { AiChatAuthorInfo, AiModelConfig, AiModelProvider, AiGatewayInfo, SUGGESTED_MODELS } from '@gadgets/workshop-shared/api'
 import { RpcStub } from 'capnweb'
 import { AuthenticatedApi } from '@gadgets/workshop-shared/api'
@@ -71,6 +71,11 @@ function buildOptions(gatewayMode: boolean, enabledProviders: Set<string> | null
 
   for (const provider of providerOrder) {
     if (enabledProviders && !enabledProviders.has(provider)) continue
+
+    // OpenRouter is only ever served by the deployment's platform key (no BYOK), so it must not
+    // be offered when no gateway serves it -- otherwise a no-gateway deployment lets a user add a
+    // model with their own token that every request then rejects.
+    if (provider === 'openrouter' && !enabledProviders?.has('openrouter')) continue
 
     // In gateway mode, suggested models are already built-in, so don't list them.
     if (!gatewayMode) {
@@ -235,6 +240,15 @@ export default function AddModelModal({ visible, onCancel, onSuccess, authentica
     }
   }
 
+  // Combobox.Root filters (and derives its Empty state) from the `items` it's given, so the
+  // groups it needs are the encoded values, not the option objects -- decoupled from
+  // `groupedOptions` above so that array stays untouched.
+  const comboboxGroups = groupedOptions.map(group => ({
+    provider: group.provider,
+    items: group.items.map(opt => opt.value),
+  }))
+  const labelForValue = (value: string) => options.find(o => o.value === value)?.label ?? value
+
   return (
     <Dialog.Root open={visible} onOpenChange={(open) => { if (!open) onCancel() }}>
       <Dialog className="p-6" size="lg">
@@ -243,35 +257,45 @@ export default function AddModelModal({ visible, onCancel, onSuccess, authentica
         </Dialog.Title>
 
         <div className="space-y-4">
-          {/* Model / Provider selection */}
-          <Select
+          {/* Combobox rather than Select: with both gateways active this list runs to ~20
+              options, so it needs type-to-filter. Groups and values are unchanged. */}
+          <Combobox
+            items={comboboxGroups}
+            itemToStringLabel={labelForValue}
             label={gatewayMode ? 'Select Provider' : 'Select Model'}
-            className="w-full text-sm"
-            placeholder={gatewayMode ? 'Choose a provider...' : 'Choose an AI model...'}
+            error={errors.selection}
             value={selectValue}
             onValueChange={(v) => handleModelSelect(v as string)}
-            error={errors.selection}
-            renderValue={(v) => {
-              const opt = options.find(o => o.value === v)
-              return opt?.label ?? String(v)
-            }}
           >
-            {groupedOptions.map((group, groupIndex) => (
-              <div key={group.provider}>
-                {groupIndex > 0 && (
-                  <div className="h-px bg-kumo-line my-1 mx-2" />
+            <Combobox.TriggerInput
+              className="w-full max-w-none text-sm"
+              placeholder={gatewayMode ? 'Choose a provider...' : 'Choose an AI model...'}
+            />
+            <Combobox.Content>
+              <Combobox.List>
+                {(group: { provider: string; items: string[] }, groupIndex: number) => (
+                  <div key={group.provider}>
+                    {groupIndex > 0 && (
+                      <div className="h-px bg-kumo-line my-1 mx-2" />
+                    )}
+                    <Combobox.Group items={group.items}>
+                      <Combobox.GroupLabel className="px-3 py-1.5 text-xs font-medium text-kumo-subtle select-none">
+                        {PROVIDER_LABELS[group.provider as AiModelProvider] || group.provider}
+                      </Combobox.GroupLabel>
+                      <Combobox.Collection>
+                        {(value: string) => (
+                          <Combobox.Item key={value} value={value}>
+                            {labelForValue(value)}
+                          </Combobox.Item>
+                        )}
+                      </Combobox.Collection>
+                    </Combobox.Group>
+                  </div>
                 )}
-                <div className="px-3 py-1.5 text-xs font-medium text-kumo-subtle select-none">
-                  {PROVIDER_LABELS[group.provider as AiModelProvider] || group.provider}
-                </div>
-                {group.items.map(opt => (
-                  <Select.Option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </Select.Option>
-                ))}
-              </div>
-            ))}
-          </Select>
+              </Combobox.List>
+              <Combobox.Empty>No models match your search</Combobox.Empty>
+            </Combobox.Content>
+          </Combobox>
 
           {/* Custom model fields */}
           {showCustomFields && (
