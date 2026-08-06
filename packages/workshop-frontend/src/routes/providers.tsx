@@ -3,11 +3,10 @@ import { useState, useEffect } from 'react'
 import { DropdownMenu, useKumoToastManager } from '@cloudflare/kumo'
 import { useAuthenticatedApi } from '../AuthContext'
 import {
-  AiChatAuthorInfo,
   AiGatewayInfo,
-  AiModelProvider,
-  SUGGESTED_MODELS,
+  AiModelInfo,
 } from '@gadgets/workshop-shared/api'
+import { filterModels, gatewayLabel } from '../modelListDisplay'
 import {
   Plus,
   Trash,
@@ -23,8 +22,6 @@ export const Route = createFileRoute('/providers')({ component: ProvidersPage })
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const PROVIDER_ORDER = Object.keys(SUGGESTED_MODELS) as AiModelProvider[]
-
 const PRIMARY_BTN =
   'press inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium tracking-[-0.25px] text-white transition-colors hover:bg-kumo-brand-hover'
 
@@ -35,13 +32,11 @@ const PRIMARY_BTN =
 function ModelRow({
   model,
   isQuick,
-  isBuiltIn,
   onDelete,
   onSetQuick,
 }: {
-  model: AiChatAuthorInfo
+  model: AiModelInfo
   isQuick: boolean
-  isBuiltIn: boolean
   onDelete: () => void
   onSetQuick: () => void
 }) {
@@ -70,9 +65,9 @@ function ModelRow({
           <span className="truncate text-sm font-medium tracking-[-0.25px] text-kumo-default">
             {model.name}
           </span>
-          {isBuiltIn && (
+          {gatewayLabel(model.gateway) && (
             <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
-              built-in
+              {gatewayLabel(model.gateway)}
             </span>
           )}
           {isQuick && (
@@ -105,7 +100,7 @@ function ModelRow({
               <Lightning size={13} className="mr-2" weight={isQuick ? 'fill' : 'regular'} />
               {isQuick ? 'Clear quick model' : 'Set as quick model'}
             </DropdownMenu.Item>
-            {!isBuiltIn && (
+            {!model.gateway && (
               <DropdownMenu.Item variant="danger" onClick={onDelete} className={MENU_ITEM_DANGER}>
                 <Trash size={13} className="mr-2" />
                 Delete provider
@@ -135,7 +130,7 @@ function ProvidersPage() {
 
   const { authenticatedApi } = useAuthenticatedApi()
   const toasts = useKumoToastManager()
-  const [models, setModels] = useState<AiChatAuthorInfo[]>([])
+  const [models, setModels] = useState<AiModelInfo[]>([])
   const [quickModel, setQuickModel] = useState<string | null>(null)
   const [aiConfig, setAiConfig] = useState<AiGatewayInfo | null>(null)
   const [search, setSearch] = useState('')
@@ -167,13 +162,7 @@ function ProvidersPage() {
 
   const gatewayMode = aiConfig?.enabled === true
 
-  const isBuiltIn = (modelId: string): boolean => {
-    if (!aiConfig?.enabled) return false
-    const enabled = new Set((aiConfig as Extract<AiGatewayInfo, { enabled: true }>).enabledProviders)
-    return PROVIDER_ORDER.some((p) => enabled.has(p) && modelId in SUGGESTED_MODELS[p])
-  }
-
-  const handleDelete = async (model: AiChatAuthorInfo) => {
+  const handleDelete = async (model: AiModelInfo) => {
     if (!confirm(`Delete "${model.name}"? This cannot be undone.`)) return
     setDeletingId(model.id)
     try {
@@ -199,11 +188,7 @@ function ProvidersPage() {
     }
   }
 
-  const filtered = models.filter((m) => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
-  })
+  const filtered = filterModels(models, search)
 
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 sm:px-10">
@@ -244,9 +229,12 @@ function ProvidersPage() {
               <Notice>
                 <Lightning size={15} className="mt-px shrink-0 text-kumo-brand" />
                 <span>
-                  <strong className="font-medium text-kumo-default">AI Gateway mode:</strong> built-in
-                  models are managed by your deployment. You can still add custom models with your own
-                  API tokens.
+                  <strong className="font-medium text-kumo-default">Built-in models</strong> are
+                  managed by your deployment
+                  {aiConfig?.enabled
+                    ? ` (${aiConfig.gateways.map((g) => g.label).join(', ')})`
+                    : ''}
+                  . You can still add your own models with your own API tokens.
                 </span>
               </Notice>
             )}
@@ -307,7 +295,6 @@ function ProvidersPage() {
               <ModelRow
                 model={model}
                 isQuick={quickModel === model.id}
-                isBuiltIn={isBuiltIn(model.id)}
                 onDelete={() => handleDelete(model)}
                 onSetQuick={() => handleSetQuick(model.id)}
               />
