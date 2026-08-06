@@ -268,29 +268,24 @@ export default function AddModelModal({ visible, onCancel, onSuccess, authentica
             onValueChange={(v) => handleModelSelect(v as string)}
           >
             <Combobox.TriggerInput
-              className="w-full max-w-none text-sm"
+              className="w-full max-w-none [&_input]:text-sm"
               placeholder={gatewayMode ? 'Choose a provider...' : 'Choose an AI model...'}
             />
             <Combobox.Content>
               <Combobox.List>
-                {(group: { provider: string; items: string[] }, groupIndex: number) => (
-                  <div key={group.provider}>
-                    {groupIndex > 0 && (
-                      <div className="h-px bg-kumo-line my-1 mx-2" />
-                    )}
-                    <Combobox.Group items={group.items}>
-                      <Combobox.GroupLabel className="px-3 py-1.5 text-xs font-medium text-kumo-subtle select-none">
-                        {PROVIDER_LABELS[group.provider as AiModelProvider] || group.provider}
-                      </Combobox.GroupLabel>
-                      <Combobox.Collection>
-                        {(value: string) => (
-                          <Combobox.Item key={value} value={value}>
-                            {labelForValue(value)}
-                          </Combobox.Item>
-                        )}
-                      </Combobox.Collection>
-                    </Combobox.Group>
-                  </div>
+                {(group: { provider: string; items: string[] }) => (
+                  <Combobox.Group key={group.provider} items={group.items}>
+                    <Combobox.GroupLabel className="px-3 py-1.5 text-xs font-medium text-kumo-subtle select-none">
+                      {PROVIDER_LABELS[group.provider as AiModelProvider] || group.provider}
+                    </Combobox.GroupLabel>
+                    <Combobox.Collection>
+                      {(value: string) => (
+                        <Combobox.Item key={value} value={value}>
+                          {labelForValue(value)}
+                        </Combobox.Item>
+                      )}
+                    </Combobox.Collection>
+                  </Combobox.Group>
                 )}
               </Combobox.List>
               <Combobox.Empty>No models match your search</Combobox.Empty>
