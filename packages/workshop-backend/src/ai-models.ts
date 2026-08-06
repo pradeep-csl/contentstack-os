@@ -16,7 +16,7 @@ import { OPENROUTER_MODELS } from "@earendil-works/pi-ai/providers/openrouter.mo
 import { ApprovalQueue, Gatekeeper, ResourceDescription } from '@gadgets/workshop-shared/gatekeeper';
 import { LanguageModelBinding } from "./ai-model-binding";
 import AI_MODEL_BINDING_TYPES from "./ai-model-binding.txt";
-import { AiChatAuthorInfo, AiModelConfig, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
+import { AiChatAuthorInfo, AiModelConfig, DEFAULT_SITE_NAME, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
   from "@gadgets/workshop-shared/api";
 import { CloudflareModelGateway, getAiGatewayConfig, getOpenRouterGateway, type AiGatewayLogRoute,
   type OpenRouterModelGateway } from "./ai-gateway.js";
@@ -345,7 +345,10 @@ function makeHandle(args: HandleArgs): ModelHandle {
 }
 
 // Attribution sent on OpenRouter requests so usage is identifiable in the OpenRouter dashboard.
-const OPENROUTER_APP_TITLE = "Gadgets";
+//
+// This is the product's default site name, not the live admin-configured one: the latter needs
+// `await readAdminConfig(env)`, but getModel() (and this function, which it calls) is synchronous.
+const OPENROUTER_APP_TITLE = DEFAULT_SITE_NAME;
 
 // Build the pi model descriptor for an OpenRouter model. OpenRouter speaks the OpenAI completions
 // dialect, which pi already implements; the catalog supplies real cost, window, and compat.

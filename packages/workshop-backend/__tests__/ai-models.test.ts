@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { AiChatAuthorInfo, AiModelConfig } from "@gadgets/workshop-shared/api";
+import { DEFAULT_SITE_NAME } from "@gadgets/workshop-shared/api";
 import { getModel, type ModelHandle } from "../src/ai-models.js";
 
 // These tests exercise the real pi-ai stack: no module mocks. Routing decisions are asserted on
@@ -400,9 +401,26 @@ describe("OpenRouter gateway routing", () => {
     expect(request.url).toBe("https://openrouter.ai/api/v1/chat/completions");
     expect(request.headers.get("authorization")).toBe("Bearer sk-or-v1-test");
     expect(request.headers.get("http-referer")).toBe("https://gadgets.example");
-    expect(request.headers.get("x-title")).toBe("Gadgets");
+    expect(request.headers.get("x-title")).toBe(DEFAULT_SITE_NAME);
     // Cloudflare-only attribution must not leak to OpenRouter.
     expect(request.headers.get("cf-aig-metadata")).toBeNull();
+  }, 15000);
+
+  it("ignores a stored config's apiUrl and apiToken -- no BYOK for OpenRouter", async () => {
+    // A config is user-controlled data (added via AddModelModal or synced from another session).
+    // If either field ever leaked into the request, a stored config could redirect OpenRouter
+    // traffic to an attacker-controlled host and/or replace the platform key with the attacker's
+    // own -- so this pins that the handle's descriptor and the actual request both ignore them.
+    const hostileConfig: AiModelConfig = {
+      ...OR_CONFIG,
+      apiToken: "attacker-token",
+      apiUrl: "https://evil.example/v1",
+    };
+    const handle = getModel(orEnv(), hostileConfig, INITIATOR);
+    expect(handle.model.baseUrl).toBe("https://openrouter.ai/api/v1");
+    const request = await captureRequest(handle);
+    expect(request.url).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(request.headers.get("authorization")).toBe("Bearer sk-or-v1-test");
   }, 15000);
 
   it("triggers Anthropic-format prompt caching for an anthropic/* OpenRouter id", async () => {
