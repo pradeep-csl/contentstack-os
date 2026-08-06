@@ -39,6 +39,16 @@ describe("assertChatAttachmentSupportedByProvider", () => {
     expect(() => assertChatAttachmentSupportedByProvider(undefined, "text/plain", 1024 * 1024 + 1))
       .toThrow("Chat attachment is too large.");
   });
+
+  it("allows text and images but not PDFs for OpenRouter", () => {
+    expect(() => assertChatAttachmentSupportedByProvider("openrouter", "image/png", 1))
+        .not.toThrow();
+    expect(() => assertChatAttachmentSupportedByProvider("openrouter", "text/plain", 1))
+        .not.toThrow();
+    // openai-completions payloads have no native document input, so PDFs are rejected at upload.
+    expect(() => assertChatAttachmentSupportedByProvider("openrouter", "application/pdf", 1))
+        .toThrow();
+  });
 });
 
 describe("validateChatAttachmentUpload", () => {

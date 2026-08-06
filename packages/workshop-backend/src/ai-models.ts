@@ -587,6 +587,14 @@ function getModelDirect(config: AiModelConfig, sessionAffinity?: string): ModelH
         apiKey: config.apiToken,
         sessionAffinity,
       });
+    case "openrouter":
+      // OpenRouter is always served by the deployment's platform key (see the gateway dispatch in
+      // getModel()), so reaching the direct path means OPENROUTER_API_KEY is unset -- e.g. a
+      // stored model that outlived the key. Fail with something actionable instead of sending a
+      // keyless request and surfacing an opaque 401.
+      throw new Error(
+          "OpenRouter is not configured for this deployment. Set OPENROUTER_API_KEY, or pick " +
+          "another model.");
     default:
       config.provider satisfies never;
       throw new Error(`Unknown provider "${config.provider}".`);

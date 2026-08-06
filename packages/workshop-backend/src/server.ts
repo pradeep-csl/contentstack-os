@@ -192,6 +192,9 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
       return Promise.resolve({
         enabled: true,
         enabledProviders: [...gwConfig.providers] as AiModelProvider[],
+        // OpenRouter has no gateway class or dispatch yet (a later task), so Cloudflare is the
+        // only gateway ever live today.
+        gateways: [{id: "cloudflare", label: "Cloudflare AI Gateway"}],
       });
     } else {
       return Promise.resolve({ enabled: false });

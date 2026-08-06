@@ -917,12 +917,19 @@ export type CloudflareAccountOption = {
 };
 
 // Supported AI providers.
-export type AiModelProvider = "openai" | "anthropic" | "google" | "cloudflare" | "ollama";
+export type AiModelProvider =
+    "openai" | "anthropic" | "google" | "cloudflare" | "ollama" | "openrouter";
+
+// A deployment-managed source of built-in models, holding the platform's credentials.
+export type AiGatewayId = "cloudflare" | "openrouter";
 
 // Information about the AI gateway configuration. Returned by `AuthenticatedApi.getAiConfig()`.
+// `enabledProviders` is the union across all active gateways; `gateways` names them in routing
+// order (Cloudflare first) so the UI can say which sources are live.
 export type AiGatewayInfo = {
   enabled: true;
   enabledProviders: AiModelProvider[];
+  gateways: {id: AiGatewayId, label: string}[];
 } | {
   enabled: false;
 };
@@ -982,6 +989,19 @@ export const SUGGESTED_MODELS: Record<
   },
   "google": {
     "gemini-3.6-flash": {name: "Gemini 3.6 Flash", contextWindow: 1048576},
+  },
+  // OpenRouter ids are vendor-namespaced ("anthropic/claude-sonnet-5"), so they never collide
+  // with the Cloudflare gateway's ids for the same model ("claude-sonnet-5"). Windows match
+  // pi's OpenRouter catalog; override the offered set with OPENROUTER_MODELS.
+  "openrouter": {
+    "anthropic/claude-sonnet-5": {name: "Claude Sonnet 5", contextWindow: 1000000},
+    "anthropic/claude-opus-5": {name: "Claude Opus 5", contextWindow: 1000000},
+    "openai/gpt-5.6-sol": {
+      name: "GPT 5.6 Sol", contextWindow: 1050000, outputLimit: 128000,
+    },
+    "google/gemini-3.6-flash": {name: "Gemini 3.6 Flash", contextWindow: 1048576},
+    "moonshotai/kimi-k2.7-code": {name: "Kimi K2.7 Code", contextWindow: 262144},
+    "z-ai/glm-4.7": {name: "GLM 4.7", contextWindow: 202752},
   },
   "ollama": {
   },
@@ -1764,6 +1784,16 @@ export type AiChatAuthorInfo = {
   // Note: the avatar is intentionally not included here to keep this type lightweight (it's
   // embedded in every chat message). Fetch user avatars separately via
   // `AuthenticatedApi.getAvatar(userId)`.
+};
+
+// A model as offered in pickers and settings lists. Extends AiChatAuthorInfo with the gateway
+// that serves it, for the origin tag in the UI.
+//
+// IMPORTANT: only `listModels()` returns this. AiChatAuthorInfo is embedded in every chat
+// message and stays lightweight, so a gateway-tagged profile must never reach the chat log --
+// in particular AiGatewayConfig.resolveModel() keeps returning a bare AiChatAuthorInfo.
+export type AiModelInfo = AiChatAuthorInfo & {
+  gateway?: AiGatewayId;
 };
 
 export type AiChatMessage = {

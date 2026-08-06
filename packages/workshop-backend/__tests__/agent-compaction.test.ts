@@ -118,6 +118,20 @@ describe("compaction trigger", () => {
         .toEqual({inputBudget: 128_000, maxOutputTokens: undefined});
   });
 
+  it("sizes a curated OpenRouter model from SUGGESTED_MODELS", () => {
+    expect(getModelTokenLimits(
+        {provider: "openrouter", model: "openai/gpt-5.6-sol", apiToken: ""}))
+        .toEqual({inputBudget: 1050000 - 128000, maxOutputTokens: 128000});
+  });
+
+  it("falls back to the default window for an uncurated OpenRouter model", () => {
+    // Env-listed ids outside SUGGESTED_MODELS get the conservative 128k default: a model with a
+    // larger real window simply compacts earlier than strictly necessary.
+    expect(getModelTokenLimits(
+        {provider: "openrouter", model: "deepseek/deepseek-v3.1-terminus", apiToken: ""}))
+        .toEqual({inputBudget: 128_000, maxOutputTokens: undefined});
+  });
+
   it("recognizes /compact as the newest message, and only there", () => {
     let compact = record(1, user, {
       type: "slashCommand", request: {id: {builtin: true, commandId: "compact"}, args: ""},

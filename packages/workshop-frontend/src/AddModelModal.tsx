@@ -22,6 +22,7 @@ const PROVIDER_LABELS: Record<AiModelProvider, string> = {
   google: 'Google',
   cloudflare: 'Cloudflare Workers AI',
   ollama: 'Ollama',
+  openrouter: 'OpenRouter',
 }
 
 // Placeholder hinting at the shape of each provider's API token.
@@ -31,6 +32,9 @@ const API_TOKEN_PLACEHOLDERS: Record<AiModelProvider, string> = {
   google: 'AIza...',
   cloudflare: 'Cloudflare API token',
   ollama: '(optional)',
+  // unused while a gateway is configured (no BYOK for OpenRouter), present so the Record stays
+  // exhaustive.
+  openrouter: 'sk-or-v1-...',
 }
 
 // Example used in the custom-model placeholders for providers that have no suggested models
