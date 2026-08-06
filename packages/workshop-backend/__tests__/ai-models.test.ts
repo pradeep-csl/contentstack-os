@@ -366,6 +366,80 @@ describe("getModel direct routing (no gateway)", () => {
   });
 });
 
+describe("OpenRouter gateway routing", () => {
+  beforeEach(() => {
+    capturedRequests.length = 0;
+  });
+
+  const OR_CONFIG: AiModelConfig = {
+    provider: "openrouter",
+    model: "anthropic/claude-sonnet-5",
+    apiToken: "never-used",
+  };
+
+  const orEnv = (overrides: Partial<Cloudflare.Env> = {}) =>
+      env({ CF_AI_GATEWAY: undefined, OPENROUTER_API_KEY: "sk-or-v1-test", ...overrides });
+
+  it("builds an openai-completions handle against OpenRouter", () => {
+    const handle = getModel(orEnv(), OR_CONFIG, INITIATOR);
+    expect(handle.model.api).toBe("openai-completions");
+    expect(handle.model.provider).toBe("openrouter");
+    expect(handle.model.baseUrl).toBe("https://openrouter.ai/api/v1");
+    expect(handle.model.contextWindow).toBe(1000000);
+    // No AI Gateway log to read: cost falls back to pi's catalog-priced usage.
+    expect(handle.aiGatewayLogRoute).toBeUndefined();
+  });
+
+  it("sends the platform key, not the config's token, plus attribution headers", async () => {
+    const handle = getModel(orEnv({ PUBLIC_BASE_URL: "https://gadgets.example" }),
+        OR_CONFIG, INITIATOR);
+    const request = await captureRequest(handle);
+    expect(request.url).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(request.headers.get("authorization")).toBe("Bearer sk-or-v1-test");
+    expect(request.headers.get("http-referer")).toBe("https://gadgets.example");
+    expect(request.headers.get("x-title")).toBe("Gadgets");
+    // Cloudflare-only attribution must not leak to OpenRouter.
+    expect(request.headers.get("cf-aig-metadata")).toBeNull();
+  }, 15000);
+
+  it("keeps the catalog's compat so Anthropic prompt caching still applies", async () => {
+    const handle = getModel(orEnv(), OR_CONFIG, INITIATOR);
+    const request = await captureRequest(handle);
+    // pi emits cache_control only when compat.cacheControlFormat === "anthropic", which comes
+    // from the catalog entry. Hand-built compat would silently disable prompt caching.
+    expect(request.body).toContain("cache_control");
+  }, 15000);
+
+  it("requests medium reasoning for a reasoning-capable OpenRouter model", async () => {
+    // pi's openrouter thinking branch reads options.reasoningEffort and emits a nested
+    // `reasoning: {effort}` object. With no effort passed it emits `{effort: "none"}` instead --
+    // i.e. thinking explicitly off -- so this assertion is what keeps reasoning switched on.
+    const handle = getModel(orEnv(), OR_CONFIG, INITIATOR);
+    const request = await captureRequest(handle);
+    expect(JSON.parse(request.body).reasoning).toEqual({ effort: "medium" });
+  }, 15000);
+
+  it("honors OPENROUTER_BASE_URL", () => {
+    const handle = getModel(orEnv({ OPENROUTER_BASE_URL: "https://proxy.example/or/v1/" }),
+        OR_CONFIG, INITIATOR);
+    expect(handle.model.baseUrl).toBe("https://proxy.example/or/v1");
+  });
+
+  it("ignores a Cloudflare user gateway it cannot serve instead of throwing", () => {
+    // A connected+funded user's BYOK routing is passed for every model; Cloudflare unified
+    // billing can't serve OpenRouter, so the platform gateway must take over silently.
+    const handle = getModel(orEnv(), OR_CONFIG, INITIATOR, {
+      userGateway: { accountId: "user-account-id", apiKey: "user-token" },
+    });
+    expect(handle.model.baseUrl).toBe("https://openrouter.ai/api/v1");
+  });
+
+  it("fails clearly when OpenRouter is not configured", () => {
+    expect(() => getModel(env({ CF_AI_GATEWAY: undefined }), OR_CONFIG, INITIATOR))
+        .toThrow("OpenRouter is not configured for this deployment.");
+  });
+});
+
 describe("PDF attachment bridging", () => {
   beforeEach(() => {
     capturedRequests.length = 0;

@@ -12,12 +12,14 @@ import { ANTHROPIC_MODELS } from "@earendil-works/pi-ai/providers/anthropic.mode
 import { CLOUDFLARE_WORKERS_AI_MODELS } from "@earendil-works/pi-ai/providers/cloudflare-workers-ai.models";
 import { GOOGLE_MODELS } from "@earendil-works/pi-ai/providers/google.models";
 import { OPENAI_MODELS } from "@earendil-works/pi-ai/providers/openai.models";
+import { OPENROUTER_MODELS } from "@earendil-works/pi-ai/providers/openrouter.models";
 import { ApprovalQueue, Gatekeeper, ResourceDescription } from '@gadgets/workshop-shared/gatekeeper';
 import { LanguageModelBinding } from "./ai-model-binding";
 import AI_MODEL_BINDING_TYPES from "./ai-model-binding.txt";
-import { AiChatAuthorInfo, AiModelConfig, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
+import { AiChatAuthorInfo, AiModelConfig, AiModelProvider, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
   from "@gadgets/workshop-shared/api";
-import { CloudflareModelGateway, getAiGatewayConfig, type AiGatewayLogRoute } from "./ai-gateway.js";
+import { CloudflareModelGateway, getAiGatewayConfig, getOpenRouterGateway, type AiGatewayLogRoute,
+  type OpenRouterModelGateway } from "./ai-gateway.js";
 import { completeText } from "./ai-invoke.js";
 import { bridgePdfAttachments } from "./chat-attachment-pdf.js";
 
@@ -123,6 +125,7 @@ function catalogModel(provider: AiModelConfig["provider"], modelId: string): Mod
     case "openai": return (OPENAI_MODELS as Record<string, Model<Api>>)[modelId];
     case "google": return (GOOGLE_MODELS as Record<string, Model<Api>>)[modelId];
     case "cloudflare": return (CLOUDFLARE_WORKERS_AI_MODELS as Record<string, Model<Api>>)[modelId];
+    case "openrouter": return (OPENROUTER_MODELS as Record<string, Model<Api>>)[modelId];
     case "ollama": return undefined;
     default: return undefined;
   }
@@ -236,6 +239,14 @@ function gatewayNativeModel(config: AiModelConfig, gatewayUrl: string): Model<Ap
   }
 }
 
+// Providers Cloudflare AI Gateway can serve on a user's own account (unified billing). Kept
+// beside gatewayNativeModel(), which returns a descriptor for exactly this set -- if you add a
+// provider there, add it here too.
+function servableByUserGateway(provider: AiModelProvider): boolean {
+  return provider === "anthropic" || provider === "openai" ||
+      provider === "google" || provider === "cloudflare";
+}
+
 // Case-insensitive response-header lookup (pi surfaces headers as a plain record).
 function getHeader(headers: Record<string, string>, name: string): string | undefined {
   if (headers[name] !== undefined) return headers[name];
@@ -276,12 +287,20 @@ function makeHandle(args: HandleArgs): ModelHandle {
   //   when no effort is passed; effort selection also makes pi request encrypted reasoning
   //   content, which -- with pi's unconditional `store: false` -- preserves the old stateless
   //   ZDR behavior with reasoning carried between tool steps.
+  // - OpenRouter: same idea via a different pi option. See below.
   // - Everything else: provider defaults.
   const anthropicCompat = args.model.compat as AnthropicMessagesCompat | undefined;
   const apiExtras: Record<string, unknown> =
       args.model.api === "anthropic-messages"
           ? (anthropicCompat?.forceAdaptiveThinking === true ? { thinkingEnabled: true } : {}) :
-      args.model.api === "openai-responses" ? { reasoningEffort: "medium" } : {};
+      args.model.api === "openai-responses" ? { reasoningEffort: "medium" } :
+      // OpenRouter: pi's openrouter thinking branch reads reasoningEffort and, when none is
+      // passed, emits `reasoning: {effort: "none"}` -- thinking explicitly OFF. So a
+      // reasoning-capable model needs an explicit level here or it silently degrades versus the
+      // same model reached through a native provider API. `thinking: false` (one-shot calls) still
+      // wins, since apiExtras is only spread when thinking is on.
+      args.model.provider === "openrouter" && args.model.reasoning
+          ? { reasoningEffort: "medium" } : {};
 
   const handle: ModelHandle = {
     model: args.model,
@@ -333,19 +352,81 @@ function makeHandle(args: HandleArgs): ModelHandle {
   return handle;
 }
 
+// Attribution sent on OpenRouter requests so usage is identifiable in the OpenRouter dashboard.
+const OPENROUTER_APP_TITLE = "Gadgets";
+
+// Build the pi model descriptor for an OpenRouter model. OpenRouter speaks the OpenAI completions
+// dialect, which pi already implements; the catalog supplies real cost, window, and compat.
+//
+// `provider: "openrouter"` is load-bearing, not decorative: pi's detectCompat() keys the whole
+// dialect off it -- openrouter-format reasoning, openrouter session affinity, and
+// cacheControlFormat "anthropic" for anthropic/* ids (which is what makes prompt caching work
+// here). Catalog compat is merged over those detected defaults per key.
+function openRouterModel(config: AiModelConfig, baseUrl: string): Model<Api> {
+  const catalog = catalogModel(config.provider, config.model);
+  return {
+    id: config.model,
+    name: catalog?.name ?? config.model,
+    api: "openai-completions",
+    provider: "openrouter",
+    baseUrl,
+    reasoning: catalog?.reasoning ?? true,
+    input: catalog?.input ?? ["text", "image"],
+    cost: catalog?.cost ?? ZERO_COST,
+    ...modelTokenWindow(config, catalog),
+    thinkingLevelMap: catalog?.thinkingLevelMap,
+    compat: catalog?.compat,
+  };
+}
+
+// Handle for an OpenRouter model served with the deployment's platform key. There is no BYOK
+// path for OpenRouter, so the config's own apiToken is deliberately ignored.
+function getModelViaOpenRouter(
+  gateway: OpenRouterModelGateway,
+  config: AiModelConfig,
+  env: Cloudflare.Env,
+  sessionAffinity?: string,
+): ModelHandle {
+  const headers: ProviderHeaders = { "X-Title": OPENROUTER_APP_TITLE };
+  if (env.PUBLIC_BASE_URL) headers["HTTP-Referer"] = env.PUBLIC_BASE_URL;
+  return makeHandle({
+    model: openRouterModel(config, gateway.baseUrl),
+    apiKey: gateway.apiKey,
+    headers,
+    // No cf-aig-metadata and no aiGatewayLogRoute: OpenRouter is not an AI Gateway. Per-turn
+    // cost comes from pi's catalog-priced usage via the overseer's estimatedCost fallback.
+    sessionAffinity,
+  });
+}
+
 /**
- * Resolve an AiModelConfig to a ModelHandle, choosing among three routing modes: the user's own
- * AI Gateway (BYOK unified billing), the platform's AI Gateway (free tier), or direct provider
- * access with the config's own credentials. The handle carries the matching AI Gateway log route
- * for cost accounting, when there is one.
+ * Resolve an AiModelConfig to a ModelHandle, choosing among four routing modes: OpenRouter (always
+ * the platform key), the user's own AI Gateway (BYOK unified billing), the platform's AI Gateway
+ * (free tier), or direct provider access with the config's own credentials. The handle carries the
+ * matching AI Gateway log route for cost accounting, when there is one.
  */
 export function getModel(env: Cloudflare.Env, config: AiModelConfig,
                          initiator: AiChatAuthorInfo,
                          options: ModelRoutingOptions = {}): ModelHandle {
-  // BYOK: a connected user's own Cloudflare account pays for everything (all providers, including
-  // Workers AI), routed through the user's own AI Gateway with unified billing. Honored regardless
-  // of whether a platform AI Gateway is configured, so connected users are always billed correctly.
-  if (options.userGateway) {
+  // OpenRouter is served by the deployment's platform key for every user, so it is decided before
+  // any BYOK consideration: Cloudflare unified billing cannot route it at all.
+  if (config.provider === "openrouter") {
+    let openrouter = getOpenRouterGateway(env);
+    if (!openrouter) {
+      throw new Error(
+          "OpenRouter is not configured for this deployment. Set OPENROUTER_API_KEY, or pick " +
+          "another model.");
+    }
+    return getModelViaOpenRouter(openrouter, config, env, options.sessionAffinity);
+  }
+
+  // BYOK: a connected user's own Cloudflare account pays for everything Cloudflare unified
+  // billing can serve, routed through the user's own AI Gateway. Providers it cannot serve fall
+  // through to the platform paths below rather than throwing -- the overseer passes this routing
+  // for every model once a user is connected and funded, so throwing here would break those
+  // users on exactly the models their gateway can't bill. (This also retires the same latent
+  // failure for Ollama, which hit the identical throw.)
+  if (options.userGateway && servableByUserGateway(config.provider)) {
     return getModelViaUserGateway(
         config, buildMetadata(initiator, options.metadata), options.userGateway,
         options.sessionAffinity);
