@@ -15,6 +15,13 @@ export function gatewayLabel(gateway?: AiGatewayId): string | null {
   return gateway ? GATEWAY_LABELS[gateway] : null;
 }
 
+// Plain-text disambiguation for pickers that render option text only (native <option>, Kumo
+// Select.Option's collapsed value) and so cannot host the pill treatment used elsewhere.
+export function modelOptionLabel(model: AiModelInfo): string {
+  const label = gatewayLabel(model.gateway);
+  return label ? `${model.name} — ${label}` : model.name;
+}
+
 // Above this many models a list gets a search box. Mirrors the providers page, which already
 // hides its search when there is nothing to search: a deployment with only Workers AI keeps the
 // one-tap onboarding step, while both gateways together (~14 built-ins) get the filter.

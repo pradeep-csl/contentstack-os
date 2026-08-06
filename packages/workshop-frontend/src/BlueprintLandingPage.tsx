@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } fro
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import { RpcStub, RpcTarget } from 'capnweb'
 import { PublicApi, AuthenticatedApi, AdminApi, BlueprintPublicInfo, BlueprintBinding, BlueprintBindingAssignment, BlueprintUserSummary, AiChatAuthorInfo, AiModelInfo, ConnectedAccountsSubscriber } from '@gadgets/workshop-shared/api'
+import { modelOptionLabel } from './modelListDisplay'
 import { AccountDescription, SupportedResource, VendorDescription, ResourceConfiguratorFrame } from '@gadgets/workshop-shared/gatekeeper'
 import { Button, Dialog, DropdownMenu, Select, Tooltip, useKumoToastManager } from '@cloudflare/kumo'
 import { ArrowsOutSimple, ArrowLeft, ArrowSquareOut, DotsThree, DownloadSimple, Lightning, Plus, Robot, Sparkle, Star, Trash, X } from '@phosphor-icons/react'
@@ -1349,7 +1350,7 @@ function BindingField({
   name: string
   binding: BlueprintBinding
   value: Partial<BlueprintBindingAssignment>
-  models: AiChatAuthorInfo[]
+  models: AiModelInfo[]
   authenticatedApi: RpcStub<AuthenticatedApi>
   vendors: {id: string, description: VendorDescription, supportedResources: SupportedResource[]}[]
   accounts: AccountOption[]
@@ -1399,13 +1400,16 @@ function BindingField({
           placeholder="Choose an AI model"
           value={(value as any).modelId || undefined}
           onValueChange={(modelId) => onChange({ modelId } as any)}
-          renderValue={(id) => models.find(m => m.id === id)?.name ?? String(id)}
+          renderValue={(id) => {
+            const model = models.find(m => m.id === id)
+            return model ? modelOptionLabel(model) : String(id)
+          }}
           container={selectPortalContainer}
           disabled={models.length === 0}
         >
           {models.map(m => (
             <Select.Option key={m.id} value={m.id}>
-              {m.name}
+              {modelOptionLabel(m)}
             </Select.Option>
           ))}
         </Select>
@@ -1439,14 +1443,15 @@ function BindingField({
           onValueChange={(modelId) => onChange({ modelId: modelId === NO_AGENT_MODEL_ID ? null : modelId } as any)}
           renderValue={(id) => {
             if (id === NO_AGENT_MODEL_ID) return '(No agent)'
-            return models.find(m => m.id === id)?.name ?? String(id)
+            const model = models.find(m => m.id === id)
+            return model ? modelOptionLabel(model) : String(id)
           }}
           container={selectPortalContainer}
         >
           <Select.Option value={NO_AGENT_MODEL_ID}>(No agent)</Select.Option>
           {models.map(m => (
             <Select.Option key={m.id} value={m.id}>
-              {m.name}
+              {modelOptionLabel(m)}
             </Select.Option>
           ))}
         </Select>

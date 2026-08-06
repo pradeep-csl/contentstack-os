@@ -1,9 +1,10 @@
 import { Select, type PortalContainer } from '@cloudflare/kumo'
-import { AiChatAuthorInfo } from '@gadgets/workshop-shared/api'
+import { AiModelInfo } from '@gadgets/workshop-shared/api'
+import { modelOptionLabel } from '../modelListDisplay'
 import { ConnectionConfigField } from './ConnectionConfigField'
 
 export interface AiModelConnectionConfigProps {
-  availableModels: AiChatAuthorInfo[]
+  availableModels: AiModelInfo[]
   selectedModelId: string | undefined
   onSelectedModelIdChange: (id: string | undefined) => void
   selectContainer?: PortalContainer
@@ -28,11 +29,14 @@ export function AiModelConnectionConfig({
           placeholder="Select an AI model"
           value={selectedModelId}
           onValueChange={(v) => onSelectedModelIdChange(v as string | undefined)}
-          renderValue={(id) => availableModels.find((m) => m.id === id)?.name ?? id}
+          renderValue={(id) => {
+            const model = availableModels.find((m) => m.id === id)
+            return model ? modelOptionLabel(model) : id
+          }}
         >
           {availableModels.map(model => (
             <Select.Option key={model.id} value={model.id}>
-              {model.name}
+              {modelOptionLabel(model)}
             </Select.Option>
           ))}
         </Select>

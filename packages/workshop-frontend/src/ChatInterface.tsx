@@ -60,6 +60,7 @@ import {
   getStoredSelectedModel,
   persistSelectedModel,
 } from "./modelSelection";
+import { gatewayLabel } from "./modelListDisplay";
 import {
   Overseer,
   GatekeeperClient,
@@ -69,6 +70,7 @@ import {
   AiChatSubscriber,
   ActionLogEntry,
   AiChatAuthorInfo,
+  AiModelInfo,
   CapsuleSpecifier,
   AiChatStreamEvent,
   AiToolCall,
@@ -1799,7 +1801,7 @@ export const ChatInput = ({
     formats?: MessageFormatRef[],
   ) => Promise<void> | void;
   isAgentActive: boolean;
-  models: AiChatAuthorInfo[];
+  models: AiModelInfo[];
   selectedModel: string | null;
   onModelChange: (modelId: string | null) => void;
   pendingConsoleLogCount?: number;
@@ -3342,6 +3344,11 @@ export const ChatInput = ({
                         className="!h-auto rounded-xl !px-2 !py-1.5 text-[12px] leading-4 font-normal tracking-[-0.15px] text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                       >
                         <span className="min-w-0 flex-1 truncate">{model.name}</span>
+                        {gatewayLabel(model.gateway) && (
+                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.3px] text-kumo-subtle">
+                            {gatewayLabel(model.gateway)}
+                          </span>
+                        )}
                         {active && (
                           <Check size={12} weight="bold" className="ml-3 flex-shrink-0 text-kumo-inactive" />
                         )}
@@ -4318,7 +4325,7 @@ function ChatInterface({
   const [processingConnections, setProcessingConnections] = useState<Set<string>>(
     new Set(),
   );
-  const [availableModels, setAvailableModels] = useState<AiChatAuthorInfo[]>(
+  const [availableModels, setAvailableModels] = useState<AiModelInfo[]>(
     [],
   );
   const [selectedModel, setSelectedModel] = useState<string | null>(null);

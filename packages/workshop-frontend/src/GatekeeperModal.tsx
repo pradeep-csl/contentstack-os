@@ -13,7 +13,7 @@ import {
 import { RpcStub, RpcTarget } from 'capnweb'
 import {
   AgentSpawnerConfig,
-  AiChatAuthorInfo,
+  AiModelInfo,
   ConnectedAccountsSubscriber,
   GatekeeperClient,
   Overseer,
@@ -190,7 +190,7 @@ export default function GatekeeperModal({
   const [accounts, setAccounts] = useState<AccountOption[]>([])
   const [vendors, setVendors] = useState<VendorOption[]>([])
 
-  const [availableModels, setAvailableModels] = useState<AiChatAuthorInfo[]>([])
+  const [availableModels, setAvailableModels] = useState<AiModelInfo[]>([])
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>()
 
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)

@@ -1,5 +1,6 @@
 import { Checkbox, Select, type PortalContainer } from '@cloudflare/kumo'
-import { AiChatAuthorInfo, WorkpieceId, validateBindingName } from '@gadgets/workshop-shared/api'
+import { AiModelInfo, WorkpieceId, validateBindingName } from '@gadgets/workshop-shared/api'
+import { modelOptionLabel } from '../modelListDisplay'
 import { WorkshopInput } from '../components/WorkshopControls'
 import { ConnectionConfigField } from './ConnectionConfigField'
 
@@ -50,7 +51,7 @@ export function spawnerEnvFromRows(rows: SpawnerEnvRow[]): Record<string, Workpi
 }
 
 export interface AgentSpawnerConfigFormProps {
-  availableModels: AiChatAuthorInfo[]
+  availableModels: AiModelInfo[]
   displayName: string
   modelId: string | null
   env: SpawnerEnvRow[]
@@ -104,7 +105,8 @@ export function AgentSpawnerConfigForm({
           onValueChange={(v) => onModelIdChange(v as string | null)}
           renderValue={(id) => {
             if (id === null) return 'None (no agent)'
-            return availableModels.find((m) => m.id === id)?.name ?? String(id)
+            const model = availableModels.find((m) => m.id === id)
+            return model ? modelOptionLabel(model) : String(id)
           }}
         >
           <Select.Option value={null as any}>
@@ -112,7 +114,7 @@ export function AgentSpawnerConfigForm({
           </Select.Option>
           {availableModels.map(model => (
             <Select.Option key={model.id} value={model.id}>
-              {model.name}
+              {modelOptionLabel(model)}
             </Select.Option>
           ))}
         </Select>

@@ -306,7 +306,7 @@ export interface AuthenticatedApi extends RpcTarget {
   //
   // Note that the list returned here could be different from a particular gadget's Overseer,
   // especially if the gadget is owned by someone else.
-  listModels(): Promise<AiChatAuthorInfo[]>;
+  listModels(): Promise<AiModelInfo[]>;
 
   // Adds a new model to the user's configured set. The ID must be unique among the user's
   // configured models.
@@ -1480,7 +1480,7 @@ export interface Overseer extends RpcTarget {
 
   // List available models. The first listed model should be the default, unless the user has
   // chosen something else.
-  listModels(): Promise<AiChatAuthorInfo[]>;
+  listModels(): Promise<AiModelInfo[]>;
 
   // Fetch one page of messages in the chat history for the given chat thread. If `beforeSequence`
   // is absent, fetch the current tail. Otherwise, fetch messages before that sequence.
