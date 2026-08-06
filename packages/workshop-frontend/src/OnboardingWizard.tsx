@@ -3,8 +3,8 @@ import { useKumoToastManager } from '@cloudflare/kumo'
 import { RpcTarget } from 'capnweb'
 import { useAuthenticatedApi } from './AuthContext'
 import {
-  AiChatAuthorInfo,
   AiGatewayInfo,
+  AiModelInfo,
   ConnectedAccountsSubscriber,
 } from '@gadgets/workshop-shared/api'
 import {
@@ -23,9 +23,11 @@ import {
   Key,
   Plugs,
   Hexagon,
+  MagnifyingGlass,
 } from '@phosphor-icons/react'
 import AddModelModal from './AddModelModal'
 import { persistSelectedModel } from './modelSelection'
+import { filterModels, gatewayLabel, shouldShowModelSearch } from './modelListDisplay'
 import { logoComponents } from './components/ConnectionLogos'
 import { getVendorIconBackground } from './components/vendorColors'
 import { compressAvatar, avatarBlobUrl } from './avatarUtils'
@@ -84,11 +86,12 @@ export default function OnboardingWizard({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Model state
-  const [models, setModels] = useState<AiChatAuthorInfo[]>([])
+  const [models, setModels] = useState<AiModelInfo[]>([])
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
   const [aiConfig, setAiConfig] = useState<AiGatewayInfo | null>(null)
   const [addModelOpen, setAddModelOpen] = useState(false)
   const [modelsLoading, setModelsLoading] = useState(true)
+  const [modelSearch, setModelSearch] = useState('')
 
   // Connections state
   const [vendors, setVendors] = useState<VendorEntry[]>([])
@@ -331,6 +334,8 @@ export default function OnboardingWizard({
     return a.description.displayName.localeCompare(b.description.displayName)
   })
 
+  const visibleModels = filterModels(models, modelSearch)
+
   // ── render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -502,6 +507,24 @@ export default function OnboardingWizard({
                   Pick the AI model you&apos;d like to use by default
                 </p>
 
+                {/* Search appears only once the list is long enough to need it (both gateways
+                    active ≈ 14 models); a Workers-AI-only deployment keeps the one-tap step. */}
+                {!modelsLoading && shouldShowModelSearch(models.length) && (
+                  <div className="relative mb-3">
+                    <MagnifyingGlass
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive"
+                    />
+                    <input
+                      type="text"
+                      value={modelSearch}
+                      onChange={(e) => setModelSearch(e.target.value)}
+                      placeholder="Search models…"
+                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+                    />
+                  </div>
+                )}
+
                 {modelsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="w-6 h-6 border-2 border-kumo-brand border-t-transparent rounded-full animate-spin" />
@@ -509,7 +532,7 @@ export default function OnboardingWizard({
                 ) : (
                   <>
                     <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                      {models.map((model) => (
+                      {visibleModels.map((model) => (
                         <button
                           key={model.id}
                           onClick={() => setSelectedModelId(model.id)}
@@ -537,6 +560,11 @@ export default function OnboardingWizard({
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-kumo-default truncate">
                               {model.name}
+                              {gatewayLabel(model.gateway) && (
+                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
+                                  {gatewayLabel(model.gateway)}
+                                </span>
+                              )}
                             </p>
                             <p className="text-xs text-kumo-subtle truncate">
                               {model.id}
@@ -552,13 +580,13 @@ export default function OnboardingWizard({
                         </button>
                       ))}
 
-                      {models.length === 0 && (
+                      {visibleModels.length === 0 && (
                         <div className="text-center py-8">
                           <p className="text-sm text-kumo-subtle mb-1">
-                            No models configured yet
+                            {models.length === 0 ? 'No models configured yet' : 'No models match your search'}
                           </p>
                           <p className="text-xs text-kumo-inactive">
-                            Add a model to get started
+                            {models.length === 0 ? 'Add a model to get started' : 'Try a different name'}
                           </p>
                         </div>
                       )}
