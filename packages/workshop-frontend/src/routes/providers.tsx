@@ -234,7 +234,8 @@ function ProvidersPage() {
                   {aiConfig?.enabled
                     ? ` (${aiConfig.gateways.map((g) => g.label).join(', ')})`
                     : ''}
-                  . You can still add your own models with your own API tokens.
+                  . You can still add models from providers your deployment has enabled — the
+                  gateway serves them, so no token of your own is needed.
                 </span>
               </Notice>
             )}

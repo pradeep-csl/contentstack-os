@@ -60,6 +60,16 @@ When using `CF_AI_GATEWAY*` in local development, start the server with
 conversion still has a `WORKERS_AI` binding. (Inference itself no longer uses the binding; it goes
 over HTTPS with the tokens above.)
 
+Each gatekeeper's OAuth app must be registered with that gatekeeper's redirect URI (replace the host
+with `PUBLIC_BASE_URL`):
+
+- GitHub: `${PUBLIC_BASE_URL}/gatekeeper/github/oauth`
+- Google: `${PUBLIC_BASE_URL}/gatekeeper/google/oauth`
+- Cloudflare: `${PUBLIC_BASE_URL}/gatekeeper/cloudflare/oauth`
+
+See [docs/oauth-signin.md](oauth-signin.md) and [docs/ai-gateway-billing.md](ai-gateway-billing.md)
+for the full list of options, the free-tier / top-up behavior, and the storage bindings involved.
+
 ### OpenRouter gateway
 
 OpenRouter is a peer of the Cloudflare AI Gateway: set its key and its models appear as built-ins
@@ -79,13 +89,3 @@ credential: every OpenRouter request uses `OPENROUTER_API_KEY`.
 Per-turn cost for OpenRouter models is priced from pi's model catalog rather than read from an AI
 Gateway log, so it is an estimate that can drift from OpenRouter's actual charges; refresh it by
 bumping `@earendil-works/pi-ai`.
-
-Each gatekeeper's OAuth app must be registered with that gatekeeper's redirect URI (replace the host
-with `PUBLIC_BASE_URL`):
-
-- GitHub: `${PUBLIC_BASE_URL}/gatekeeper/github/oauth`
-- Google: `${PUBLIC_BASE_URL}/gatekeeper/google/oauth`
-- Cloudflare: `${PUBLIC_BASE_URL}/gatekeeper/cloudflare/oauth`
-
-See [docs/oauth-signin.md](oauth-signin.md) and [docs/ai-gateway-billing.md](ai-gateway-billing.md)
-for the full list of options, the free-tier / top-up behavior, and the storage bindings involved.
