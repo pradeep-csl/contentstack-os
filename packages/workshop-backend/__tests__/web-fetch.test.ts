@@ -5,14 +5,15 @@ import {
   formatWebFetchResult,
   type WebFetchEnv,
 } from "../src/web-fetch.js";
-import { AiGatewayConfig } from "../src/ai-gateway.js";
+import { CloudflareModelGateway } from "../src/ai-gateway.js";
 
 // A minimal stand-in for the Workers AI binding's toMarkdown method. The real signature
 // accepts a single document or an array of documents; we only use the single-document form
 // in webFetch, so the stub mirrors only that branch.
 type ToMarkdownStub = ReturnType<typeof vi.fn>;
 
-function makeEnv(toMarkdown?: ToMarkdownStub, gateway: AiGatewayConfig | null = null): WebFetchEnv {
+function makeEnv(toMarkdown?: ToMarkdownStub, gateway: CloudflareModelGateway | null = null)
+    : WebFetchEnv {
   const stub =
     toMarkdown ??
     vi.fn(async (doc: { name: string; blob: Blob }) => ({
@@ -120,7 +121,7 @@ describe("webFetch document conversion", () => {
       tokens: 1,
       data: "# Title",
     }));
-    const gateway = new AiGatewayConfig({
+    const gateway = new CloudflareModelGateway({
       CF_AI_GATEWAY: "workers-ai-gateway",
       CF_AI_GATEWAY_ACCOUNT_ID: "gateway-account-id",
       CF_AI_GATEWAY_API_TOKEN: "gateway-token",
@@ -145,7 +146,7 @@ describe("webFetch document conversion", () => {
       tokens: 1,
       data: "# Title",
     }));
-    const gateway = new AiGatewayConfig({
+    const gateway = new CloudflareModelGateway({
       CF_AI_GATEWAY: "platform-gateway",
       CF_AI_GATEWAY_ACCOUNT_ID: "gateway-account-id",
       CF_AI_GATEWAY_API_TOKEN: "gateway-token",

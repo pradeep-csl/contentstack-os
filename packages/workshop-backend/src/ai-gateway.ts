@@ -1,4 +1,5 @@
-import { AiChatAuthorInfo, AiModelConfig, SUGGESTED_MODELS } from "@gadgets/workshop-shared/api";
+import { AiGatewayId, AiModelConfig, AiModelInfo, AiModelProvider, SUGGESTED_MODELS }
+  from "@gadgets/workshop-shared/api";
 import { UserAiModelRecord } from "./user.js";
 
 // The model used for quick tasks like title generation when AI Gateway mode is active.
@@ -7,7 +8,28 @@ import { UserAiModelRecord } from "./user.js";
 // compared to the actual coding model so there's not much reason to use a smaller model.
 const QUICK_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-export class AiGatewayConfig {
+/**
+ * A deployment-managed source of built-in models, holding the platform's credentials. Callers go
+ * through the registry functions below rather than naming a concrete gateway, so adding a third
+ * gateway stays additive.
+ */
+export interface ModelGateway {
+  readonly id: AiGatewayId;
+  readonly label: string;
+  // Providers this gateway serves. Disjoint across gateways: "openrouter" belongs to the
+  // OpenRouter gateway, every other provider to the Cloudflare one.
+  readonly providers: Set<string>;
+  // Built-in models offered to users, each tagged with this gateway's id.
+  getModelList(): AiModelInfo[];
+  // Look up a built-in by id. The returned profile is a bare AiChatAuthorInfo: it is stamped onto
+  // every persisted chat message, so it must never carry the gateway tag.
+  resolveModel(modelId: string): UserAiModelRecord | undefined;
+  getQuickModelConfig(): AiModelConfig | undefined;
+}
+
+export class CloudflareModelGateway implements ModelGateway {
+  readonly id = "cloudflare" as const;
+  readonly label = "Cloudflare AI Gateway";
   readonly gateway: string;
   readonly workersAiGateway?: string;
   readonly accountId: string;
@@ -39,14 +61,14 @@ export class AiGatewayConfig {
   }
 
   /**
-   * Get the list of models available through AI Gateway, as AiChatAuthorInfo entries.
+   * Get the list of models available through AI Gateway, as AiModelInfo entries.
    */
-  getModelList(): AiChatAuthorInfo[] {
-    let result: AiChatAuthorInfo[] = [];
+  getModelList(): AiModelInfo[] {
+    let result: AiModelInfo[] = [];
     for (let [provider, models] of Object.entries(SUGGESTED_MODELS)) {
       if (this.providers.has(provider)) {
         for (let [id, model] of Object.entries(models)) {
-          result.push({ type: "agent", id, name: model.name });
+          result.push({ type: "agent", id, name: model.name, gateway: this.id });
         }
       }
     }
@@ -89,13 +111,131 @@ export class AiGatewayConfig {
   }
 }
 
+// Default model for quick tasks (titles, binding names, compaction summaries) when OpenRouter is
+// the only active gateway. Cheap and fast; overridable with OPENROUTER_QUICK_MODEL.
+const OPENROUTER_DEFAULT_QUICK_MODEL = "anthropic/claude-haiku-4.5";
+
+const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
+
 /**
- * Parse AI Gateway configuration from environment variables. Returns null if AI Gateway
- * mode is not enabled (i.e. CF_AI_GATEWAY is not set).
+ * OpenRouter as a deployment-managed gateway. Enabled by OPENROUTER_API_KEY; every request uses
+ * that platform key (there is no per-user OpenRouter credential anywhere in the product).
  */
-export function getAiGatewayConfig(env: Cloudflare.Env): AiGatewayConfig | null {
+export class OpenRouterModelGateway implements ModelGateway {
+  readonly id = "openrouter" as const;
+  readonly label = "OpenRouter";
+  // OpenRouter ids are vendor-namespaced, so this gateway owns exactly one provider.
+  readonly providers = new Set<string>(["openrouter"]);
+  readonly apiKey: string;
+  readonly baseUrl: string;
+  readonly quickModel: string;
+  // Offered built-in ids, in display order.
+  readonly modelIds: string[];
+
+  constructor(env: Cloudflare.Env) {
+    this.apiKey = env.OPENROUTER_API_KEY!;
+    this.baseUrl = (env.OPENROUTER_BASE_URL || OPENROUTER_DEFAULT_BASE_URL).replace(/\/+$/, "");
+    this.quickModel = env.OPENROUTER_QUICK_MODEL || OPENROUTER_DEFAULT_QUICK_MODEL;
+    let override = (env.OPENROUTER_MODELS || "")
+        .split(",").map(s => s.trim()).filter(s => s !== "");
+    this.modelIds = override.length > 0
+        ? override
+        : Object.keys(SUGGESTED_MODELS.openrouter);
+  }
+
+  // Display name for an id: the curated entry's name, else the id itself (an OPENROUTER_MODELS
+  // entry we don't curate is still perfectly usable -- pi's catalog supplies its cost/window).
+  #displayName(modelId: string): string {
+    return SUGGESTED_MODELS.openrouter[modelId]?.name ?? modelId;
+  }
+
+  getModelList(): AiModelInfo[] {
+    return this.modelIds.map(id => (
+        { type: "agent", id, name: this.#displayName(id), gateway: this.id }));
+  }
+
+  resolveModel(modelId: string): UserAiModelRecord | undefined {
+    if (!this.modelIds.includes(modelId)) return undefined;
+    return {
+      // Bare AiChatAuthorInfo: this profile is stamped onto every persisted chat message.
+      profile: { type: "agent", id: modelId, name: this.#displayName(modelId) },
+      config: {
+        provider: "openrouter",
+        model: modelId,
+        // Unused: OpenRouter always uses the platform key from env (see getModel()).
+        apiToken: "",
+      },
+    };
+  }
+
+  getQuickModelConfig(): AiModelConfig | undefined {
+    return { provider: "openrouter", model: this.quickModel, apiToken: "" };
+  }
+}
+
+/**
+ * Parse Cloudflare AI Gateway configuration. Returns null when CF_AI_GATEWAY is not set.
+ * Prefer the registry functions below unless you specifically need Cloudflare-only fields.
+ */
+export function getAiGatewayConfig(env: Cloudflare.Env): CloudflareModelGateway | null {
   if (!env.CF_AI_GATEWAY) return null;
-  return new AiGatewayConfig(env);
+  return new CloudflareModelGateway(env);
+}
+
+/** The OpenRouter gateway, or null when OPENROUTER_API_KEY is not set. */
+export function getOpenRouterGateway(env: Cloudflare.Env): OpenRouterModelGateway | null {
+  if (!env.OPENROUTER_API_KEY) return null;
+  return new OpenRouterModelGateway(env);
+}
+
+/**
+ * Every active gateway, in routing order: Cloudflare first, then OpenRouter. The order is the
+ * one source of truth for merged model lists, quick-model preference, and the blueprint
+ * suggested-model tie-break.
+ */
+export function getActiveGateways(env: Cloudflare.Env): ModelGateway[] {
+  let result: ModelGateway[] = [];
+  let cloudflare = getAiGatewayConfig(env);
+  if (cloudflare) result.push(cloudflare);
+  let openrouter = getOpenRouterGateway(env);
+  if (openrouter) result.push(openrouter);
+  return result;
+}
+
+/** The gateway serving a provider, or undefined when no active gateway does. */
+export function getGatewayForProvider(env: Cloudflare.Env, provider: AiModelProvider)
+    : ModelGateway | undefined {
+  return getActiveGateways(env).find(gateway => gateway.providers.has(provider));
+}
+
+/** Look up a built-in model across every active gateway, in gateway order. */
+export function resolveGatewayModel(env: Cloudflare.Env, modelId: string)
+    : UserAiModelRecord | undefined {
+  for (let gateway of getActiveGateways(env)) {
+    let record = gateway.resolveModel(modelId);
+    if (record) return record;
+  }
+  return undefined;
+}
+
+/** The quick-task model of the first active gateway that offers one. */
+export function getGatewayQuickModelConfig(env: Cloudflare.Env): AiModelConfig | undefined {
+  for (let gateway of getActiveGateways(env)) {
+    let config = gateway.getQuickModelConfig();
+    if (config) return config;
+  }
+  return undefined;
+}
+
+/**
+ * Merge gateway built-ins with a user's own stored models. Gateway entries come first and win:
+ * a stored model whose id duplicates a built-in is dropped, so the gateway's routing and naming
+ * are what the user sees.
+ */
+export function mergeModelLists(gatewayEntries: AiModelInfo[], stored: AiModelInfo[])
+    : AiModelInfo[] {
+  let ids = new Set(gatewayEntries.map(entry => entry.id));
+  return [...gatewayEntries, ...stored.filter(entry => !ids.has(entry.id))];
 }
 
 /** Identifies the Gateway and credentials needed to retrieve an inference log. */

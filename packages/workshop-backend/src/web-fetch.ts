@@ -18,13 +18,13 @@
 // permit fetching from any address (so localhost services stay reachable), so the flag
 // only takes effect in production -- an acceptable tradeoff for dev.
 
-import type { AiGatewayConfig } from "./ai-gateway";
+import type { CloudflareModelGateway } from "./ai-gateway";
 
 // The bits of the Workers AI binding and gateway config that `webFetch` needs. Kept narrow
 // so the caller can pass a stub in tests without constructing a full Cloudflare.Env.
 export type WebFetchEnv = {
   ai: Ai;
-  gateway: AiGatewayConfig | null;
+  gateway: CloudflareModelGateway | null;
 };
 
 export type WebFetchInput = {
@@ -172,9 +172,10 @@ const TO_MARKDOWN_MIME_TYPES = new Set([
 ]);
 
 // `toMarkdown()` uses the Workers AI binding, so only apply the same-account Workers AI gateway
-// resolved by AiGatewayConfig. A cross-account platform gateway cannot be used by this binding.
+// resolved by CloudflareModelGateway. A cross-account platform gateway cannot be used by this
+// binding.
 function buildGatewayOptions(
-  gateway: AiGatewayConfig | null,
+  gateway: CloudflareModelGateway | null,
 ): GatewayOptions | undefined {
   if (!gateway) return undefined;
   if (!gateway.workersAiGateway) return undefined;

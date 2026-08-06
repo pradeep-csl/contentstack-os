@@ -17,7 +17,7 @@ import { LanguageModelBinding } from "./ai-model-binding";
 import AI_MODEL_BINDING_TYPES from "./ai-model-binding.txt";
 import { AiChatAuthorInfo, AiModelConfig, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
   from "@gadgets/workshop-shared/api";
-import { AiGatewayConfig, getAiGatewayConfig, type AiGatewayLogRoute } from "./ai-gateway.js";
+import { CloudflareModelGateway, getAiGatewayConfig, type AiGatewayLogRoute } from "./ai-gateway.js";
 import { completeText } from "./ai-invoke.js";
 import { bridgePdfAttachments } from "./chat-attachment-pdf.js";
 
@@ -404,7 +404,7 @@ function getModelViaUserGateway(
 // Platform free-tier path: route through the deployment's configured AI Gateway (platform-funded).
 // Used only for requests that are NOT billed to a connected user's account.
 function getModelViaGateway(
-  gwConfig: AiGatewayConfig,
+  gwConfig: CloudflareModelGateway,
   config: AiModelConfig,
   initiator: AiChatAuthorInfo,
   options: ModelRoutingOptions,

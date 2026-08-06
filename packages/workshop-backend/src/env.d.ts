@@ -23,6 +23,14 @@ declare global {
       // Note: outside gateway mode, Workers AI (provider "cloudflare") is BYOK like every other
       // provider -- the account ID and API token live in the user's model config, not in env.
 
+      // OpenRouter gateway: a peer of the Cloudflare AI Gateway. When OPENROUTER_API_KEY is set,
+      // provider "openrouter" models are served with this platform key. There is no BYOK path for
+      // OpenRouter -- a stored model config's apiToken is never used for it.
+      OPENROUTER_API_KEY?: string;        // Platform key (enables the OpenRouter gateway)
+      OPENROUTER_MODELS?: string;         // Comma-separated id override, e.g. "z-ai/glm-4.7,..."
+      OPENROUTER_QUICK_MODEL?: string;    // Quick/title model when OpenRouter is the only gateway
+      OPENROUTER_BASE_URL?: string;       // Defaults to https://openrouter.ai/api/v1
+
       // Blueprint storage bindings.
       BLUEPRINTS: KVNamespace;             // Workers KV for blueprint metadata lookup
       BLUEPRINT_CONTENT: R2Bucket;         // R2 bucket for blueprint code snapshots
