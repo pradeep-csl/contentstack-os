@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import { RpcStub, RpcTarget } from 'capnweb'
-import { PublicApi, AuthenticatedApi, AdminApi, BlueprintPublicInfo, BlueprintBinding, BlueprintBindingAssignment, BlueprintUserSummary, AiChatAuthorInfo, ConnectedAccountsSubscriber } from '@gadgets/workshop-shared/api'
+import { PublicApi, AuthenticatedApi, AdminApi, BlueprintPublicInfo, BlueprintBinding, BlueprintBindingAssignment, BlueprintUserSummary, AiChatAuthorInfo, AiModelInfo, ConnectedAccountsSubscriber } from '@gadgets/workshop-shared/api'
 import { AccountDescription, SupportedResource, VendorDescription, ResourceConfiguratorFrame } from '@gadgets/workshop-shared/gatekeeper'
 import { Button, Dialog, DropdownMenu, Select, Tooltip, useKumoToastManager } from '@cloudflare/kumo'
 import { ArrowsOutSimple, ArrowLeft, ArrowSquareOut, DotsThree, DownloadSimple, Lightning, Plus, Robot, Sparkle, Star, Trash, X } from '@phosphor-icons/react'
@@ -9,6 +9,7 @@ import { ArrowsOutSimple, ArrowLeft, ArrowSquareOut, DotsThree, DownloadSimple, 
 import { useAuth } from './useAuth'
 import LoginPage from './LoginPage'
 import { normalizeResourceUrl } from './resourceMatching'
+import { findSuggestedModelId as matchSuggestedModel } from './suggestedModelMatch'
 import {
   BLUEPRINT_ARCHIVE_EXTENSION,
   makeBlueprintFilename,
@@ -45,7 +46,7 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
   const [activeBindingName, setActiveBindingName] = useState<string | null>(null)
   const [bindingForm, setBindingForm] = useState<BindingFormState>({})
   const [draftAssignments, setDraftAssignments] = useState<Record<string, BlueprintBindingAssignment>>({})
-  const [models, setModels] = useState<AiChatAuthorInfo[]>([])
+  const [models, setModels] = useState<AiModelInfo[]>([])
   const [creating, setCreating] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
@@ -376,23 +377,9 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
     )
   }, [accounts])
 
-  const findSuggestedModelId = useCallback((suggested: {provider: string, modelName: string}) => {
-    const provider = suggested.provider.trim().toLowerCase()
-    const modelName = suggested.modelName.trim().toLowerCase()
-    const exactMatches = models.filter(model =>
-      model.id.toLowerCase() === modelName ||
-      model.name.toLowerCase() === modelName ||
-      model.id.toLowerCase() === `${provider}/${modelName}` ||
-      model.id.toLowerCase() === `${provider}:${modelName}`
-    )
-    if (exactMatches.length === 1) return exactMatches[0].id
-
-    const providerScopedMatches = models.filter(model => {
-      const text = `${model.id} ${model.name}`.toLowerCase()
-      return text.includes(provider) && text.includes(modelName)
-    })
-    return providerScopedMatches.length === 1 ? providerScopedMatches[0].id : null
-  }, [models])
+  const findSuggestedModelId = useCallback(
+    (suggested: {provider: string, modelName: string}) => matchSuggestedModel(models, suggested),
+    [models])
 
   const getFirstUnresolvedBindingName = useCallback((assignments = draftAssignments) => {
     if (!blueprint) return null
