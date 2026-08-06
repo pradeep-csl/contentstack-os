@@ -386,7 +386,10 @@ describe("OpenRouter gateway routing", () => {
     expect(handle.model.provider).toBe("openrouter");
     expect(handle.model.baseUrl).toBe("https://openrouter.ai/api/v1");
     expect(handle.model.contextWindow).toBe(1000000);
-    // No AI Gateway log to read: cost falls back to pi's catalog-priced usage.
+    // No AI Gateway log to read: cost falls back to pi's catalog-priced usage, so a wrong or
+    // missing catalog cost here means the model silently bills $0/turn. Values are pi's real
+    // catalog entry for this id (providers/data/openrouter.json), not values we invented.
+    expect(handle.model.cost).toEqual({ input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 });
     expect(handle.aiGatewayLogRoute).toBeUndefined();
   });
 
@@ -402,12 +405,26 @@ describe("OpenRouter gateway routing", () => {
     expect(request.headers.get("cf-aig-metadata")).toBeNull();
   }, 15000);
 
-  it("keeps the catalog's compat so Anthropic prompt caching still applies", async () => {
+  it("triggers Anthropic-format prompt caching for an anthropic/* OpenRouter id", async () => {
+    // pi's detectCompat() derives cache_control purely from provider === "openrouter" plus the
+    // "anthropic/" id prefix -- it doesn't actually read our descriptor's compat field for this.
+    // This is still a real end-to-end check that our provider/id combination triggers it (a
+    // wrong provider string, e.g. "openai" instead of "openrouter", would silently disable it).
     const handle = getModel(orEnv(), OR_CONFIG, INITIATOR);
     const request = await captureRequest(handle);
-    // pi emits cache_control only when compat.cacheControlFormat === "anthropic", which comes
-    // from the catalog entry. Hand-built compat would silently disable prompt caching.
     expect(request.body).toContain("cache_control");
+  }, 15000);
+
+  it("pins session affinity so repeat turns land on the same OpenRouter session", async () => {
+    // pi only emits the affinity header when compat.sendSessionAffinityHeaders is true, which
+    // detectCompat() defaults to false for every provider (including openrouter); without setting
+    // it explicitly in the descriptor's compat, session affinity is silently dropped and
+    // consecutive turns lose their pinning to the same upstream host/cache.
+    const handle = getModel(orEnv(), OR_CONFIG, INITIATOR, { sessionAffinity: "session-a" });
+    const request = await captureRequest(handle);
+    // OpenRouter's own affinity header (compat.sessionAffinityFormat === "openrouter", detected
+    // from provider === "openrouter" alone) -- not the generic x-session-affinity header.
+    expect(request.headers.get("x-session-id")).toBe("session-a");
   }, 15000);
 
   it("requests medium reasoning for a reasoning-capable OpenRouter model", async () => {

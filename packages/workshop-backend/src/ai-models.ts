@@ -16,7 +16,7 @@ import { OPENROUTER_MODELS } from "@earendil-works/pi-ai/providers/openrouter.mo
 import { ApprovalQueue, Gatekeeper, ResourceDescription } from '@gadgets/workshop-shared/gatekeeper';
 import { LanguageModelBinding } from "./ai-model-binding";
 import AI_MODEL_BINDING_TYPES from "./ai-model-binding.txt";
-import { AiChatAuthorInfo, AiModelConfig, AiModelProvider, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
+import { AiChatAuthorInfo, AiModelConfig, SUGGESTED_MODELS, WORKERS_AI_OUTPUT_LIMIT }
   from "@gadgets/workshop-shared/api";
 import { CloudflareModelGateway, getAiGatewayConfig, getOpenRouterGateway, type AiGatewayLogRoute,
   type OpenRouterModelGateway } from "./ai-gateway.js";
@@ -239,14 +239,6 @@ function gatewayNativeModel(config: AiModelConfig, gatewayUrl: string): Model<Ap
   }
 }
 
-// Providers Cloudflare AI Gateway can serve on a user's own account (unified billing). Kept
-// beside gatewayNativeModel(), which returns a descriptor for exactly this set -- if you add a
-// provider there, add it here too.
-function servableByUserGateway(provider: AiModelProvider): boolean {
-  return provider === "anthropic" || provider === "openai" ||
-      provider === "google" || provider === "cloudflare";
-}
-
 // Case-insensitive response-header lookup (pi surfaces headers as a plain record).
 function getHeader(headers: Record<string, string>, name: string): string | undefined {
   if (headers[name] !== undefined) return headers[name];
@@ -375,7 +367,12 @@ function openRouterModel(config: AiModelConfig, baseUrl: string): Model<Api> {
     cost: catalog?.cost ?? ZERO_COST,
     ...modelTokenWindow(config, catalog),
     thinkingLevelMap: catalog?.thinkingLevelMap,
-    compat: catalog?.compat,
+    // sendSessionAffinityHeaders isn't in the catalog (pi's detectCompat() defaults it to false
+    // for every provider); without it here, session affinity is silently dropped and consecutive
+    // turns lose their pinning to the same upstream host. Setting it explicitly -- same idea as
+    // workersAiCompat() below -- makes pi emit `x-session-id` (its openrouter-format affinity
+    // header, chosen by provider === "openrouter" alone).
+    compat: { ...catalog?.compat, sendSessionAffinityHeaders: true },
   };
 }
 
@@ -421,15 +418,16 @@ export function getModel(env: Cloudflare.Env, config: AiModelConfig,
   }
 
   // BYOK: a connected user's own Cloudflare account pays for everything Cloudflare unified
-  // billing can serve, routed through the user's own AI Gateway. Providers it cannot serve fall
-  // through to the platform paths below rather than throwing -- the overseer passes this routing
-  // for every model once a user is connected and funded, so throwing here would break those
-  // users on exactly the models their gateway can't bill. (This also retires the same latent
-  // failure for Ollama, which hit the identical throw.)
-  if (options.userGateway && servableByUserGateway(config.provider)) {
-    return getModelViaUserGateway(
+  // billing can serve, routed through the user's own AI Gateway. Providers it cannot serve
+  // (gatewayNativeModel() returns undefined for them) fall through to the platform paths below
+  // rather than throwing -- the overseer passes this routing for every model once a user is
+  // connected and funded, so throwing here would break those users on exactly the models their
+  // gateway can't bill.
+  if (options.userGateway) {
+    let handle = getModelViaUserGateway(
         config, buildMetadata(initiator, options.metadata), options.userGateway,
         options.sessionAffinity);
+    if (handle) return handle;
   }
 
   // Otherwise: when a platform AI Gateway is configured, route through it (platform-funded free
@@ -444,13 +442,16 @@ export function getModel(env: Cloudflare.Env, config: AiModelConfig,
 
 // Route inference through the user's own account (unified billing) via their account's default AI
 // Gateway. Supports every provider AI Gateway serves, including Workers AI. Billed to the
-// user's Cloudflare credits; no provider API key required.
+// user's Cloudflare credits; no provider API key required. Returns undefined for a provider
+// gatewayNativeModel() cannot serve (openrouter, ollama) -- gatewayNativeModel()'s switch is the
+// single source of truth for "servable via unified billing"; callers fall through to a platform
+// path instead of failing, so this must never throw.
 function getModelViaUserGateway(
   config: AiModelConfig,
   metadata: GatewayMetadata,
   userGateway: UserGatewayRouting,
   sessionAffinity?: string,
-): ModelHandle {
+): ModelHandle | undefined {
   // Route through the user's AI Gateway data plane, speaking each provider's native API (see
   // gatewayNativeModel; unified *billing* has no API requirements). Auth is the connected user's
   // Cloudflare token via `cf-aig-authorization` (authorized by its `aig.run` scope); the
@@ -458,9 +459,7 @@ function getModelViaUserGateway(
   // auto-created "default" gateway.
   const model = gatewayNativeModel(
       config, `https://gateway.ai.cloudflare.com/v1/${userGateway.accountId}/default`);
-  if (!model) {
-    throw new Error(`Provider "${config.provider}" is not supported via unified billing.`);
-  }
+  if (!model) return undefined;
   return makeHandle({
     model,
     // The Google SDK requires an API key and sends it as `x-goog-api-key`, which the gateway
