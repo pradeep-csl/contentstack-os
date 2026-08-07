@@ -6,7 +6,7 @@
 // test below fails if a PENDING entry no longer needs to be there — so the list can only shrink.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -73,7 +73,12 @@ test('no legacy Cloudflare palette colours outside the pending allowlist', () =>
 test('the pending allowlist has no stale entries', () => {
   const stale = []
   for (const rel of PENDING) {
-    const hits = legacyHits(readFileSync(join(ROOT, rel), 'utf8').toLowerCase())
+    const path = join(ROOT, rel)
+    if (!existsSync(path)) {
+      stale.push(rel)
+      continue
+    }
+    const hits = legacyHits(readFileSync(path, 'utf8').toLowerCase())
     if (!hits.length) stale.push(rel)
   }
   assert.deepEqual(stale, [], 'these files are clean — remove them from PENDING')
