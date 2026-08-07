@@ -123,7 +123,7 @@ describe('Venus light palette', () => {
       '--text-color-kumo-brand', '--text-color-kumo-link', '--text-color-kumo-subtle',
       '--text-color-kumo-success', '--text-color-kumo-danger', '--text-color-kumo-warning',
     ]) {
-      expect(contrast(token(light, name), base)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(token(light, name), base), `${name} on ${base}`).toBeGreaterThanOrEqual(4.5)
     }
   })
 
