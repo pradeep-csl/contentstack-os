@@ -34,7 +34,6 @@ const SOURCE_EXT = /\.(ts|tsx|css|html)$/
 
 // Files not yet migrated. Remove an entry in the task that converts it.
 const PENDING = new Set([
-  'packages/design-tokens/tokens.css',
   'packages/gatekeeper-context/app/ContextLibraryPage.tsx',
   'packages/gatekeeper-context/app/index.html',
   'packages/gatekeeper-scheduler/app/index.html',

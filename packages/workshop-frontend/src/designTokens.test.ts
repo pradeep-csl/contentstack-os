@@ -131,3 +131,65 @@ describe('Venus light palette', () => {
     expect(contrast('#ffffff', token(light, '--color-kumo-brand'))).toBeGreaterThanOrEqual(4.5)
   })
 })
+
+/** Converts an `oklch(L C H)` string to linear-light sRGB, clipped to gamut. */
+function oklchToLinear(value: string): [number, number, number] {
+  const m = value.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/)
+  if (!m) throw new Error(`not an oklch colour: ${value}`)
+  const [L, C, H] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const a = C * Math.cos((H * Math.PI) / 180)
+  const b = C * Math.sin((H * Math.PI) / 180)
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const mm = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3
+  return [
+    4.0767416621 * l - 3.3077115913 * mm + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * mm - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * mm + 1.707614701 * s,
+  ].map((v) => Math.min(1, Math.max(0, v))) as [number, number, number]
+}
+
+const toSrgbChannel = (v: number) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055)
+
+/** Renders any oklch()/hex token value as a hex string so `contrast()` can consume it. */
+function asHex(value: string): string {
+  if (value.startsWith('#')) return value
+  const rgb = oklchToLinear(value)
+  return '#' + rgb.map((v) => Math.round(toSrgbChannel(v) * 255).toString(16).padStart(2, '0')).join('')
+}
+
+describe('Venus-derived dark palette', () => {
+  const dark = darkBlock(TOKENS_CSS)
+
+  it('keeps solid brand fills but lightens brand text (decision D5)', () => {
+    expect(token(dark, '--color-kumo-brand')).toBe('#6c5ce7')
+    expect(token(dark, '--text-color-kumo-brand')).toBe('#ada4f4')
+    expect(token(dark, '--text-color-kumo-link')).toBe('#ada4f4')
+  })
+
+  it('uses the approved dark status colours (decision D6)', () => {
+    expect(token(dark, '--color-kumo-success')).toBe('#48dba2')
+    expect(token(dark, '--color-kumo-danger')).toBe('#ff735f')
+    expect(token(dark, '--color-kumo-warning')).toBe('#ffbc36')
+    expect(token(dark, '--color-kumo-info')).toBe('#74b4ff')
+  })
+
+  it('meets WCAG AA for text and status colours on all three dark surfaces', () => {
+    const surfaces = ['--color-kumo-base', '--color-kumo-elevated', '--color-kumo-tint']
+      .map((name) => asHex(token(dark, name)))
+    const foregrounds = [
+      '--text-color-kumo-default', '--text-color-kumo-subtle', '--text-color-kumo-brand',
+      '--text-color-kumo-success', '--text-color-kumo-danger', '--text-color-kumo-warning',
+    ]
+    for (const name of foregrounds) {
+      const fg = asHex(token(dark, name))
+      for (const bg of surfaces) {
+        expect(contrast(fg, bg), `${name} on ${bg}`).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it('meets WCAG AA for white label text on the dark primary button', () => {
+    expect(contrast('#ffffff', asHex(token(dark, '--color-kumo-brand')))).toBeGreaterThanOrEqual(4.5)
+  })
+})
