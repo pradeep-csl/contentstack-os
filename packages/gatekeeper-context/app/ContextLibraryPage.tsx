@@ -3280,7 +3280,7 @@ const monoFont =
 // Token colors matching the Workshop's Monaco theme, including its subdued markdown (headers use
 // keyword purple, URLs green, the rest default).
 const gadgetsHighlightStyleLight = HighlightStyle.define([
-  { tag: t.comment, color: "#a39990", fontStyle: "italic" },
+  { tag: t.comment, color: "#8593ab", fontStyle: "italic" },
   {
     tag: [
       t.keyword,
@@ -3293,17 +3293,17 @@ const gadgetsHighlightStyleLight = HighlightStyle.define([
     ],
     color: "#8e3aa6",
   },
-  { tag: t.operator, color: "#6b6157" },
+  { tag: t.operator, color: "#647696" },
   { tag: [t.string, t.special(t.string), t.regexp, t.escape], color: "#4d8a44" },
-  { tag: [t.number, t.bool, t.null, t.atom], color: "#b56a1f" },
-  { tag: [t.typeName, t.className, t.namespace], color: "#b56a1f" },
+  { tag: [t.number, t.bool, t.null, t.atom], color: "#ba5800" },
+  { tag: [t.typeName, t.className, t.namespace], color: "#ba5800" },
   { tag: [t.function(t.variableName), t.function(t.propertyName)], color: "#3a72c9" },
-  { tag: [t.variableName, t.propertyName], color: "#1f1d1a" },
-  { tag: t.constant(t.variableName), color: "#b56a1f" },
+  { tag: [t.variableName, t.propertyName], color: "#222222" },
+  { tag: t.constant(t.variableName), color: "#ba5800" },
   { tag: t.standard(t.variableName), color: "#3a72c9" },
-  { tag: [t.punctuation, t.separator, t.bracket, t.paren, t.brace], color: "#6b6157" },
+  { tag: [t.punctuation, t.separator, t.bracket, t.paren, t.brace], color: "#647696" },
   { tag: t.tagName, color: "#c14438" },
-  { tag: t.attributeName, color: "#b56a1f" },
+  { tag: t.attributeName, color: "#ba5800" },
   { tag: t.attributeValue, color: "#4d8a44" },
   // Markdown: match Monaco (headers = keyword purple, URLs green, the rest default).
   { tag: t.heading, color: "#8e3aa6" },
@@ -3312,7 +3312,7 @@ const gadgetsHighlightStyleLight = HighlightStyle.define([
 
 const gadgetsEditorThemeLight = EditorView.theme(
   {
-    "&": { color: "#1f1d1a", backgroundColor: "transparent", height: "100%", fontSize: "13px" },
+    "&": { color: "#222222", backgroundColor: "transparent", height: "100%", fontSize: "13px" },
     "&.cm-focused": { outline: "none" },
     ".cm-scroller": {
       fontFamily: monoFont,
@@ -3327,7 +3327,7 @@ const gadgetsEditorThemeLight = EditorView.theme(
       borderRadius: "4px",
     },
     ".cm-scroller::-webkit-scrollbar-track": { background: "transparent" },
-    ".cm-content": { padding: "12px 0", caretColor: "#1f1d1a" },
+    ".cm-content": { padding: "12px 0", caretColor: "#222222" },
     ".cm-line": { padding: "0 16px" },
     ".cm-gutters": {
       backgroundColor: "transparent",
@@ -3339,8 +3339,8 @@ const gadgetsEditorThemeLight = EditorView.theme(
       padding: "0 8px 0 14px",
       minWidth: "28px",
     },
-    ".cm-activeLineGutter": { backgroundColor: "transparent", color: "#6b6157" },
-    ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#1f1d1a" },
+    ".cm-activeLineGutter": { backgroundColor: "transparent", color: "#647696" },
+    ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#222222" },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
       backgroundColor: "#b3d4ff",
     },

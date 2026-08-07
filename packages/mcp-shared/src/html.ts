@@ -28,29 +28,29 @@ export const PAGE_STYLE = `
     color-scheme: light dark;
     --font: "FT Kunst Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             "Helvetica Neue", sans-serif;
-    --base: #fcfcfb;
+    --base: #ffffff;
     --control: #ffffff;
-    --line: #e8e7e4;
-    --text: #1c1a18;
-    --strong: #100f0d;
-    --subtle: oklch(52% 0.006 60);
-    --brand: #ff4801;
-    --danger: oklch(63.7% 0.237 25.331);
+    --line: #dde3ee;
+    --text: #475161;
+    --strong: #222222;
+    --subtle: #647696;
+    --brand: #6c5ce7;
+    --danger: #d62400;
     /* Kumo's primary button is "contrast": near-black in light mode, the accent in dark. */
-    --contrast: #14110f;
+    --contrast: #222222;
     --on-contrast: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --base: oklch(0.115 0.012 285);
-      --control: oklch(0.155 0.011 285);
-      --line: oklch(0.34 0.022 285);
-      --text: oklch(0.92 0.01 285);
-      --strong: oklch(0.92 0.01 285);
-      --subtle: oklch(0.66 0.02 285);
-      --brand: #b84e00;
-      --danger: oklch(70.4% 0.191 22.216);
-      --contrast: #b84e00;
+      --base: oklch(0.15 0.015 285);
+      --control: oklch(0.19 0.016 285);
+      --line: oklch(0.32 0.022 285);
+      --text: oklch(0.92 0.008 285);
+      --strong: oklch(0.96 0.006 285);
+      --subtle: oklch(0.70 0.02 285);
+      --brand: #ada4f4;
+      --danger: #ff735f;
+      --contrast: #6c5ce7;
     }
   }
 
