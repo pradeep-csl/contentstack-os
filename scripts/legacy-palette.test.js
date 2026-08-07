@@ -38,8 +38,6 @@ const PENDING = new Set([
   'packages/gatekeeper-context/app/index.html',
   'packages/gatekeeper-scheduler/app/index.html',
   'packages/mcp-shared/src/html.ts',
-  'packages/workshop-frontend/src/CodeDiffEditor.css',
-  'packages/workshop-frontend/src/components/monacoTheme.ts',
 ])
 
 function sourceFiles(dir, out = []) {
