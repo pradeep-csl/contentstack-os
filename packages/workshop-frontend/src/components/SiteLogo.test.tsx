@@ -51,9 +51,10 @@ describe('SiteLogo', () => {
     expect(container!.querySelector('[data-fallback]')).toBeNull()
   })
 
-  it('uses the supplied fallback when no logo is configured or loading fails', () => {
+  it('falls back to the Contentstack mark (ignoring any passed children) when no logo is configured or loading fails', () => {
     render()
-    expect(container!.querySelector('[data-fallback]')).not.toBeNull()
+    expect(container!.querySelector('[data-fallback]')).toBeNull()
+    expect(container!.querySelector('svg[aria-label="Contentstack"]')).not.toBeNull()
 
     act(() => root!.unmount())
     container!.remove()
@@ -62,7 +63,7 @@ describe('SiteLogo', () => {
     render('/api/site-logo?v=revision')
     act(() => container!.querySelector('img')!.dispatchEvent(new Event('error')))
     expect(container!.querySelector('img')).toBeNull()
-    expect(container!.querySelector('[data-fallback]')).not.toBeNull()
+    expect(container!.querySelector('svg[aria-label="Contentstack"]')).not.toBeNull()
 
     rerender('/api/site-logo?v=revision')
     expect(container!.querySelector('img')).not.toBeNull()
@@ -80,7 +81,7 @@ describe('SiteLogo', () => {
     ))
 
     expect(container!.querySelector('img')).toBeNull()
-    expect(container!.querySelector('[data-fallback]')).not.toBeNull()
+    expect(container!.querySelector('svg[aria-label="Contentstack"]')).not.toBeNull()
   })
 
 })
