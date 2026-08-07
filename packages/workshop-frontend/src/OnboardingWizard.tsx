@@ -22,7 +22,6 @@ import {
   UsersThree,
   Key,
   Plugs,
-  Hexagon,
   MagnifyingGlass,
 } from '@phosphor-icons/react'
 import AddModelModal from './AddModelModal'
@@ -361,9 +360,7 @@ export default function OnboardingWizard({
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
           }`}
         >
-          <SiteLogo size={22}>
-            <Hexagon size={22} className="text-kumo-brand" weight="bold" />
-          </SiteLogo>
+          <SiteLogo size={22} />
           <span className="text-base font-semibold tracking-tight text-kumo-default">
             {siteName}
           </span>

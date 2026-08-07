@@ -27,7 +27,7 @@ describe('SiteLogo', () => {
     let config = { siteLogo: logoUrl ? { url: logoUrl } : undefined } as ServerConfig
     act(() => root!.render(
       <ServerConfigContext.Provider value={config}>
-        <SiteLogo size={20}><span data-fallback>fallback</span></SiteLogo>
+        <SiteLogo size={20} />
       </ServerConfigContext.Provider>,
     ))
   }
@@ -36,7 +36,7 @@ describe('SiteLogo', () => {
     let config = { siteLogo: logoUrl ? { url: logoUrl } : undefined } as ServerConfig
     act(() => root!.render(
       <ServerConfigContext.Provider value={config}>
-        <SiteLogo size={20}><span data-fallback>fallback</span></SiteLogo>
+        <SiteLogo size={20} />
       </ServerConfigContext.Provider>,
     ))
   }
@@ -48,12 +48,10 @@ describe('SiteLogo', () => {
     expect(image.getAttribute('alt')).toBe('')
     expect(image.width).toBe(20)
     expect(image.height).toBe(20)
-    expect(container!.querySelector('[data-fallback]')).toBeNull()
   })
 
-  it('falls back to the Contentstack mark (ignoring any passed children) when no logo is configured or loading fails', () => {
+  it('falls back to the Contentstack mark when no logo is configured or loading fails', () => {
     render()
-    expect(container!.querySelector('[data-fallback]')).toBeNull()
     expect(container!.querySelector('svg[aria-label="Contentstack"]')).not.toBeNull()
 
     act(() => root!.unmount())
@@ -74,9 +72,7 @@ describe('SiteLogo', () => {
     const config = { siteLogo: { url: '/api/site-logo?v=configured' } } as ServerConfig
     act(() => root!.render(
       <ServerConfigContext.Provider value={config}>
-        <SiteLogo size={20} srcOverride={null}>
-          <span data-fallback>fallback</span>
-        </SiteLogo>
+        <SiteLogo size={20} srcOverride={null} />
       </ServerConfigContext.Provider>,
     ))
 

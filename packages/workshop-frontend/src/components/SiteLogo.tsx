@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { useServerConfig } from '../ServerConfigContext'
 import ContentstackMark from './ContentstackMark'
 
@@ -10,12 +10,6 @@ export default function SiteLogo({
   size: number
   className?: string
   srcOverride?: string | null
-  /**
-   * @deprecated No longer rendered. SiteLogo falls back to the ContentstackMark itself so every
-   * call site gets the mark uniformly; this stays in the prop type purely so existing call sites
-   * (which still pass a Phosphor icon here) keep compiling unchanged.
-   */
-  children?: ReactNode
 }) {
   const serverConfig = useServerConfig()
   const configuredUrl = serverConfig?.siteLogo?.url
@@ -24,8 +18,7 @@ export default function SiteLogo({
 
   useEffect(() => setFailed(false), [src, serverConfig])
 
-  // An admin-uploaded logo always wins; otherwise fall back to the Contentstack mark rather
-  // than whatever the caller passed as children (see the deprecation note above).
+  // An admin-uploaded logo always wins; otherwise fall back to the Contentstack mark.
   if (!src || failed) return <ContentstackMark size={size} className={className} />
   return (
     <img

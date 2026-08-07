@@ -6,7 +6,6 @@ import {
   Pencil,
   Check,
   X,
-  Hexagon,
   Blueprint,
   Trash,
   ArrowsOutSimple,
@@ -1334,9 +1333,7 @@ export default function GadgetEditor() {
             aria-label="Home"
             className="flex-shrink-0 hover:opacity-80 transition-opacity"
           >
-            <SiteLogo size={22}>
-              <Hexagon size={22} className="text-kumo-brand" weight="bold" />
-            </SiteLogo>
+            <SiteLogo size={22} />
           </Link>
 
           <span className="text-kumo-inactive flex-shrink-0">/</span>
