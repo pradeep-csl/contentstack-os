@@ -40,7 +40,6 @@ const PENDING = new Set([
   'packages/mcp-shared/src/html.ts',
   'packages/workshop-frontend/src/CodeDiffEditor.css',
   'packages/workshop-frontend/src/components/monacoTheme.ts',
-  'packages/workshop-frontend/src/theme.ts',
 ])
 
 function sourceFiles(dir, out = []) {

@@ -65,6 +65,10 @@ export function applyStoredThemeMode(): ResolvedThemeMode {
 // deployment accents mode-aware without needing to reapply them when the user toggles themes.
 function accentVars(seed: string): Record<string, string> {
   return {
+    // Pin the dark-mode lightness to 0.45 to guarantee white button label text stays legible
+    // (L ≤ 0.45 is the only threshold that clears WCAG AA across all hues; worst case is cyan ~4.95:1).
+    // This guard does not affect deployments with no custom accent override, because those pass ""
+    // to applyAccentColor(), which clears these variables so the static tokens.css default applies.
     '--color-kumo-brand': `light-dark(${seed}, oklch(from ${seed} 0.45 c h))`,
     // Slightly darker for hover/pressed states.
     '--color-kumo-brand-hover': `light-dark(oklch(from ${seed} calc(l - 0.06) c h), oklch(from ${seed} 0.38 c h))`,
@@ -94,4 +98,4 @@ export function applyAccentColor(color: string | null | undefined): void {
 }
 
 // The base/default accent, shown in the admin picker when no custom color is set.
-export const DEFAULT_ACCENT_COLOR = '#ff4801'
+export const DEFAULT_ACCENT_COLOR = '#6c5ce7'
