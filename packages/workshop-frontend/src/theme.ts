@@ -83,13 +83,15 @@ function accentVars(seed: string): Record<string, string> {
   }
 }
 
-const ALL_VARS = Object.keys(accentVars('#000'))
+// Exported so tests can assert every variable accentVars() sets gets cleared, without
+// hand-maintaining a second copy of the variable-name list that could silently drift.
+export const ACCENT_VAR_NAMES = Object.keys(accentVars('#000'))
 
 // Apply the accent color to the document root. Pass "" / invalid to clear back to the base theme.
 export function applyAccentColor(color: string | null | undefined): void {
   const root = document.documentElement
   if (!color || !isHexColor(color)) {
-    for (const v of ALL_VARS) root.style.removeProperty(v)
+    for (const v of ACCENT_VAR_NAMES) root.style.removeProperty(v)
     return
   }
   for (const [v, value] of Object.entries(accentVars(color))) {

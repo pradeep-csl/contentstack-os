@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it } from 'vitest'
-import { applyAccentColor, DEFAULT_ACCENT_COLOR } from './theme'
+import { ACCENT_VAR_NAMES, applyAccentColor, DEFAULT_ACCENT_COLOR } from './theme'
 
 afterEach(() => {
   document.documentElement.removeAttribute('style')
@@ -35,6 +35,8 @@ describe('runtime accent seeding', () => {
   it('clears every accent variable when given an invalid colour', () => {
     applyAccentColor(DEFAULT_ACCENT_COLOR)
     applyAccentColor('not-a-colour')
-    expect(document.documentElement.style.getPropertyValue('--color-kumo-brand')).toBe('')
+    for (const name of ACCENT_VAR_NAMES) {
+      expect(document.documentElement.style.getPropertyValue(name), `${name}`).toBe('')
+    }
   })
 })
