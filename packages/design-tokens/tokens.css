@@ -224,11 +224,15 @@
 }
 
 .themed-prompt-card-shadow {
-  box-shadow: var(--shadow-venus-8);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-kumo-fill) 75%, transparent),
+    var(--shadow-venus-8);
 }
 
 .themed-prompt-card-shadow:focus-within {
-  box-shadow: var(--shadow-venus-16);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-kumo-fill) 85%, transparent),
+    var(--shadow-venus-16);
 }
 
 .themed-user-bubble-shadow {
