@@ -844,31 +844,31 @@ window.addEventListener("touchmove", event => {
     :root {
       color-scheme: light dark;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --color-kumo-base: #fcfcfb;
-      --color-kumo-elevated: #f8f8f7;
-      --color-kumo-tint: #f3f3f1;
-      --color-kumo-line: #1411100f;
-      --color-kumo-ring: #cac8c3;
-      --color-kumo-default: #1c1a18;
-      --color-kumo-subtle: oklch(52% 0.006 60);
-      --color-kumo-inactive: oklch(66% 0.005 60);
-      --color-kumo-danger: oklch(63.7% 0.237 25.331);
-      --color-kumo-danger-tint: #fff1f2;
-      --color-kumo-danger-line: #fecdd3;
+      --color-kumo-base: #ffffff;
+      --color-kumo-elevated: #f7f9fc;
+      --color-kumo-tint: #edf1f7;
+      --color-kumo-line: #4751611f;
+      --color-kumo-ring: #c7d0e1;
+      --color-kumo-default: #475161;
+      --color-kumo-subtle: #647696;
+      --color-kumo-inactive: #a9b6cb;
+      --color-kumo-danger: #d62400;
+      --color-kumo-danger-tint: #ffeeeb;
+      --color-kumo-danger-line: #ffcec2;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --color-kumo-base: oklch(0.115 0.012 285);
-        --color-kumo-elevated: oklch(0.155 0.011 285);
-        --color-kumo-tint: oklch(0.225 0.025 285);
-        --color-kumo-line: oklch(0.34 0.022 285);
-        --color-kumo-ring: oklch(0.52 0.065 285);
-        --color-kumo-default: oklch(0.92 0.01 285);
-        --color-kumo-subtle: oklch(0.66 0.02 285);
-        --color-kumo-inactive: oklch(0.58 0.025 285);
-        --color-kumo-danger: oklch(70.4% 0.191 22.216);
-        --color-kumo-danger-tint: oklch(0.25 0.065 25.331);
-        --color-kumo-danger-line: oklch(0.4 0.1 25.331);
+        --color-kumo-base: oklch(0.15 0.015 285);
+        --color-kumo-elevated: oklch(0.19 0.016 285);
+        --color-kumo-tint: oklch(0.25 0.024 285);
+        --color-kumo-line: oklch(0.32 0.022 285);
+        --color-kumo-ring: oklch(0.52 0.08 288);
+        --color-kumo-default: oklch(0.92 0.008 285);
+        --color-kumo-subtle: oklch(0.70 0.02 285);
+        --color-kumo-inactive: oklch(0.58 0.02 285);
+        --color-kumo-danger: #ff735f;
+        --color-kumo-danger-tint: oklch(0.27 0.07 30);
+        --color-kumo-danger-line: oklch(0.4 0.08 30);
       }
     }
     html, body { margin: 0; overflow: visible; background: transparent; color: var(--color-kumo-default, #2f261f); font-size: 13px; }
@@ -886,7 +886,7 @@ window.addEventListener("touchmove", event => {
     .input { display: block; width: 100%; height: 36px; border: 1px solid var(--color-kumo-line, #ded7d0); border-radius: 8px; padding: 8px 10px 8px 30px; background: var(--color-kumo-base, #fff); color: inherit; outline: none; font: inherit; font-size: 13px; line-height: 18px; letter-spacing: -0.25px; }
     .input.no-icon { padding-left: 10px; }
     .input-wrapper:has(.clear-button) .input { padding-right: 34px; }
-    .input:focus { border-color: var(--color-kumo-ring, #ff6a00); box-shadow: 0 0 0 2px rgb(255 106 0 / 12%); }
+    .input:focus { border-color: var(--color-kumo-ring, #ff6a00); box-shadow: 0 0 0 2px rgb(108 92 231 / 12%); }
     .input.invalid { border-color: var(--color-kumo-danger, #c2410c); box-shadow: 0 0 0 2px rgb(194 65 12 / 10%); }
     .input:disabled { background: var(--color-kumo-elevated, #f8f5f1); color: var(--color-kumo-subtle, #7d746c); cursor: not-allowed; }
     .input-error { margin: 4px 0 0; font-size: 12px; line-height: 16px; color: var(--color-kumo-danger, #c2410c); }
