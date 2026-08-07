@@ -67,3 +67,67 @@ describe('shared design tokens', () => {
     }
   })
 })
+
+/** Converts `#rgb`, `#rrggbb` or `#rrggbbaa` to linear-light sRGB (alpha ignored). */
+function hexToLinear(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  const channels = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255)
+  return channels.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)) as [number, number, number]
+}
+
+function relativeLuminance([r, g, b]: [number, number, number]): number {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+/** WCAG contrast ratio between two hex colours. */
+export function contrast(a: string, b: string): number {
+  const [hi, lo] = [relativeLuminance(hexToLinear(a)), relativeLuminance(hexToLinear(b))]
+    .toSorted((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+describe('Venus light palette', () => {
+  const light = lightBlock(TOKENS_CSS)
+
+  it('uses the Venus brand purple', () => {
+    expect(token(light, '--color-kumo-brand')).toBe('#6c5ce7')
+    expect(token(light, '--color-kumo-brand-hover')).toBe('#5d50be')
+  })
+
+  it('uses Venus cool-grey surfaces', () => {
+    expect(token(light, '--color-kumo-base')).toBe('#ffffff')
+    expect(token(light, '--color-kumo-elevated')).toBe('#f7f9fc')
+    expect(token(light, '--color-kumo-tint')).toBe('#edf1f7')
+    expect(token(light, '--color-kumo-recessed')).toBe('#dde3ee')
+  })
+
+  it('keeps the line token translucent so borders survive on every surface', () => {
+    // A solid #dde3ee line is invisible on the recessed and fill-hover surfaces, which are
+    // themselves #dde3ee. The token must carry alpha.
+    const line = token(light, '--color-kumo-line')
+    expect(line).toMatch(/^#[0-9a-f]{8}$/)
+  })
+
+  it('meets WCAG AA for body text on both light surfaces', () => {
+    const base = token(light, '--color-kumo-base')
+    const elevated = token(light, '--color-kumo-elevated')
+    const body = token(light, '--text-color-kumo-default')
+    expect(contrast(body, base)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(body, elevated)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('meets WCAG AA for brand, link and status text on the base surface', () => {
+    const base = token(light, '--color-kumo-base')
+    for (const name of [
+      '--text-color-kumo-brand', '--text-color-kumo-link', '--text-color-kumo-subtle',
+      '--text-color-kumo-success', '--text-color-kumo-danger', '--text-color-kumo-warning',
+    ]) {
+      expect(contrast(token(light, name), base)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('meets WCAG AA for white label text on the primary button', () => {
+    expect(contrast('#ffffff', token(light, '--color-kumo-brand'))).toBeGreaterThanOrEqual(4.5)
+  })
+})

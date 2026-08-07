@@ -7,93 +7,93 @@
    Those remain per-surface and out of scope for the Venus migration. */
 
 @theme {
-  /* ===== KUMO SEMANTIC COLOR OVERRIDES =====
-     Near-neutral, barely-warm greys for every surface, border, and neutral text. The brand orange
-     is reserved for *intent only* (active item, links, primary action, focus) so it actually pops.
-     This is the single biggest lever between a "consumer/playground" feel and an enterprise one. */
-
-  /* Background tokens — near-white neutrals with a faint warm undertone */
-  --color-kumo-base: #fcfcfb;
-  --color-kumo-elevated: #f8f8f7;
-  --color-kumo-tint: #f3f3f1;
-  --color-kumo-overlay: #fbfbfa;
-  --color-kumo-recessed: #efeeec;
+  /* ===== VENUS SURFACES ===== */
+  --color-kumo-base: #ffffff;
+  --color-kumo-elevated: #f7f9fc;
+  --color-kumo-tint: #edf1f7;
+  --color-kumo-overlay: #ffffff;
+  --color-kumo-recessed: #dde3ee;
   --color-kumo-control: #ffffff;
-  --color-kumo-contrast: #14110f;
-  --color-kumo-fill: #e8e7e4;
-  --color-kumo-fill-hover: #dededb;
-  --color-kumo-interact: #cac8c3;
+  --color-kumo-contrast: #222222;
+  --color-kumo-fill: #edf1f7;
+  --color-kumo-fill-hover: #dde3ee;
+  --color-kumo-interact: #c7d0e1;
 
-  /* Brand — warm orange accent (intent only) */
-  --color-kumo-brand: #ff4801;
-  --color-kumo-brand-hover: #e03f00;
+  /* ===== BRAND (Orchid Purple P400) ===== */
+  --color-kumo-brand: #6c5ce7;
+  --color-kumo-brand-hover: #5d50be;
 
-  /* Border / line tokens — neutral hairlines */
-  --color-kumo-line: #1411100f;
-  --color-kumo-ring: #cac8c3;
+  /* ===== LINES =====
+     Translucent on purpose: `recessed` and `fill-hover` are both #dde3ee, so a solid
+     #dde3ee hairline would be invisible on them. Derived from Venus `font-base` at 12%. */
+  --color-kumo-line: #4751611f;
+  --color-kumo-ring: #c7d0e1;
 
-  /* Chat surface tokens */
-  --color-kumo-bubble-user: #f1f0ee;
+  /* ===== CHAT ===== */
+  --color-kumo-bubble-user: #f8f6ff;
 
-  /* Status tints — keep functional colors, warm the tints */
-  --color-kumo-info: oklch(62.3% 0.214 259.815);
-  --color-kumo-info-tint: oklch(90% 0.06 250);
-  --color-kumo-warning: oklch(79.5% 0.184 86.047);
-  --color-kumo-warning-tint: oklch(92% 0.08 85);
-  --color-kumo-danger: oklch(63.7% 0.237 25.331);
-  --color-kumo-danger-tint: oklch(92% 0.06 25);
-  --color-kumo-success: oklch(72.3% 0.219 149.579);
-  --color-kumo-success-tint: oklch(92% 0.08 150);
+  /* ===== STATUS =====
+     Kumo `danger` maps to Venus *warning* (red); Kumo `warning` maps to Venus *attention*
+     (amber). `info` uses the readable aqua B600 rather than Venus's cyan, so its pale
+     companion is re-derived at that hue instead of using Venus `info-light`. */
+  --color-kumo-info: #0469e3;
+  --color-kumo-info-tint: #eef5fe;
+  --color-kumo-warning: #ffae0a;
+  --color-kumo-warning-tint: #fff8eb;
+  --color-kumo-danger: #d62400;
+  --color-kumo-danger-tint: #ffeeeb;
+  --color-kumo-success: #007a52;
+  --color-kumo-success-tint: #f5fffc;
 
-  /* Tooltip */
-  --color-kumo-tip-shadow: #14111014;
+  /* ===== TOOLTIP ===== */
+  --color-kumo-tip-shadow: #47516114;
   --color-kumo-tip-stroke: transparent;
 
-  /* Text color tokens — near-neutral greys (faint warm undertone, no brown) */
-  --text-color-kumo-default: #1c1a18;
-  --text-color-kumo-default-hover: #100f0d;
+  /* ===== TEXT =====
+     `warning` text uses Venus attention-*dark*: #ffae0a on white is 1.86:1 and fails AA. */
+  --text-color-kumo-default: #475161;
+  --text-color-kumo-default-hover: #212121;
   --text-color-kumo-inverse: #ffffff;
-  --text-color-kumo-strong: #100f0d;
-  --text-color-kumo-subtle: oklch(52% 0.006 60);
-  --text-color-kumo-inactive: oklch(66% 0.005 60);
-  --text-color-kumo-brand: #ff4801;
-  --text-color-kumo-link: #ff4801;
-  --text-color-kumo-success: oklch(72.3% 0.219 149.579);
-  --text-color-kumo-danger: oklch(63.7% 0.237 25.331);
-  --text-color-kumo-warning: oklch(47.6% 0.114 61.907);
+  --text-color-kumo-strong: #222222;
+  --text-color-kumo-subtle: #647696;
+  --text-color-kumo-inactive: #a9b6cb;
+  --text-color-kumo-brand: #6c5ce7;
+  --text-color-kumo-link: #6c5ce7;
+  --text-color-kumo-success: #007a52;
+  --text-color-kumo-danger: #d62400;
+  --text-color-kumo-warning: #704b00;
 
-  /* ===== CUSTOM BRAND TOKENS (for direct use alongside Kumo tokens) ===== */
-  --color-accent-100: #ff4801;
-  --color-accent-200: #ff7038;
-  --color-background-100: #fcfcfb;
-  --color-background-200: #f8f8f7;
-  --color-background-300: #f3f3f1;
-  --color-foreground-100: #100f0d;
-  --color-foreground-200: #100f0d;
-  --color-foreground-300: #1c1a18;
-  --color-border-100: #e8e7e4;
-  /* Three-way merge conflict: workshop-frontend's value (#e8e7e480) won over
-     gatekeeper-context's prior #1411100f, which is now dropped. */
-  --color-border-100-50: #e8e7e480;
-  --color-selection-bg: #ffe9e0;
-  --color-selection-text: #ff500a;
-  --color-shadow-accent-light: #ffa683;
-  --color-shadow-accent-dark: #b13200;
+  /* ===== CUSTOM BRAND TOKENS ===== */
+  --color-accent-100: #6c5ce7;
+  --color-accent-200: #9387ed;
+  --color-background-100: #ffffff;
+  --color-background-200: #f7f9fc;
+  --color-background-300: #edf1f7;
+  --color-foreground-100: #222222;
+  --color-foreground-200: #212121;
+  --color-foreground-300: #475161;
+  --color-border-100: #dde3ee;
+  --color-border-100-50: #dde3ee80;
+  --color-selection-bg: #efedfc;
+  --color-selection-text: #3e3871;
+  --color-shadow-accent-light: #b6aef3;
+  --color-shadow-accent-dark: #3e3871;
 
-  /* Category colors */
-  --color-compute-100: #0a95ff;
-  --color-compute-200: #0a95ff1a;
-  --color-storage-100: #ee0ddb;
-  --color-storage-200: #ee0ddb1a;
-  --color-ai-100: #19e306;
-  --color-ai-200: #f2f5e1;
-  --color-media-100: #9616ff;
-  --color-media-200: #f8ebee;
+  /* ===== CATEGORY COLOURS =====
+     `media` moves off purple: a purple category chip is ambiguous against a purple brand. */
+  --color-compute-100: #0469e3;
+  --color-compute-200: #0469e31a;
+  --color-storage-100: #bd59fa;
+  --color-storage-200: #bd59fa1a;
+  --color-ai-100: #007a52;
+  --color-ai-200: #f5fffc;
+  --color-media-100: #43b7c2;
+  --color-media-200: #43b7c21a;
 
-  /* Status colors */
-  --color-status-live: oklch(72.3% 0.219 149.579);
-  --color-status-draft: oklch(68.1% 0.162 75.834);
-  --color-status-building: oklch(62.3% 0.214 259.815);
+  /* ===== STATUS COLOURS ===== */
+  --color-status-live: #007a52;
+  --color-status-draft: #ffae0a;
+  --color-status-building: #0469e3;
 
   /* Spacing / layout */
   --container-md: 28rem;
