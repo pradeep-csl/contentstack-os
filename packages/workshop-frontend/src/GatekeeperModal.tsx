@@ -128,7 +128,7 @@ function platformConnectionTypes(siteName: string): ConnectionType[] {
     vendor: siteName,
     description: 'Allow this connection to start new AI agent conversations with selected tools.',
     icon: Robot,
-    accent: '#f2f0ff',
+    accent: '#efedfc',
     iconColor: '#6c5ce7',
   },
   ]
