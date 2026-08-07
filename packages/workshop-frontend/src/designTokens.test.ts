@@ -193,3 +193,34 @@ describe('Venus-derived dark palette', () => {
     expect(contrast('#ffffff', asHex(token(dark, '--color-kumo-brand')))).toBeGreaterThanOrEqual(4.5)
   })
 })
+
+describe('Venus radius and elevation', () => {
+  const light = lightBlock(TOKENS_CSS)
+  const dark = darkBlock(TOKENS_CSS)
+
+  it('uses the Venus radius ramp 2/4/6/8/10px', () => {
+    expect(token(light, '--radius-sm')).toBe('0.125rem')
+    expect(token(light, '--radius-md')).toBe('0.25rem')
+    expect(token(light, '--radius-lg')).toBe('0.375rem')
+    expect(token(light, '--radius-xl')).toBe('0.5rem')
+    expect(token(light, '--radius-2xl')).toBe('0.625rem')
+  })
+
+  it('defines the elevation ramp in both modes', () => {
+    for (const step of ['1', '4', '8', '16', '24']) {
+      expect(light).toContain(`--shadow-venus-${step}:`)
+      expect(dark).toContain(`--shadow-venus-${step}:`)
+    }
+  })
+
+  it('tints light elevation with Venus purple and dark elevation with black', () => {
+    expect(token(light, '--shadow-venus-4')).toContain('108, 92, 231')
+    expect(token(dark, '--shadow-venus-4')).not.toContain('108, 92, 231')
+  })
+
+  it('drives every themed shadow utility from the ramp, not hardcoded warm browns', () => {
+    // rgba(82, 16, 0, …) and rgba(20, 17, 16, …) were the Cloudflare-era shadow tints.
+    expect(TOKENS_CSS).not.toContain('rgba(82, 16, 0')
+    expect(TOKENS_CSS).not.toContain('rgba(20, 17, 16')
+  })
+})
