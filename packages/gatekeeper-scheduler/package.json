@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@gadgets/backend-utils": "workspace:*",
+    "@gadgets/design-tokens": "workspace:*",
     "@gadgets/error-reporting": "workspace:*",
     "@gadgets/workshop-shared": "workspace:*",
     "capnweb": "^0.8.0",

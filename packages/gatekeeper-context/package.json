@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@gadgets/backend-utils": "workspace:*",
+    "@gadgets/design-tokens": "workspace:*",
     "@gadgets/error-reporting": "workspace:*",
     "@gadgets/typed-storage": "workspace:*",
     "@gadgets/workshop-shared": "workspace:*",
