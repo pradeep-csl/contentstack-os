@@ -117,8 +117,8 @@ function platformConnectionTypes(siteName: string): ConnectionType[] {
     vendor: siteName,
     description: 'Expose a selected model through this connection.',
     icon: Sparkle,
-    accent: '#f6edff',
-    iconColor: '#7c3aed',
+    accent: '#efedfc',
+    iconColor: '#6c5ce7',
   },
   {
     id: 'agent-spawner',
@@ -129,7 +129,7 @@ function platformConnectionTypes(siteName: string): ConnectionType[] {
     description: 'Allow this connection to start new AI agent conversations with selected tools.',
     icon: Robot,
     accent: '#f2f0ff',
-    iconColor: '#7c3aed',
+    iconColor: '#6c5ce7',
   },
   ]
 }

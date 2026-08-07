@@ -3,10 +3,10 @@ import { useEffect, useRef } from 'react'
 const COLS = 22
 const ROWS = 18
 
-// Line color — neutral grey for the current (de-warmed) design system.
-const LINE_R = 120
+// Line color — Venus cool grey (font-secondary #647696).
+const LINE_R = 100
 const LINE_G = 118
-const LINE_B = 113
+const LINE_B = 150
 
 /**
  * Static perspective hexagonal mesh background. Draws a wireframe hex grid that recedes toward a

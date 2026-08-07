@@ -11,11 +11,12 @@ import { useDocumentTitle } from './useDocumentTitle'
 import AdminFormatsPanel from './components/format/AdminFormatsPanel'
 
 // Preset accent colors offered in the Theme section ('' = default brand).
+// Preset accent colors offered in the Theme section ('' = default brand).
 const ACCENT_PRESETS: { label: string; value: string }[] = [
   { label: 'Default', value: '' },
-  { label: 'Blue', value: '#3b82f6' },
-  { label: 'Green', value: '#16a34a' },
-  { label: 'Purple', value: '#7c3aed' },
+  { label: 'Contentstack', value: '#6c5ce7' },
+  { label: 'Blue', value: '#0469e3' },
+  { label: 'Green', value: '#007a52' },
   { label: 'Pink', value: '#db2777' },
   { label: 'Teal', value: '#0d9488' },
 ]
