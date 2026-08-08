@@ -11,12 +11,25 @@ import {
 // A few example work tasks shown under the Home composer, so a new user immediately sees the kind
 // of thing they can ask for. Picking one drops a starter prompt into the composer (it does not
 // auto-send) so the user can tweak it before running.
+
+// What the suggestion produces, used to tint its tile. Without this every row got the same swatch,
+// so the chip only held the glyph in place instead of carrying information. Three kinds, not five:
+// something to read, something drawn from data you supply, and something that runs. Reuses the
+// shared category colours -- see OnboardingWizard, which tints its cards the same way. `ai-200` is
+// deliberately unused: it resolves to near-white in light mode, so a tile tinted with it vanishes.
+const TILE_TONES = {
+  document: 'bg-storage-200 text-storage-100',
+  analysis: 'bg-compute-200 text-compute-100',
+  interactive: 'bg-media-200 text-media-100',
+} as const
+
 type TaskSuggestion = {
   id: string
   label: string
   description: string
   prompt: string
   icon: Icon
+  tone: keyof typeof TILE_TONES
 }
 
 // Formats are advertised by example rather than by a row of "Start with Docs" buttons, so the
@@ -27,6 +40,7 @@ const SUGGESTIONS: TaskSuggestion[] = [
     label: 'Write a 1:1 pre-read',
     description: 'A doc with a snapshot, things to inspect, and one ask',
     icon: FileText,
+    tone: 'document',
     prompt:
       'Create a document to prepare for my next 1:1 with a direct report: a current snapshot, a coaching frame, things to inspect, carryover items from last time, and one clear ask.',
   },
@@ -35,6 +49,7 @@ const SUGGESTIONS: TaskSuggestion[] = [
     label: 'Build a team meeting deck',
     description: 'Slides with progress, risks, and what needs a decision',
     icon: Presentation,
+    tone: 'document',
     prompt:
       'Create a slide deck for my next team meeting: where things stand, what shipped, risks and blockers, and the decisions I need from the room. Ask me what the team is working on first.',
   },
@@ -43,6 +58,7 @@ const SUGGESTIONS: TaskSuggestion[] = [
     label: 'Find insights in my data',
     description: 'Turn a spreadsheet or CSV into trends and recommendations',
     icon: ChartLineUp,
+    tone: 'analysis',
     prompt:
       'Turn a dataset I will share (a spreadsheet, CSV, or pasted table) into a narrative analysis: key trends, anomalies, the "so what", and concrete recommendations.',
   },
@@ -51,6 +67,7 @@ const SUGGESTIONS: TaskSuggestion[] = [
     label: 'Automate a workflow',
     description: 'Trigger an agent when a new email arrives',
     icon: Lightning,
+    tone: 'interactive',
     prompt:
       'Create an agent workflow that runs automatically when a new email arrives: read the message, decide what to do, and take action or draft a reply. Ask me which inbox to watch and what it should handle.',
   },
@@ -59,6 +76,7 @@ const SUGGESTIONS: TaskSuggestion[] = [
     label: 'Build a quick tool',
     description: 'A small interactive app, calculator, or dashboard',
     icon: AppWindow,
+    tone: 'interactive',
     prompt:
       'Build a small interactive tool I can use right here — a calculator, dashboard, or explorer. Ask me what it should do, then create it.',
   },
@@ -69,11 +87,13 @@ function SuggestionRow({
   icon,
   label,
   description,
+  tone,
   onClick,
 }: {
   icon: React.ReactNode
   label: string
   description: string
+  tone: keyof typeof TILE_TONES
   onClick: () => void
 }) {
   return (
@@ -81,9 +101,10 @@ function SuggestionRow({
       <button
         type="button"
         onClick={onClick}
-        className="press group flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-kumo-tint"
+        className="press group flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-kumo-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring focus-visible:ring-offset-2 focus-visible:ring-offset-kumo-base"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-kumo-fill text-kumo-subtle transition-colors group-hover:text-kumo-default">
+        {/* The tile carries its own colour now, so it doesn't shift on row hover. */}
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${TILE_TONES[tone]}`}>
           {icon}
         </span>
         <span className="min-w-0 flex-1">
@@ -133,6 +154,7 @@ export default function HomeTaskSuggestions({
             icon={<suggestion.icon size={16} />}
             label={suggestion.label}
             description={suggestion.description}
+            tone={suggestion.tone}
             onClick={() => onPick(suggestion.prompt)}
           />
         ))}
