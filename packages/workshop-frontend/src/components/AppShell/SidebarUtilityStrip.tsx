@@ -47,30 +47,38 @@ function ThemeModeButton() {
 function StripLink({
   to,
   label,
+  collapsed,
   children,
 }: {
   to: '/gatekeepers'
   label: string
+  collapsed: boolean
   children: React.ReactNode
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const active = pathname === to
-  return (
-    <Tooltip content={label}>
-      <Link
-        to={to}
-        aria-label={label}
-        className={[
-          'flex h-8 w-8 items-center justify-center rounded-md transition-colors',
-          active
-            ? 'bg-kumo-fill text-kumo-brand'
-            : 'text-kumo-inactive hover:bg-kumo-tint hover:text-kumo-default',
-        ].join(' ')}
-      >
-        {children}
-      </Link>
-    </Tooltip>
+  const link = (
+    <Link
+      to={to}
+      aria-label={label}
+      className={[
+        'flex h-8 items-center gap-2 rounded-md transition-colors',
+        collapsed ? 'w-8 justify-center' : 'px-2',
+        active
+          ? 'bg-kumo-fill text-kumo-brand'
+          : 'text-kumo-inactive hover:bg-kumo-tint hover:text-kumo-default',
+      ].join(' ')}
+    >
+      {children}
+      {!collapsed && (
+        <span className="text-[12px] leading-4 font-medium tracking-[-0.2px]">{label}</span>
+      )}
+    </Link>
   )
+
+  // The rail is 260px wide when expanded, so this destination doesn't have to stay a bare glyph.
+  // The tooltip is what names it in collapsed mode; alongside a visible label it would only repeat.
+  return collapsed ? <Tooltip content={label}>{link}</Tooltip> : link
 }
 
 export default function SidebarUtilityStrip({ collapsed = false }: { collapsed?: boolean }) {
@@ -83,7 +91,7 @@ export default function SidebarUtilityStrip({ collapsed = false }: { collapsed?:
         collapsed ? 'flex-col justify-center gap-2 px-1.5' : '',
       ].join(' ')}
     >
-      <StripLink to="/gatekeepers" label="Gatekeepers">
+      <StripLink to="/gatekeepers" label="Gatekeepers" collapsed={collapsed}>
         <Plug size={15} />
       </StripLink>
       <div className={collapsed ? 'flex flex-col items-center gap-2' : 'ml-auto flex items-center gap-1'}>

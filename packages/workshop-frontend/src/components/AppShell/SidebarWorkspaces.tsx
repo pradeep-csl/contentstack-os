@@ -427,7 +427,11 @@ function SidebarSection({
         />
         {icon}
         <span>{label}</span>
-        {count !== undefined && <span className="ml-1 text-kumo-inactive">{count}</span>}
+        {/* Only once there's something to count. A "0" beside an empty section is noise, and for a
+            new user every section in the rail is empty at the same time. */}
+        {count !== undefined && count > 0 && (
+          <span className="ml-1 text-kumo-inactive">{count}</span>
+        )}
       </button>
       {open && <div className="mt-0.5">{children}</div>}
     </div>

@@ -72,12 +72,16 @@ export default function Sidebar({
         </Link>
         {!collapsed && (
           <div className="flex items-center gap-0.5">
+            {/* Search and collapse sit side by side but aren't peers: search opens the command
+                palette and gets used constantly, collapse is chrome touched rarely. Matching them
+                at the same weight made the primary action disappear into the pair, so search
+                carries a resting fill and collapse recedes until hovered. */}
             <button
               type="button"
               onClick={() => openCommandPalette()}
               aria-label="Search"
               title="Search (⌘K)"
-              className="press flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-kumo-inactive transition-colors hover:bg-kumo-tint hover:text-kumo-default"
+              className="press flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-kumo-fill text-kumo-default transition-colors hover:bg-kumo-fill-hover"
             >
               <MagnifyingGlass size={15} />
             </button>
@@ -115,25 +119,25 @@ export default function Sidebar({
             <SidebarItem
               to="/"
               label="Home"
-              icon={<House size={14} weight="regular" />}
+              icon={<House size={16} weight="regular" />}
               collapsed={collapsed}
             />
             <SidebarItem
               to="/workspaces"
               label="Workspaces"
-              icon={<SquaresFour size={14} weight="regular" />}
+              icon={<SquaresFour size={16} weight="regular" />}
               collapsed={collapsed}
             />
             <SidebarItem
               to="/blueprints"
               label="Blueprints"
-              icon={<Blueprint size={14} weight="regular" />}
+              icon={<Blueprint size={16} weight="regular" />}
               collapsed={collapsed}
             />
             <SidebarItem
               to="/outputs"
               label="Outputs"
-              icon={<Stack size={14} weight="regular" />}
+              icon={<Stack size={16} weight="regular" />}
               collapsed={collapsed}
             />
             {/* Gatekeeper management apps (e.g. the Context Library), listed dynamically. */}
@@ -155,7 +159,7 @@ export default function Sidebar({
                     // when active, darker on hover.
                     <span
                       aria-hidden
-                      className="h-3.5 w-3.5 bg-current"
+                      className="h-4 w-4 bg-current"
                       style={{
                         maskImage: maskUrl,
                         WebkitMaskImage: maskUrl,
@@ -168,7 +172,7 @@ export default function Sidebar({
                       }}
                     />
                   ) : (
-                    <BookOpen size={14} weight="regular" />
+                    <BookOpen size={16} weight="regular" />
                   )
                 }
                 collapsed={collapsed}
@@ -178,7 +182,7 @@ export default function Sidebar({
             <SidebarItem
               to="/explore"
               label="Explore"
-              icon={<Compass size={14} weight="regular" />}
+              icon={<Compass size={16} weight="regular" />}
               collapsed={collapsed}
             />
           </nav>
