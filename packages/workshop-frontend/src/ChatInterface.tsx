@@ -1785,6 +1785,7 @@ export const ChatInput = ({
   onStop,
   showThinkingTraces = true,
   onToggleThinkingTraces,
+  surface = "docked",
 }: {
   createCapsuleGatekeeper: (
     accountId: number,
@@ -1815,6 +1816,12 @@ export const ChatInput = ({
   // with `newChat`, since a format names something to build rather than something to say.
   offerFormats?: boolean;
   autoFocus?: boolean;
+  /**
+   * What the composer sits on, which decides how much elevation it needs. `docked` (the default)
+   * is the in-conversation composer pinned above scrolling content; `canvas` is a composer alone
+   * on an empty page, where the docked lift reads as a glow.
+   */
+  surface?: "docked" | "canvas";
   /** Minimum number of textarea rows at rest. Defaults to 2. */
   minRows?: number;
   /** Optional starter text to drop into the composer (e.g. a Home task suggestion). Applied
@@ -3030,12 +3037,13 @@ export const ChatInput = ({
         </div>
       )}
 
-      {/* Prompt card. Brighter than the page surface (kumo-control vs kumo-base) and gently lifted
-          with a soft neutral shadow so the composer reads as a distinct surface instead of blending
-          into the canvas; the lift intensifies a touch on focus. */}
+      {/* Prompt card. Brighter than the page surface (kumo-control vs kumo-base) so the composer
+          reads as a distinct surface instead of blending into the canvas. How far it lifts depends
+          on `surface`: docked over scrolling content it needs real elevation, alone on a page it
+          only needs a resting edge. */}
       <div
         ref={promptCardRef}
-        className="themed-prompt-card-shadow relative overflow-visible rounded-2xl border border-kumo-line bg-kumo-control transition-shadow duration-150 ease-out"
+        className={`${surface === "canvas" ? "themed-prompt-card-canvas-shadow" : "themed-prompt-card-shadow"} relative overflow-visible rounded-2xl border border-kumo-line bg-kumo-control transition-shadow duration-150 ease-out`}
         onDragEnter={handleAttachmentDragEnter}
         onDragOver={handleAttachmentDragOver}
         onDragLeave={handleAttachmentDragLeave}
