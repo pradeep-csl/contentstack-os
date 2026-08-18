@@ -6,6 +6,8 @@ declare namespace Cloudflare {
     CONTEXT_COLLECTIONS: KVNamespace;
     // Optional Git-compatible backing repos for artifact-backed context collections.
     ARTIFACTS?: Artifacts;
+    // Optional: bounds the public CI ingestion endpoint. Absent means the check is skipped.
+    INGEST_RATE_LIMITER?: RateLimit;
   }
 
   interface GlobalProps {

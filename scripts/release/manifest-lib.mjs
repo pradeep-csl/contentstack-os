@@ -27,7 +27,7 @@ export const MANIFEST_VERSION = 1;
 const HANDLED_CONFIG_KEYS = new Set([
   "$schema", "name", "main", "build", "compatibility_date", "compatibility_flags", "rules",
   "migrations", "observability", "kv_namespaces", "r2_buckets", "worker_loaders", "services",
-  "assets", "vars",
+  "assets", "vars", "ratelimits",
   // Browser Rendering (Gadget PDF exports). Unlike artifacts it is generally available, so it
   // passes through to customer instances as a placeholder-free binding, like the AI binding.
   "browser",
@@ -144,6 +144,14 @@ export function buildWorkerEntry({ pkgName, config, mainModule, modules, deployI
       name: svc.binding,
       service: `$WORKER_NAME(${svc.service})`,
       ...(svc.entrypoint ? { entrypoint: svc.entrypoint } : {}),
+    });
+  }
+  for (const limiter of config.ratelimits ?? []) {
+    bindings.push({
+      type: "ratelimit",
+      name: limiter.name,
+      namespace_id: limiter.namespace_id,
+      simple: limiter.simple,
     });
   }
 
