@@ -25,6 +25,7 @@ import {
   FolderPlus,
   User,
   X,
+  CloudArrowUp,
 } from "@phosphor-icons/react";
 import {
   useCallback,
@@ -43,6 +44,8 @@ import type {
   ContextDocumentSummary,
   ContextGitTokenCreateResult,
   ContextGitTokenInfo,
+  ContextIngestTokenCreateResult,
+  ContextIngestTokenInfo,
   EnabledCollectionInfo,
 } from "../src/context-types";
 import {
@@ -695,6 +698,12 @@ const CONTENT_SOURCE_OPTIONS = [
     title: "Git mirror",
     description: "Push content from git using repository mirroring. All changes must be made through git.",
   },
+  {
+    value: "push" as const,
+    Icon: CloudArrowUp,
+    title: "CI push",
+    description: "Content is pushed from CI. All changes must be made in the source repository.",
+  },
 ];
 
 // Full-pane "create collection" destination (not a modal): you name it, then land inside it to add
@@ -793,54 +802,56 @@ function CreateCollectionView({
             <div className="ctx-rise" style={{ animationDelay: "120ms" }}>
               <CollectionDescriptionField value={description} onChange={setDescription} />
             </div>
-            {supportsGitCollections && (
-              <div className="ctx-rise" style={{ animationDelay: "160ms" }}>
-                <FieldLabel>Type</FieldLabel>
-                <div role="radiogroup" aria-label="Collection type" className="grid gap-2">
-                  {CONTENT_SOURCE_OPTIONS.map(({
-                    value,
-                    Icon,
-                    title: optionTitle,
-                    description: optionDescription,
-                  }) => {
-                    const selected = source === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => setSource(value)}
-                        className={`press flex items-start gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-[border-color,background-color] duration-150 ease-out ${
-                          selected
-                            ? "border-kumo-brand/50 bg-kumo-brand/[0.05]"
-                            : "border-kumo-line bg-kumo-base hover:border-kumo-ring/60"
-                        }`}
-                      >
-                        <Icon
-                          size={16}
-                          weight={selected ? "fill" : "regular"}
-                          className={`mt-0.5 shrink-0 ${selected ? "text-kumo-brand" : "text-kumo-subtle"}`}
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
-                            {optionTitle}
-                          </span>
-                          <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
-                            {optionDescription}
-                          </span>
+            <div className="ctx-rise" style={{ animationDelay: "160ms" }}>
+              <FieldLabel>Type</FieldLabel>
+              <div role="radiogroup" aria-label="Collection type" className="grid gap-2">
+                {CONTENT_SOURCE_OPTIONS.filter(
+                  // CI push has no Artifacts dependency, so it's always offered; the git mirror
+                  // option is the one gated on Artifacts support.
+                  (option) => option.value !== "git" || supportsGitCollections,
+                ).map(({
+                  value,
+                  Icon,
+                  title: optionTitle,
+                  description: optionDescription,
+                }) => {
+                  const selected = source === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setSource(value)}
+                      className={`press flex items-start gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-[border-color,background-color] duration-150 ease-out ${
+                        selected
+                          ? "border-kumo-brand/50 bg-kumo-brand/[0.05]"
+                          : "border-kumo-line bg-kumo-base hover:border-kumo-ring/60"
+                      }`}
+                    >
+                      <Icon
+                        size={16}
+                        weight={selected ? "fill" : "regular"}
+                        className={`mt-0.5 shrink-0 ${selected ? "text-kumo-brand" : "text-kumo-subtle"}`}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                          {optionTitle}
                         </span>
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
-                          {selected && (
-                            <Check size={13} weight="bold" className="text-kumo-brand" />
-                          )}
+                        <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+                          {optionDescription}
                         </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      </span>
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        {selected && (
+                          <Check size={13} weight="bold" className="text-kumo-brand" />
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
             {isAdmin && (
               <div className="ctx-rise" style={{ animationDelay: "200ms" }}>
                 <FieldLabel>Visibility</FieldLabel>
@@ -1132,6 +1143,7 @@ function CollectionOverview({
   onRefreshSource,
   onEditDetails,
   onManageGitTokens,
+  onManageIngestTokens,
   onDelete,
 }: {
   metadata: ContextCollectionMetadata;
@@ -1141,10 +1153,14 @@ function CollectionOverview({
   onRefreshSource: () => void;
   onEditDetails: () => void;
   onManageGitTokens: () => void;
+  onManageIngestTokens: () => void;
   onDelete: () => void;
 }) {
   const isPublic = metadata.visibility === "public";
-  const isSynced = metadata.content.source === "git";
+  const isGit = metadata.content.source === "git";
+  const isPush = metadata.content.source === "push";
+  // Content managed outside the UI, whatever the mechanism.
+  const isSynced = isGit || isPush;
   return (
     <div className="ctx-scroll @container min-h-0 flex-1 overflow-auto">
       <div className="mx-auto max-w-[850px] px-8 py-10 sm:px-11 sm:py-12">
@@ -1163,7 +1179,7 @@ function CollectionOverview({
             </div>
             {canWrite && (
               <div className="flex shrink-0 items-center gap-2">
-                {isSynced && supportsGitCollections && (
+                {isGit && supportsGitCollections && (
                   <WorkshopButton
                     tone="secondary"
                     className="h-9!"
@@ -1171,6 +1187,15 @@ function CollectionOverview({
                     loading={refreshingSource}
                   >
                     Refresh
+                  </WorkshopButton>
+                )}
+                {isPush && (
+                  <WorkshopButton
+                    tone="secondary"
+                    className="h-9!"
+                    onClick={onManageIngestTokens}
+                  >
+                    Manage ingestion tokens
                   </WorkshopButton>
                 )}
                 <KebabMenu
@@ -1191,7 +1216,7 @@ function CollectionOverview({
                   >
                     Edit details
                   </DropdownMenu.Item>
-                  {isSynced && supportsGitCollections && (
+                  {isGit && supportsGitCollections && (
                     <DropdownMenu.Item
                       icon={<Key size={13} className="mr-2" />}
                       onClick={onManageGitTokens}
@@ -1224,7 +1249,7 @@ function CollectionOverview({
               {isPublic ? "Everyone (required)" : "Private to you"}
             </MetaField>
             <MetaField label="Documents">{metadata.documentCount}</MetaField>
-            <MetaField label={isSynced ? "Refreshed" : "Updated"} align="right">
+            <MetaField label={isGit ? "Refreshed" : "Updated"} align="right">
               {metadata.content.source === "git"
                 ? formatRelativeTime(metadata.content.lastRefreshedAt)
                 : formatRelativeTime(metadata.lastUpdated)}
@@ -1232,7 +1257,7 @@ function CollectionOverview({
           </div>
         </header>
 
-        {isSynced && !supportsGitCollections && (
+        {isGit && !supportsGitCollections && (
           <section className="mt-8 rounded-xl border border-kumo-line bg-kumo-elevated/60 px-5 py-4">
             <p className="text-[13px] font-medium tracking-[-0.2px] text-kumo-default">
               Git synchronization unavailable
@@ -1270,9 +1295,11 @@ function CollectionOverview({
                 </p>
                 <p className="mt-1 max-w-xl text-[13px] leading-5 tracking-[-0.2px] text-kumo-subtle">
                   {isSynced
-                    ? supportsGitCollections
-                      ? "This git mirror is empty. Mirror content from git, then refresh."
-                      : "No Git content was cached before synchronization became unavailable."
+                    ? isGit
+                      ? supportsGitCollections
+                        ? "This git mirror is empty. Mirror content from git, then refresh."
+                        : "No Git content was cached before synchronization became unavailable."
+                      : "This collection is empty. Push content from CI."
                     : canWrite
                     ? "Use the + in the Files panel to create or upload skills or files. Agents use the names and descriptions to decide what to read."
                     : "This collection is empty."}
@@ -1737,6 +1764,230 @@ function GitTokenManagementModal({
   );
 }
 
+function IngestTokenManagementModal({
+  open,
+  collectionId,
+  onClose,
+}: {
+  open: boolean;
+  collectionId: string;
+  onClose: () => void;
+}) {
+  const context = useContextApi();
+  const toasts = useKumoToastManager();
+  const toastsRef = useRef(toasts);
+  const { presenting, onOpenChangeComplete } = usePresentWhileOpen(open);
+
+  const [loadingTokens, setLoadingTokens] = useState(false);
+  const [creatingToken, setCreatingToken] = useState(false);
+  const [revokingToken, setRevokingToken] = useState<string | null>(null);
+  const [tokens, setTokens] = useState<ContextIngestTokenInfo[]>([]);
+  const [newToken, setNewToken] = useState<ContextIngestTokenCreateResult | null>(null);
+
+  toastsRef.current = toasts;
+
+  useEffect(() => {
+    if (open) {
+      setLoadingTokens(false);
+      setCreatingToken(false);
+      setRevokingToken(null);
+      setTokens([]);
+      setNewToken(null);
+    }
+  }, [open]);
+
+  const loadTokens = useCallback(async () => {
+    if (!open) return;
+    setLoadingTokens(true);
+    try {
+      const result = await context.listContextCollectionIngestTokens(collectionId);
+      setTokens(result.tokens);
+    } catch (err) {
+      toastsRef.current.add({
+        title: `Failed to load ingestion tokens: ${(err as Error).message}`, variant: "error",
+      });
+    } finally {
+      setLoadingTokens(false);
+    }
+  }, [open, context, collectionId]);
+
+  useEffect(() => {
+    void loadTokens();
+  }, [loadTokens]);
+
+  const handleCreate = async () => {
+    setCreatingToken(true);
+    try {
+      const token = await context.createContextCollectionIngestToken(collectionId);
+      setNewToken(token);
+      await loadTokens();
+      toasts.add({ title: "Ingestion token created", variant: "success" });
+    } catch (err) {
+      toasts.add({
+        title: `Failed to create ingestion token: ${(err as Error).message}`, variant: "error",
+      });
+    } finally {
+      setCreatingToken(false);
+    }
+  };
+
+  const handleRevoke = async (tokenId: string) => {
+    setRevokingToken(tokenId);
+    try {
+      await context.revokeContextCollectionIngestToken(collectionId, tokenId);
+      await loadTokens();
+      toasts.add({ title: "Ingestion token revoked", variant: "success" });
+    } catch (err) {
+      toasts.add({
+        title: `Failed to revoke ingestion token: ${(err as Error).message}`, variant: "error",
+      });
+    } finally {
+      setRevokingToken(null);
+    }
+  };
+
+  const copyToClipboard = (value: string, successTitle: string, errorTitle: string) =>
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => toasts.add({ title: successTitle, variant: "success" }))
+      .catch(() => toasts.add({ title: errorTitle, variant: "error" }));
+
+  // The API returns an origin-relative path; the UI runs on the deployment origin, so it can show
+  // the absolute URL CI actually posts to.
+  const endpointUrl = newToken ? new URL(newToken.path, window.location.origin).toString() : "";
+  const busy = creatingToken || revokingToken !== null;
+
+  return (
+    <Dialog.Root
+      open={open && presenting}
+      onOpenChange={(next: boolean) => {
+        if (!busy && !next) onClose();
+      }}
+      onOpenChangeComplete={onOpenChangeComplete}
+    >
+      <Dialog
+        className="z-[1000]! w-[min(560px,calc(100vw-32px))]! overflow-visible bg-kumo-base p-0 top-[14%]! translate-y-0!"
+        size="sm"
+      >
+        <ModalHeader title="Manage ingestion tokens" />
+
+        <div className="space-y-3 px-4 py-5 sm:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <p className="max-w-sm text-[12px] leading-4 text-kumo-subtle">
+              Create a token so CI can publish this collection's content.
+            </p>
+            <WorkshopButton
+              tone="secondary"
+              className="h-8!"
+              onClick={handleCreate}
+              loading={creatingToken}
+              disabled={busy}
+            >
+              Create token
+            </WorkshopButton>
+          </div>
+
+          {newToken && (
+            <div className="space-y-3 rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-3 text-[12px] leading-5 text-kumo-subtle">
+              <div>
+                <div className="font-medium text-kumo-default">Token created</div>
+                <p className="mt-0.5">
+                  Store both values as repository secrets. The token is only shown once.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <FieldLabel>Endpoint URL</FieldLabel>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      readOnly
+                      value={endpointUrl}
+                      className="min-w-0 flex-1 rounded border border-kumo-line bg-kumo-base px-2 py-1 font-mono text-[11px] text-kumo-default"
+                    />
+                    <WorkshopButton
+                      tone="secondary"
+                      className="h-8!"
+                      onClick={() => copyToClipboard(endpointUrl, "Endpoint URL copied", "Failed to copy endpoint URL")}
+                    >
+                      Copy
+                    </WorkshopButton>
+                  </div>
+                </div>
+                <div>
+                  <FieldLabel>Token</FieldLabel>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      readOnly
+                      type="password"
+                      value={newToken.plaintext}
+                      className="min-w-0 flex-1 rounded border border-kumo-line bg-kumo-base px-2 py-1 font-mono text-[11px] text-kumo-default"
+                    />
+                    <WorkshopButton
+                      tone="secondary"
+                      className="h-8!"
+                      onClick={() => copyToClipboard(newToken.plaintext, "Token copied", "Failed to copy token")}
+                    >
+                      Copy
+                    </WorkshopButton>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-green-500/20 pt-3">
+                <div className="font-medium text-kumo-default">Configure CI push</div>
+                <ol className="mt-2 list-decimal space-y-1.5 pl-4">
+                  <li>Add the endpoint URL as a repository secret named CONTEXT_INGEST_URL</li>
+                  <li>Add the token as a repository secret named CONTEXT_INGEST_TOKEN</li>
+                  <li>Add the publish workflow from docs/context-library-ingestion.md</li>
+                  <li>Merge to the default branch, or run the workflow manually, to publish</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-lg border border-kumo-line bg-kumo-base">
+            {loadingTokens ? (
+              <div className="px-3 py-2 text-[12px] text-kumo-subtle">Loading tokens...</div>
+            ) : tokens.length === 0 ? (
+              <div className="px-3 py-2 text-[12px] text-kumo-subtle">No ingestion tokens yet.</div>
+            ) : (
+              <div className="divide-y divide-kumo-line">
+                {tokens.map((token) => (
+                  <div
+                    key={token.id}
+                    className={`flex items-center justify-between gap-3 px-3 py-2 text-[12px] ${newToken?.id === token.id ? "bg-green-500/5" : ""}`}
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-mono text-[11px] text-kumo-default">{token.id}</div>
+                      <div className="text-kumo-subtle">
+                        expires {new Date(token.expiresAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <WorkshopButton
+                      tone="secondary"
+                      className="h-8!"
+                      onClick={() => void handleRevoke(token.id)}
+                      loading={revokingToken === token.id}
+                      disabled={revokingToken !== null}
+                    >
+                      Revoke
+                    </WorkshopButton>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-kumo-line px-4 py-3 sm:px-6">
+          <WorkshopButton tone="secondary" className="h-9!" disabled={busy} onClick={onClose}>
+            Close
+          </WorkshopButton>
+        </div>
+      </Dialog>
+    </Dialog.Root>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // File tree model
 // ---------------------------------------------------------------------------
@@ -2169,6 +2420,7 @@ function CollectionEditor({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState<"edit" | "delete">("edit");
   const [gitTokensOpen, setGitTokensOpen] = useState(false);
+  const [ingestTokensOpen, setIngestTokensOpen] = useState(false);
   const openSettings = (m: "edit" | "delete") => {
     setSettingsMode(m);
     setSettingsOpen(true);
@@ -2225,7 +2477,8 @@ function CollectionEditor({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dirInputRef = useRef<HTMLInputElement>(null);
-  const canEditDocuments = canWrite && metadata?.content.source !== "git";
+  // Only web collections are editable here; git and push content is owned elsewhere.
+  const canEditDocuments = canWrite && metadata?.content.source === "web";
 
   const loadDocs = useCallback(async () => {
     try {
@@ -2558,6 +2811,14 @@ function CollectionEditor({
         />
       )}
 
+      {metadata?.content.source === "push" && (
+        <IngestTokenManagementModal
+          open={ingestTokensOpen}
+          collectionId={collectionId}
+          onClose={() => setIngestTokensOpen(false)}
+        />
+      )}
+
       {/* In-app confirmation for tree ⋮ deletes (files and folders). */}
       <Dialog.Root
         open={!!pendingDelete && deletePresentation.presenting}
@@ -2728,6 +2989,8 @@ function CollectionEditor({
                   ? supportsGitCollections
                     ? "No files yet. Mirror content from git, then refresh."
                     : "No Git content was cached before synchronization became unavailable."
+                  : metadata?.content.source === "push"
+                  ? "No files yet. Publish from CI."
                   : canWrite ? "No files yet. Use + to create or upload skills or files." : "No files yet."}
               </p>
             ) : (
@@ -2775,6 +3038,7 @@ function CollectionEditor({
               onRefreshSource={handleRefreshArtifactSource}
               onEditDetails={() => openSettings("edit")}
               onManageGitTokens={() => setGitTokensOpen(true)}
+              onManageIngestTokens={() => setIngestTokensOpen(true)}
               onDelete={() => openSettings("delete")}
             />
           ) : null}
