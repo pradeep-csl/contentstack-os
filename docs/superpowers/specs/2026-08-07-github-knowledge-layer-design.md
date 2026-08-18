@@ -53,9 +53,10 @@ The first version of this design had CI post the entire document set in one requ
 once the real scale became clear, for two independent reasons:
 
 - **Request size.** At 10–15 MB the Worker would hold the body string, its parsed form and the
-  normalized array at once — roughly 60 MB+ of a 128 MB budget — before RPC serialization, and the
-  Durable Object RPC message limit is unmeasured at that size. Compression shrinks the wire but not
-  the memory.
+  normalized array at once — roughly 60 MB+ of a 128 MB budget. Compression shrinks the wire but not
+  the memory. (The Durable Object RPC ceiling turned out **not** to be the binding constraint: it was
+  measured at 32 MiB, so a 15 MB payload would have crossed it fine. Worker memory and the write
+  amplification below are the real reasons.)
 - **Write amplification.** Whole-set replacement rewrites every row on every merge. Fixing one typo in
   a 3,000-file wiki costs ~6,000 row operations. That scales with repository size rather than with
   what changed, and it is pure waste.
@@ -274,6 +275,11 @@ session, and the commit transaction is atomic, so no publish is ever partially a
   existing 1.4 MB `MAX_DOCUMENT_BODY_BYTES` per document. Unlike the git path, an oversized document is
   a hard error naming the file rather than a silent skip: commit requires every planned path, so a
   skipped document would fail the publication later with a far less useful message.
+
+  **Measured 2026-08-18:** the Durable Object RPC ceiling is 32 MiB, enforced by the runtime with an
+  explicit error ("Serialized RPC arguments or return values are limited to 32MiB"). Arguments of 1,
+  5, 10 and 20 MB all crossed successfully; 40 MB failed. The 5 MB batch cap therefore has roughly six
+  times the headroom it needs, and the binding constraint is Worker memory rather than RPC size.
 - **Hash verification on upload** means a body that does not match its manifest entry is rejected, so a
   truncated or corrupted transfer cannot be committed as good content.
 - **An empty manifest is rejected** unless `allowEmpty: true`. A full-state publish with nothing in it
