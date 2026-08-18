@@ -149,7 +149,8 @@ export type ContextIngestTokenList = {
 };
 
 // A freshly minted ingestion token. `plaintext` is shown once and never stored; `path` is the
-// origin-relative endpoint base CI posts to, so the UI can render an absolute URL.
+// origin-relative endpoint base CI posts to. It stays relative: the management UI renders in an
+// opaque-origin frame and cannot know the deployment's address, so the operator prefixes it.
 export type ContextIngestTokenCreateResult = {
   id: string;
   plaintext: string;

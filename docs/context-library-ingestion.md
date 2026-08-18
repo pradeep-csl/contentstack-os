@@ -14,8 +14,10 @@ everything at once.
 3. Write a description saying *when to consult this collection*, not what it contains — an agent
    chooses collections by their description. "How Billing services are deployed, on-call runbooks, and
    payment-provider integration decisions" beats "Billing wiki".
-4. Open **Manage ingestion tokens**, create a token, and copy the endpoint URL and token. The token is
-   shown once and is valid for one year.
+4. Open **Manage ingestion tokens**, create a token, and copy the endpoint path and token. The token
+   is shown once and is valid for one year. The Library UI runs sandboxed and cannot know the
+   deployment's address, so it shows an origin-relative path — prefix it with your deployment's base
+   URL (`https://gadgets.example.com/gatekeeper/context/ingest/...`) to get the endpoint URL.
 
 ## One-time setup (repository)
 

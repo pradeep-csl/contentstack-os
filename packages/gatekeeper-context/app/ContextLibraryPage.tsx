@@ -1852,9 +1852,11 @@ function IngestTokenManagementModal({
       .then(() => toasts.add({ title: successTitle, variant: "success" }))
       .catch(() => toasts.add({ title: errorTitle, variant: "error" }));
 
-  // The API returns an origin-relative path; the UI runs on the deployment origin, so it can show
-  // the absolute URL CI actually posts to.
-  const endpointUrl = newToken ? new URL(newToken.path, window.location.origin).toString() : "";
+  // The API returns an origin-relative path, and this UI runs in an opaque-origin frame (no
+  // allow-same-origin), where window.location.origin is the string "null" and cannot name the
+  // deployment. So the path is shown as-is, for the operator to prefix with their base URL —
+  // resolving it here would throw in a render body, losing a token that is displayed exactly once.
+  const endpointPath = newToken?.path ?? "";
   const busy = creatingToken || revokingToken !== null;
 
   return (
@@ -1897,21 +1899,25 @@ function IngestTokenManagementModal({
               </div>
               <div className="space-y-2">
                 <div>
-                  <FieldLabel>Endpoint URL</FieldLabel>
+                  <FieldLabel>Endpoint path</FieldLabel>
                   <div className="mt-1 flex gap-2">
                     <input
                       readOnly
-                      value={endpointUrl}
+                      value={endpointPath}
                       className="min-w-0 flex-1 rounded border border-kumo-line bg-kumo-base px-2 py-1 font-mono text-[11px] text-kumo-default"
                     />
                     <WorkshopButton
                       tone="secondary"
                       className="h-8!"
-                      onClick={() => copyToClipboard(endpointUrl, "Endpoint URL copied", "Failed to copy endpoint URL")}
+                      onClick={() => copyToClipboard(endpointPath, "Endpoint path copied", "Failed to copy endpoint path")}
                     >
                       Copy
                     </WorkshopButton>
                   </div>
+                  <p className="mt-1 break-all">
+                    Prefix this with your deployment's base URL to get the endpoint URL, for example
+                    https://gadgets.example.com{endpointPath}
+                  </p>
                 </div>
                 <div>
                   <FieldLabel>Token</FieldLabel>
@@ -1935,10 +1941,13 @@ function IngestTokenManagementModal({
               <div className="border-t border-green-500/20 pt-3">
                 <div className="font-medium text-kumo-default">Configure CI push</div>
                 <ol className="mt-2 list-decimal space-y-1.5 pl-4">
-                  <li>Add the endpoint URL as a repository secret named CONTEXT_INGEST_URL</li>
+                  <li>
+                    Prefix the endpoint path with your deployment's base URL and add the result as a
+                    repository secret named CONTEXT_INGEST_URL
+                  </li>
                   <li>Add the token as a repository secret named CONTEXT_INGEST_TOKEN</li>
                   <li>Add the publish workflow from docs/context-library-ingestion.md</li>
-                  <li>Merge to the default branch, or run the workflow manually, to publish</li>
+                  <li>Merge to the default branch to publish</li>
                 </ol>
               </div>
             </div>
