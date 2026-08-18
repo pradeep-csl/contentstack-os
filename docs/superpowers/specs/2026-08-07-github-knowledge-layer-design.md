@@ -243,9 +243,20 @@ were hand-authored and tiny; publishing 10–15 MB is what makes it matter.
 In dollars this is small — duration and rows-read are cheap. In **latency** it is not: with global
 collections, every agent question fans out across all of them and each loads its full contents.
 
-This is deliberately **not** fixed in this phase. The plan ends with a measurement against a real
-published wiki; the fix, if the numbers demand it, is to split bodies from searchable metadata so
-search stops loading every body. That change is independent of ingestion and can land on its own.
+**Measured 2026-08-18, and it does not currently need fixing.** Against a synthetic corpus at the
+stated target scale — 12 public collections, 340 markdown pages each, ~1.25 MB per collection, ~15 MB
+in total — a single-collection `search()` took **2 ms** and a whole-library fan-out across all twelve
+took **16 ms**. The linear scan's CPU cost is therefore negligible at this size, roughly two orders of
+magnitude below the point where it would be felt.
+
+Two caveats on that number. It was taken in the local Workers test pool, so it measures the scan
+itself and excludes what production adds: twelve Durable Object round trips, cold starts, and real
+storage I/O — which will dominate the total and are unaffected by any indexing work. And it scales
+linearly with content, so a tenfold growth in the corpus would put the scan in the low hundreds of
+milliseconds and make it worth revisiting.
+
+If it ever does need fixing, the change is to split bodies from searchable metadata so `search()` stops
+loading every body — independent of ingestion, and able to land on its own.
 
 ## Data flow
 
