@@ -19,6 +19,7 @@ import {
 } from "./agent-skill.js";
 import { baseName, validateDocumentPath } from "./document-path.js";
 import { obsContext } from "./observability.js";
+import { webWriteRejection } from "./write-guard.js";
 import type {
   CommitOutcome, PlanOutcome, StageOutcome, StagedDocument,
 } from "./ingest-handler.js";
@@ -306,13 +307,8 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
   // --- Document CRUD ---
 
   #assertWebWritable(): void {
-    let source = this.getMetadata().content.source;
-    if (source === "git") {
-      throw new Error("Git-based collections are read-only. All changes must be made through git.");
-    }
-    if (source === "push") {
-      throw new Error("CI-published collections are read-only. All changes must be made through CI.");
-    }
+    let rejection = webWriteRejection(this.getMetadata().content.source);
+    if (rejection) throw new Error(rejection);
   }
 
   async listContextDocuments(prefix?: string): Promise<ContextDocumentSummary[]> {

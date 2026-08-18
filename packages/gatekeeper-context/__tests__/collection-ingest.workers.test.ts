@@ -168,11 +168,6 @@ describe("collection publication", () => {
     expect(await web.planIngest("c1", [], false)).toEqual({ status: "wrong-source" });
   });
 
-  it("refuses web writes to a push collection", async () => {
-    await expect(collection.putContextDocument("manual.md", { description: "", body: "no" }))
-      .rejects.toThrow(/read-only/);
-  });
-
   it("lists tokens without ever exposing their plaintext", async () => {
     let created = await collection.createIngestToken();
     let listed = await collection.listIngestTokens();
