@@ -19,6 +19,13 @@ export default defineConfig({
         },
         // The registry writes its public-collections snapshot here (see registry-do.ts).
         kvNamespaces: ["CONTEXT_COLLECTIONS"],
+        // Mirrors the real INGEST_RATE_LIMITER binding (see wrangler.jsonc) so the entrypoint's
+        // limiter-before-resolve ordering is exercised for real, not stubbed. limit is 1 rather than
+        // production's 60 so worker-entrypoint.workers.test.ts can trip it deterministically in one
+        // extra request instead of sixty.
+        ratelimits: {
+          INGEST_RATE_LIMITER: { namespace_id: "2001", simple: { limit: 1, period: 60 } },
+        },
       },
     }),
   ],
