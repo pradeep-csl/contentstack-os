@@ -6,6 +6,7 @@ import { validateRpc } from "capnweb-validate";
 import {
   ContextApi, ContextCollectionContent, ContextCollectionMetadata, ContextCollectionVisibility,
   ContextDocument, ContextDocumentSummary, ContextGitTokenCreateResult, ContextGitTokenList,
+  ContextIngestTokenCreateResult, ContextIngestTokenList,
   DEFAULT_GIT_BRANCH, EnabledCollectionInfo,
 } from "./context-types.js";
 import type { ContextCollectionDurableObject } from "./context-collection.js";
@@ -131,7 +132,7 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     source: ContextCollectionContent["source"] = "web",
   ): Promise<ContextCollectionMetadata> {
     if (visibility === "public") this.#assertAdmin();
-    if (source !== "web" && source !== "git") {
+    if (source !== "web" && source !== "git" && source !== "push") {
       throw new Error(`Unsupported collection source: ${source}`);
     }
     if (source === "git" && !this.env.ARTIFACTS) {
@@ -150,7 +151,9 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
       documentCount: 0,
       content: source === "git"
         ? { source, remote: "", branch: DEFAULT_GIT_BRANCH, lastRefreshedAt: new Date() }
-        : { source },
+        : source === "push"
+          ? { source }
+          : { source },
     };
 
     // Initialize before indexing; if this fails, nothing is reachable yet.
@@ -205,6 +208,25 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     await this.#assertCanWrite(collectionId);
     this.#assertArtifactsAvailable();
     return this.#collection(collectionId).revokeGitToken(tokenId);
+  }
+
+  // CI ingestion tokens are independent of the Artifacts binding: unlike the git token methods
+  // above, push-sourced collections don't need it, so there's no #assertArtifactsAvailable() call.
+  async createContextCollectionIngestToken(
+      collectionId: string): Promise<ContextIngestTokenCreateResult> {
+    await this.#assertCanWrite(collectionId);
+    return this.#collection(collectionId).createIngestToken();
+  }
+
+  async listContextCollectionIngestTokens(collectionId: string): Promise<ContextIngestTokenList> {
+    await this.#assertCanWrite(collectionId);
+    return this.#collection(collectionId).listIngestTokens();
+  }
+
+  async revokeContextCollectionIngestToken(
+      collectionId: string, tokenId: string): Promise<boolean> {
+    await this.#assertCanWrite(collectionId);
+    return this.#collection(collectionId).revokeIngestToken(tokenId);
   }
 
   async deleteContextCollection(collectionId: string): Promise<void> {

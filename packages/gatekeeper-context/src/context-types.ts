@@ -338,6 +338,12 @@ export interface ContextApi extends RpcTarget {
   createContextCollectionGitToken(collectionId: string): Promise<ContextGitTokenCreateResult>;
   listContextCollectionGitTokens(collectionId: string): Promise<ContextGitTokenList>;
   revokeContextCollectionGitToken(collectionId: string, tokenId: string): Promise<boolean>;
+  // CI ingestion tokens for push-sourced collections. Gated the same way as the git token
+  // methods above (owner, or admin for public collections) and independent of the Artifacts
+  // binding used by git-backed collections.
+  createContextCollectionIngestToken(collectionId: string): Promise<ContextIngestTokenCreateResult>;
+  listContextCollectionIngestTokens(collectionId: string): Promise<ContextIngestTokenList>;
+  revokeContextCollectionIngestToken(collectionId: string, tokenId: string): Promise<boolean>;
   deleteContextCollection(collectionId: string): Promise<void>;
   getContextCollectionMetadata(collectionId: string): Promise<ContextCollectionMetadata | null>;
   listContextDocuments(collectionId: string, prefix?: string): Promise<ContextDocumentSummary[]>;
