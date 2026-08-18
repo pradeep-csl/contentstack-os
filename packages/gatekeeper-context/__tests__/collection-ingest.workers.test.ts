@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ContextCollectionDurableObject } from "../src/context-collection.js";
 import type { ContextCollectionMetadata } from "../src/context-types.js";
@@ -147,6 +147,67 @@ describe("collection publication", () => {
     // The new session starts from an empty staging area, so it still needs the document.
     expect(await collection.commitIngest(second.sessionId, manifest))
       .toEqual({ status: "incomplete", missing: 1 });
+  });
+
+  it("aborts a commit that resumes after a concurrent replan replaced its session", async () => {
+    // Reproduces the race commitIngest's single await opens: session A is read and passes its
+    // top-of-method check, then commitIngest awaits hashManifest(). If a second plan+stage cycle
+    // (session B) runs to completion during that await, A must not apply B's staged documents under
+    // A's commit when it resumes. That requires genuine interleaving of two in-flight DO calls, which
+    // this harness does not otherwise produce (a bare unawaited call plus a following await never let
+    // a second call make progress first — verified empirically). So the one call that does yield
+    // control mid-flight, crypto.subtle.digest() inside hashManifest(), is paused deliberately: this
+    // pins commitIngest(A) at exactly the await the fix guards, runs B's whole plan+stage cycle to
+    // completion, then releases it. B stages the same path+hash A wants, so the pre-existing
+    // hash-cross-check (a separate, already-covered guard) does not by itself short-circuit the race
+    // before reaching the check under test.
+    let manifestA = [await entry("a.md", "# A")];
+    let planA = await collection.planIngest("c1", manifestA, false);
+    if (planA.status !== "planned") throw new Error("expected a session");
+    await collection.stageDocuments(planA.sessionId, [upload("a.md", "# A", await hashOf("# A"))]);
+
+    let outcome = await runInDurableObject(collection, async (instance) => {
+      let realDigest = crypto.subtle.digest.bind(crypto.subtle);
+      let callCount = 0;
+      let release: () => void = () => {};
+      let paused = new Promise<void>(resolve => { release = resolve; });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (crypto.subtle as any).digest = async (...args: unknown[]) => {
+        callCount++;
+        // Only the first digest — commitIngest(A)'s own hashManifest() call, issued below — pauses;
+        // every later one (session B's planIngest) proceeds normally so B can actually complete.
+        if (callCount === 1) await paused;
+        return realDigest(...(args as Parameters<typeof realDigest>));
+      };
+
+      try {
+        let commitAPromise = instance.commitIngest(planA.sessionId, manifestA);
+
+        let manifestB = [await entry("a.md", "# A")];
+        let planB = await instance.planIngest("c2", manifestB, false);
+        if (planB.status !== "planned") throw new Error("expected a second session");
+        await instance.stageDocuments(planB.sessionId, [upload("a.md", "# A", await hashOf("# A"))]);
+
+        release();
+        let commitAResult = await commitAPromise;
+        let meta = await instance.getMetadata();
+        return { commitAResult, metaCommit: meta.content.commit, sessionBId: planB.sessionId };
+      } finally {
+        (crypto.subtle as any).digest = realDigest;
+      }
+    });
+
+    // The stale session must be refused, not silently applied under commit "c1" ...
+    expect(outcome.commitAResult).toEqual({ status: "no-session" });
+    // ... and the collection's recorded commit must be untouched by it.
+    expect(outcome.metaCommit).toBeUndefined();
+
+    // Session B, untouched by A's aborted attempt, can still commit normally afterward using the
+    // session it already staged — replanning here would itself discard that staging (see the
+    // "discards a previous session" test above), which isn't what this test is checking.
+    expect(await collection.commitIngest(outcome.sessionBId, [await entry("a.md", "# A")]))
+      .toMatchObject({ status: "applied", commit: "c2" });
   });
 
   it("rejects tokens that are unknown, revoked, or minted for another collection", async () => {

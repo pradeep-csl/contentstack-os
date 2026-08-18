@@ -733,8 +733,22 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     let added = 0;
     let updated = 0;
     let deleted = 0;
+    // Set inside the transaction if the session was superseded during the await above; read after,
+    // still with no await between them, so the check stays inside the atomic section it protects.
+    let sessionChanged = false;
 
     this.storage.transaction(() => {
+      // Re-check the session's identity here, not just before the transaction: the await on
+      // hashManifest() above is a point where a concurrent planIngest+stageDocuments could have
+      // discarded this session and staged a different one. Re-reading before the transaction would
+      // only narrow that window, not close it; only a check inside the transaction — atomic with the
+      // writes it guards — can. If the session moved on, abort without touching storage.
+      let current = this.storage.ingestSession.get();
+      if (current.sessionId !== sessionId) {
+        sessionChanged = true;
+        return;
+      }
+
       for (let document of staged) {
         if (this.storage.documents.get(document.path)) updated++;
         else added++;
@@ -761,6 +775,8 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
         sessionId: "", commit: "", manifestHash: "", neededCount: 0,
       });
     });
+
+    if (sessionChanged) return { status: "no-session" };
 
     await this.#propagate();
 
