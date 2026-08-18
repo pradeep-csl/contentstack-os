@@ -13,7 +13,7 @@ import type {
   Gatekeeper, GatekeeperUserVerifier, ResourceDescription, ActionKind,
   SlashCommandDescriptor, SlashCommandProvider, SlashCommandResult,
 } from "@gadgets/workshop-shared/gatekeeper";
-import { LibraryReadSession } from "./library-read.js";
+import { LibraryReadSession, accountEnabledCollections } from "./library-read.js";
 import { ContextApiImpl, loadEnabledContextCollections } from "./context-api.js";
 import { ContextObserverTracker } from "./context-observers.js";
 import type { ContextVerifierApi } from "./context-observers.js";
@@ -272,8 +272,10 @@ export class ContextGatekeeper
     let ownedAuthorizer = authorizer.dup();
     try {
       return new LibraryReadSession(
-        this.#collections(), this.#userLibraries(),
-        this.ctx.props.sharingDomain, this.ctx.props.accountId, ownedAuthorizer,
+        this.#collections(),
+        accountEnabledCollections(
+          this.#userLibraries(), this.ctx.props.sharingDomain, this.ctx.props.accountId),
+        this.ctx.props.sharingDomain, ownedAuthorizer,
         collectionIds => this.#observers().prepareObservation(collectionIds));
     } catch (err) {
       ownedAuthorizer[Symbol.dispose]?.();

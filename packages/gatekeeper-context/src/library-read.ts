@@ -29,6 +29,20 @@ type ObserveCollections = (collectionIds: string[]) => Promise<{
   commit(): void;
 }>;
 
+// How a session learns which collections it may reach. Injected rather than derived, so a session can
+// be pinned to a subset (a workspace-scoped collection) without touching the read path.
+export type ResolveEnabledCollections = () => Promise<Map<string, ContextCollectionVisibility>>;
+
+// Default resolution: the account's own private collections plus every public collection in the
+// domain — the global knowledge model.
+export function accountEnabledCollections(
+    userLibraries: DurableObjectNamespace<UserLibraryDurableObject>,
+    domain: string,
+    accountId: string): ResolveEnabledCollections {
+  return () => userLibraries.get(userLibraries.idFromName(domainName(domain, accountId)))
+      .getEnabledCollections(domain);
+}
+
 @validateRpc()
 export class LibraryReadSession extends RpcTarget {
   // Per-session enabled set. Visibility is retained by the source API, though observer enforcement
@@ -37,9 +51,8 @@ export class LibraryReadSession extends RpcTarget {
 
   constructor(
     private collections: DurableObjectNamespace<ContextCollectionDurableObject>,
-    private userLibraries: DurableObjectNamespace<UserLibraryDurableObject>,
+    private resolveEnabled: ResolveEnabledCollections,
     private domain: string,
-    private accountId: string,
     private authorizer: NativeRpcStub<ObservationAuthorizer>,
     private observeCollections: ObserveCollections,
   ) {
@@ -55,13 +68,9 @@ export class LibraryReadSession extends RpcTarget {
     return this.collections.get(this.collections.idFromName(domainName(this.domain, id)));
   }
 
-  #userLib(): DurableObjectStub<UserLibraryDurableObject> {
-    return this.userLibraries.get(this.userLibraries.idFromName(domainName(this.domain, this.accountId)));
-  }
-
   // Computed once per session; search/list/read share it.
   #enabled(): Promise<Map<string, ContextCollectionVisibility>> {
-    return (this.#enabledPromise ??= this.#userLib().getEnabledCollections(this.domain));
+    return (this.#enabledPromise ??= this.resolveEnabled());
   }
 
   async #authorize(
