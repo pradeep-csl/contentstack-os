@@ -151,9 +151,7 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
       documentCount: 0,
       content: source === "git"
         ? { source, remote: "", branch: DEFAULT_GIT_BRANCH, lastRefreshedAt: new Date() }
-        : source === "push"
-          ? { source }
-          : { source },
+        : { source },
     };
 
     // Initialize before indexing; if this fails, nothing is reachable yet.

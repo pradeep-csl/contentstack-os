@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { accountEnabledCollections, type ResolveEnabledCollections } from "../src/library-read.js";
+import { accountEnabledCollections } from "../src/library-read.js";
 import type { UserLibraryDurableObject } from "../src/user-library.js";
 import { publicCollectionsKvKey } from "../src/collection-kv.js";
 import { domainName } from "../src/domain.js";
@@ -26,12 +26,5 @@ describe("enabled collection resolution", () => {
     let enabled = await accountEnabledCollections(LIBRARIES, DOMAIN, accountId)();
     expect(enabled.get("owned-1")).toBe("private");
     expect(enabled.get("public-1")).toBe("public");
-  });
-
-  it("accepts a resolver pinned to a single collection", async () => {
-    // The seam phase 2 needs: a session told exactly which collections it may reach.
-    let pinned: ResolveEnabledCollections = async () => new Map([["only-this", "public" as const]]);
-    let enabled = await pinned();
-    expect([...enabled.keys()]).toEqual(["only-this"]);
   });
 });
