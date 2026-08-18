@@ -2622,6 +2622,20 @@ knowledge. To re-publish, re-run the job for a merged commit.
 - Agents see new content immediately; there is no polling delay.
 - A `SKILL.md` file becomes an agent skill and a slash command.
 
+## Give your pages a description
+
+A document's description is what an agent reads to decide whether the page is worth opening, and it
+is extracted **only** from YAML frontmatter — prose is never summarised. A page without frontmatter
+is published with an empty description and is correspondingly harder for an agent to find.
+
+Start each page with:
+
+```markdown
+---
+description: When and why to read this page.
+---
+```
+
 ## Limits
 
 | Limit | Value | On exceeding |
