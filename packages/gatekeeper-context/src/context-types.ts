@@ -93,7 +93,10 @@ export type ContextCollectionContent =
   // Content in this collection is managed via the web UI.
   | { source: "web" }
   // Content in this collection is managed via git.
-  | { source: "git"; remote: string; branch: string; lastRefreshedAt: Date; commit?: string };
+  | { source: "git"; remote: string; branch: string; lastRefreshedAt: Date; commit?: string }
+  // Content in this collection is published by CI. Deliberately independent of visibility, so scoped
+  // collections can use the same pipeline later.
+  | { source: "push"; commit?: string; lastReceivedAt?: Date };
 
 export type ContextCollectionMetadata = {
   // Random hex ID.
@@ -132,6 +135,25 @@ export type ContextGitTokenCreateResult = {
   id: string;
   plaintext: string;
   remote: string;
+};
+
+// One live ingestion token, as shown in the management UI. Never carries the plaintext.
+export type ContextIngestTokenInfo = {
+  id: string;
+  expiresAt: string;
+};
+
+// The collection's live ingestion tokens.
+export type ContextIngestTokenList = {
+  tokens: ContextIngestTokenInfo[];
+};
+
+// A freshly minted ingestion token. `plaintext` is shown once and never stored; `path` is the
+// origin-relative endpoint base CI posts to, so the UI can render an absolute URL.
+export type ContextIngestTokenCreateResult = {
+  id: string;
+  plaintext: string;
+  path: string;
 };
 
 // Collection summary for listings.

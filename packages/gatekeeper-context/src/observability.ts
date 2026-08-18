@@ -2,9 +2,12 @@ import { createObservabilityContext } from "@gadgets/backend-utils/observability
 
 /** Observability fields emitted by the Context gatekeeper. */
 export type ContextObservabilityFields = {
+  added: number;
   bodyBytes: number;
   branch: string;
   collectionId: string;
+  commit: string;
+  deleted: number;
   dir: string;
   filepath: string;
   maxBodyBytes: number;
@@ -13,6 +16,7 @@ export type ContextObservabilityFields = {
   repoName: string;
   sizeBytes: number;
   tokenId: number | string;
+  updated: number;
   vendorId: string;
 };
 

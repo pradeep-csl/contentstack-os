@@ -7,6 +7,7 @@ import {
   ContextCollectionContent, ContextCollectionMetadata, ContextCollectionVisibility,
   ContextDocument, ContextDocumentSummary,
   ContextGitTokenCreateResult, ContextGitTokenList,
+  ContextIngestTokenCreateResult, ContextIngestTokenList,
   DEFAULT_DOCUMENT_CONTENT_TYPE, DEFAULT_GIT_BRANCH, MAX_DOCUMENT_BODY_BYTES,
   contentTypeFromPath, isTextContentType, VENDOR_ID,
 } from "./context-types.js";
@@ -18,6 +19,11 @@ import {
 } from "./agent-skill.js";
 import { baseName, validateDocumentPath } from "./document-path.js";
 import { obsContext } from "./observability.js";
+import type {
+  CommitOutcome, PlanOutcome, StageOutcome, StagedDocument,
+} from "./ingest-handler.js";
+import { INGEST_TOKEN_TTL_SECONDS, generateIngestToken, hashIngestToken } from "./ingest-token.js";
+import { type ManifestEntry, hashManifest, planUploads } from "./ingest-manifest.js";
 
 const logger = obsContext.createLogger({
   component: "gatekeeper.context", vendorId: VENDOR_ID,
@@ -47,7 +53,27 @@ type ContextRecord = {
   description: string;
   contentType: string;
   body: string;
+  // SHA-256 of the raw bytes, set by CI publication. Absent on documents written before hashing
+  // existed, which is why publication treats a missing hash as "must re-send".
+  hash?: string;
   lastUpdated: Date;
+};
+
+// A live ingestion token. Only the hash is stored, so a storage leak yields nothing usable.
+type IngestTokenRecord = {
+  id: string;
+  hash: string;
+  createdAt: Date;
+  expiresAt: Date;
+};
+
+// The open publication, if any. Deliberately small: persisting the manifest itself would reintroduce
+// the per-file write amplification this protocol exists to avoid.
+type IngestSession = {
+  sessionId: string;
+  commit: string;
+  manifestHash: string;
+  neededCount: number;
 };
 
 // Old records that predate git-based collections won't have `content` set in storage.
@@ -63,6 +89,8 @@ function makeContextCollectionStorage(storage: DurableObjectStorage) {
       documents: collection<ContextRecord>()({ primaryKey: "path" }),
       // Data needed to list skills without loading document bodies.
       skillIndex: collection<SkillIndexEntry>()({ primaryKey: "path" }),
+      ingestTokens: collection<IngestTokenRecord>()({ primaryKey: "id" }),
+      staging: collection<ContextRecord>()({ primaryKey: "path" }),
     },
     singletons: {
       // Sharing domain for cross-DO references.
@@ -80,6 +108,7 @@ function makeContextCollectionStorage(storage: DurableObjectStorage) {
         content: { source: "web" },
       },
       skillIndexVersion: 0,
+      ingestSession: <IngestSession>{ sessionId: "", commit: "", manifestHash: "", neededCount: 0 },
     },
   });
 }
@@ -277,8 +306,12 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
   // --- Document CRUD ---
 
   #assertWebWritable(): void {
-    if (this.#isGitBased()) {
+    let source = this.getMetadata().content.source;
+    if (source === "git") {
       throw new Error("Git-based collections are read-only. All changes must be made through git.");
+    }
+    if (source === "push") {
+      throw new Error("CI-published collections are read-only. All changes must be made through CI.");
     }
   }
 
@@ -560,6 +593,194 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
       this.#deleteArtifactDocuments(result.commit);
     }
     await this.#propagate();
+  }
+
+  // --- CI publication: tokens ---
+
+  async createIngestToken(): Promise<ContextIngestTokenCreateResult> {
+    let meta = this.getMetadata();
+    if (meta.content.source !== "push") {
+      throw new Error("Collection does not accept CI publication.");
+    }
+    let { id, plaintext } = generateIngestToken();
+    let hash = await hashIngestToken(plaintext);
+    let now = new Date();
+
+    this.storage.transaction(() => {
+      // Revocation deletes, but expiry alone never did, so mint time is where expired rows go.
+      for (let existing of Array.from(this.storage.ingestTokens.list())) {
+        if (existing.expiresAt.getTime() <= now.getTime()) {
+          this.storage.ingestTokens.delete(existing.id);
+        }
+      }
+      this.storage.ingestTokens.put({
+        id, hash, createdAt: now,
+        expiresAt: new Date(now.getTime() + INGEST_TOKEN_TTL_SECONDS * 1000),
+      });
+    });
+
+    return {
+      id,
+      plaintext,
+      path: `/gatekeeper/context/ingest/${encodeURIComponent(this.#domain())}/` +
+          `${encodeURIComponent(meta.id)}`,
+    };
+  }
+
+  async listIngestTokens(): Promise<ContextIngestTokenList> {
+    let now = Date.now();
+    return {
+      tokens: Array.from(this.storage.ingestTokens.list())
+        .filter(token => token.expiresAt.getTime() > now)
+        .map(token => ({ id: token.id, expiresAt: token.expiresAt.toISOString() })),
+    };
+  }
+
+  async revokeIngestToken(tokenId: string): Promise<boolean> {
+    if (!this.storage.ingestTokens.get(tokenId)) return false;
+    this.storage.ingestTokens.delete(tokenId);
+    return true;
+  }
+
+  // Public so the handler can authenticate before reading a request body. Comparing hashes of a
+  // high-entropy secret does not need a constant-time compare: a timing leak reveals a hash prefix,
+  // which is useless without a preimage.
+  async verifyIngestToken(plaintext: string): Promise<boolean> {
+    if (!plaintext) return false;
+    let hash = await hashIngestToken(plaintext);
+    let now = Date.now();
+    for (let record of this.storage.ingestTokens.list()) {
+      if (record.hash === hash && record.expiresAt.getTime() > now) return true;
+    }
+    return false;
+  }
+
+  // --- CI publication: the protocol ---
+
+  #clearStaging(): void {
+    for (let record of Array.from(this.storage.staging.list())) {
+      this.storage.staging.delete(record.path);
+    }
+  }
+
+  #stagedCount(): number {
+    let count = 0;
+    for (let _ of this.storage.staging.list()) count++;
+    return count;
+  }
+
+  // Compare the desired state against what is stored and open a session for the difference.
+  async planIngest(
+      commit: string, manifest: ManifestEntry[], allowEmpty: boolean): Promise<PlanOutcome> {
+    let meta = this.getMetadata();
+    if (meta.content.source !== "push") return { status: "wrong-source" };
+    if (meta.content.commit === commit) return { status: "unchanged", commit };
+    if (manifest.length === 0 && !allowEmpty) return { status: "empty-refused" };
+
+    // Await before the transaction, never inside it.
+    let manifestHash = await hashManifest(manifest);
+
+    let stored = new Map<string, string | undefined>();
+    for (let record of this.storage.documents.list()) stored.set(record.path, record.hash);
+    let { needed, unchanged, toDelete } = planUploads(manifest, stored);
+
+    let sessionId = crypto.randomUUID();
+    this.storage.transaction(() => {
+      // A new plan supersedes any previous one, which is also how abandoned sessions get cleaned up.
+      this.#clearStaging();
+      this.storage.ingestSession.put({
+        sessionId, commit, manifestHash, neededCount: needed.length,
+      });
+    });
+
+    return { status: "planned", sessionId, needed, unchanged, toDelete: toDelete.length };
+  }
+
+  // Hold uploaded documents until commit, so a partial transfer is never visible to agents.
+  async stageDocuments(sessionId: string, documents: StagedDocument[]): Promise<StageOutcome> {
+    let session = this.storage.ingestSession.get();
+    if (!session.sessionId || session.sessionId !== sessionId) return { status: "no-session" };
+
+    this.storage.transaction(() => {
+      for (let document of documents) this.storage.staging.put(document);
+    });
+
+    return {
+      status: "staged",
+      staged: documents.length,
+      remaining: Math.max(0, session.neededCount - this.#stagedCount()),
+    };
+  }
+
+  // Apply the publication in one transaction: upsert what was staged, delete what the manifest no
+  // longer lists, record the commit, clear staging.
+  async commitIngest(sessionId: string, manifest: ManifestEntry[]): Promise<CommitOutcome> {
+    let session = this.storage.ingestSession.get();
+    if (!session.sessionId || session.sessionId !== sessionId) return { status: "no-session" };
+
+    // Await before the transaction, never inside it.
+    if (await hashManifest(manifest) !== session.manifestHash) return { status: "manifest-mismatch" };
+
+    let staged = Array.from(this.storage.staging.list());
+    if (staged.length < session.neededCount) {
+      return { status: "incomplete", missing: session.neededCount - staged.length };
+    }
+
+    // Cross-check every staged document against the committed manifest. This is the integrity gate:
+    // the handler verified each body against its declared hash, and this verifies those hashes are
+    // the ones the manifest actually asked for.
+    let wanted = new Map(manifest.map(entry => [entry.path, entry.hash]));
+    for (let document of staged) {
+      if (wanted.get(document.path) !== document.hash) return { status: "manifest-mismatch" };
+    }
+
+    let added = 0;
+    let updated = 0;
+    let deleted = 0;
+
+    this.storage.transaction(() => {
+      for (let document of staged) {
+        if (this.storage.documents.get(document.path)) updated++;
+        else added++;
+        this.#putDocument(document);
+      }
+      for (let record of Array.from(this.storage.documents.list())) {
+        if (!wanted.has(record.path)) {
+          this.#deleteDocument(record.path);
+          deleted++;
+        }
+      }
+
+      let meta = this.getMetadata();
+      if (meta.content.source !== "push") throw new Error("Collection is not CI-published.");
+      meta.content.commit = session.commit;
+      meta.content.lastReceivedAt = new Date();
+      meta.documentCount = manifest.length;
+      meta.lastUpdated = new Date();
+      this.storage.metadata.put(meta);
+      this.storage.skillIndexVersion.put(SKILL_INDEX_VERSION);
+
+      this.#clearStaging();
+      this.storage.ingestSession.put({
+        sessionId: "", commit: "", manifestHash: "", neededCount: 0,
+      });
+    });
+
+    await this.#propagate();
+
+    logger.info("applied a CI publication to a context collection", {
+      event: "context.collection.ingest.applied",
+      collectionId: this.getMetadata().id,
+      commit: session.commit,
+      added, updated, deleted,
+    });
+
+    return {
+      status: "applied",
+      commit: session.commit,
+      added, updated, deleted,
+      documentCount: manifest.length,
+    };
   }
 
   // --- Search ---
