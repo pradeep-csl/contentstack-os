@@ -10,6 +10,8 @@ export type ContextObservabilityFields = {
   deleted: number;
   dir: string;
   filepath: string;
+  // Which ingestion ceiling a 429 came from: "global" or "collection".
+  limiter: string;
   maxBodyBytes: number;
   maxGitDirBytes: number;
   operation: string;

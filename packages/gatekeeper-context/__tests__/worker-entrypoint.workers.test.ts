@@ -40,6 +40,15 @@ describe("worker entrypoint", () => {
     expect(response.status).toBe(404);
   });
 
+  it("404s a malformed percent-escape rather than throwing out of fetch()", async () => {
+    // decodeURIComponent throws URIError on `%ZZ`, which the URL parser leaves in the pathname. Left
+    // unguarded it propagates out of the entrypoint as a 500 with an exception in the observability
+    // stream — unauthenticated, repeatable, and raised before either limiter has been charged, which
+    // is exactly the case the global ceiling exists to cover.
+    let response = await post(`${PREFIX}/%ZZ/plan`);
+    expect(response.status).toBe(404);
+  });
+
   it("blocks a request over the rate limit before the collection is resolved", async () => {
     // Same path both times, so both share the limiter's key and the test config's limit of 1 (see
     // vitest.workers.config.ts) is exhausted by the first call. A syntactically valid but wrong

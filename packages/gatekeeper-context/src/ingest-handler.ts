@@ -30,12 +30,20 @@ export type IngestAction = "plan" | "upload" | "commit";
 export type IngestRoute = { domain: string; collectionId: string; action: IngestAction };
 
 // Parse an ingestion path, or return null when it addresses no route — either because it is not
-// under the ingestion prefix at all, or because it is malformed beneath it.
+// under the ingestion prefix at all, or because it is malformed beneath it. Total by construction:
+// the URL parser leaves an invalid escape such as `%ZZ` in the pathname and decodeURIComponent
+// throws URIError on it, which unguarded would leave an unauthenticated caller a 500 from the top of
+// fetch() — before either rate limiter has been charged.
 export function parseIngestPath(pathname: string): IngestRoute | null {
   if (!pathname.startsWith(INGEST_PATH_PREFIX)) return null;
   let segments = pathname.slice(INGEST_PATH_PREFIX.length).split("/").filter(s => s.length > 0);
   if (segments.length !== 3) return null;
-  let [domain, collectionId, action] = segments.map(decodeURIComponent);
+  let domain: string, collectionId: string, action: string;
+  try {
+    [domain, collectionId, action] = segments.map(decodeURIComponent);
+  } catch {
+    return null;
+  }
   if (action !== "plan" && action !== "upload" && action !== "commit") return null;
   return { domain, collectionId, action };
 }

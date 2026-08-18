@@ -22,28 +22,34 @@ function fakeResolver(outcomes: Outcomes, tokenValid = true) {
   let staged: string[][] = [];
   let committed: { sessionId: string; entries: number }[] = [];
 
+  // Recorded in the factory body, not inside one of the methods: resolving is what instantiates a
+  // Durable Object, so this has to pin that resolve() itself was never reached — not merely that
+  // nothing was called on what it returned.
   let resolved: string[] = [];
 
-  let resolve: ResolveIngestTarget = (_domain, collectionId) => ({
-    async verifyIngestToken() {
-      resolved.push(collectionId);
-      return tokenValid;
-    },
-    async planIngest(commit, manifest, allowEmpty) {
-      planned.push({ commit, paths: manifest.map(e => e.path), allowEmpty });
-      return outcomes.plan ?? { status: "planned", sessionId: "s1", needed: [], unchanged: 0, toDelete: 0 };
-    },
-    async stageDocuments(_sessionId, documents) {
-      staged.push(documents.map(d => d.path));
-      return outcomes.stage ?? { status: "staged", staged: documents.length, remaining: 0 };
-    },
-    async commitIngest(sessionId, manifest) {
-      committed.push({ sessionId, entries: manifest.length });
-      return outcomes.commit ?? {
-        status: "applied", commit: "c1", added: 0, updated: 0, deleted: 0, documentCount: 0,
-      };
-    },
-  });
+  let resolve: ResolveIngestTarget = (_domain, collectionId) => {
+    resolved.push(collectionId);
+    return {
+      async verifyIngestToken() {
+        return tokenValid;
+      },
+      async planIngest(commit, manifest, allowEmpty) {
+        planned.push({ commit, paths: manifest.map(e => e.path), allowEmpty });
+        return outcomes.plan
+          ?? { status: "planned", sessionId: "s1", needed: [], unchanged: 0, toDelete: 0 };
+      },
+      async stageDocuments(_sessionId, documents) {
+        staged.push(documents.map(d => d.path));
+        return outcomes.stage ?? { status: "staged", staged: documents.length, remaining: 0 };
+      },
+      async commitIngest(sessionId, manifest) {
+        committed.push({ sessionId, entries: manifest.length });
+        return outcomes.commit ?? {
+          status: "applied", commit: "c1", added: 0, updated: 0, deleted: 0, documentCount: 0,
+        };
+      },
+    };
+  };
 
   return { resolve, planned, staged, committed, resolved };
 }
@@ -90,6 +96,19 @@ describe("routing and authentication", () => {
     expect(none!.status).toBe(401);
     expect(basic!.status).toBe(401);
     expect(planned).toEqual([]);
+  });
+
+  it("404s a path segment carrying a malformed percent-escape, without resolving a collection", async () => {
+    // The URL parser leaves an invalid escape in the pathname, and decodeURIComponent throws URIError
+    // on it. Unguarded that is a 500 from an unauthenticated request — and, in the worker, one raised
+    // before either rate limiter has been charged.
+    let { resolve, resolved } = fakeResolver({});
+    let response = await handleIngestRequest(new Request(
+      "https://workshop.example.com/gatekeeper/context/ingest/dev/%ZZ/plan",
+      { method: "POST", headers: { authorization: "Bearer secret-token" }, body: "{}" }), resolve);
+
+    expect(response!.status).toBe(404);
+    expect(resolved).toEqual([]);
   });
 
   it("rejects a collection id that is not a UUID without resolving a collection", async () => {
