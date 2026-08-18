@@ -20,8 +20,9 @@ import {
 import { baseName, validateDocumentPath } from "./document-path.js";
 import { obsContext } from "./observability.js";
 import { webWriteRejection } from "./write-guard.js";
-import type {
-  CommitOutcome, PlanOutcome, StageOutcome, StagedDocument,
+import {
+  INGEST_PATH_PREFIX,
+  type CommitOutcome, type PlanOutcome, type StageOutcome, type StagedDocument,
 } from "./ingest-handler.js";
 import { INGEST_TOKEN_TTL_SECONDS, generateIngestToken, hashIngestToken } from "./ingest-token.js";
 import { type ManifestEntry, hashManifest, planUploads } from "./ingest-manifest.js";
@@ -618,7 +619,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     return {
       id,
       plaintext,
-      path: `/gatekeeper/context/ingest/${encodeURIComponent(this.#domain())}/` +
+      path: `${INGEST_PATH_PREFIX}${encodeURIComponent(this.#domain())}/` +
           `${encodeURIComponent(meta.id)}`,
     };
   }
@@ -718,9 +719,6 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     if (await hashManifest(manifest) !== session.manifestHash) return { status: "manifest-mismatch" };
 
     let staged = Array.from(this.storage.staging.list());
-    if (staged.length < session.neededCount) {
-      return { status: "incomplete", missing: session.neededCount - staged.length };
-    }
 
     // Cross-check every staged document against the committed manifest. This is the integrity gate:
     // the handler verified each body against its declared hash, and this verifies those hashes are
@@ -736,6 +734,9 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     // Set inside the transaction if the session was superseded during the await above; read after,
     // still with no await between them, so the check stays inside the atomic section it protects.
     let sessionChanged = false;
+    // Set inside the transaction when the manifest does not describe a state this collection can
+    // reach, for the same reason: both are decided from storage read within the atomic section.
+    let missing = 0;
 
     this.storage.transaction(() => {
       // Re-check the session's identity here, not just before the transaction: the await on
@@ -749,16 +750,33 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
         return;
       }
 
+      // One pass over the stored set decides both halves of the apply: what the manifest dropped,
+      // and which manifest entries an already-stored document satisfies. Completeness is a question
+      // about sets, not counts — a staged document the plan did not ask for (an unchanged file, a
+      // retry) would otherwise pay for a document that never arrived, and the collection would
+      // record the commit with a file silently missing, never to be asked for again.
+      let obsolete: string[] = [];
+      let unresolved = new Set(wanted.keys());
+      for (let record of this.storage.documents.list()) {
+        let want = wanted.get(record.path);
+        if (want === undefined) obsolete.push(record.path);
+        else if (record.hash === want) unresolved.delete(record.path);
+      }
+      for (let document of staged) unresolved.delete(document.path);
+      // Decided before anything is written, so a refusal leaves the collection untouched.
+      if (unresolved.size > 0) {
+        missing = unresolved.size;
+        return;
+      }
+
       for (let document of staged) {
         if (this.storage.documents.get(document.path)) updated++;
         else added++;
         this.#putDocument(document);
       }
-      for (let record of Array.from(this.storage.documents.list())) {
-        if (!wanted.has(record.path)) {
-          this.#deleteDocument(record.path);
-          deleted++;
-        }
+      for (let path of obsolete) {
+        this.#deleteDocument(path);
+        deleted++;
       }
 
       let meta = this.getMetadata();
@@ -777,6 +795,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     });
 
     if (sessionChanged) return { status: "no-session" };
+    if (missing > 0) return { status: "incomplete", missing };
 
     await this.#propagate();
 

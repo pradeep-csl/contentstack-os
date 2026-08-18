@@ -25,6 +25,13 @@ const ManifestEntrySchema = z.object({
 // One file's identity in the desired state.
 export type ManifestEntry = z.infer<typeof ManifestEntrySchema>;
 
+// The desired state. Paths must be unique: the manifest is a set keyed by path everywhere it is
+// consumed — staging, the stored documents, the delete pass — so a repeated path describes a state
+// no collection can hold, and would otherwise leave the publication permanently uncommittable.
+const ManifestSchema = z.array(ManifestEntrySchema).max(MAX_MANIFEST_ENTRIES).refine(
+  entries => new Set(entries.map(entry => entry.path)).size === entries.length,
+  "manifest contains duplicate paths");
+
 const UploadDocumentSchema = z.object({
   path: z.string().min(1),
   body: z.string(),
@@ -38,7 +45,7 @@ export type UploadDocument = z.infer<typeof UploadDocumentSchema>;
 
 export const PlanRequestSchema = z.object({
   commit: z.string().min(1).max(255),
-  manifest: z.array(ManifestEntrySchema).max(MAX_MANIFEST_ENTRIES),
+  manifest: ManifestSchema,
   // An empty manifest means "delete everything" — valid, but only when the caller says so.
   allowEmpty: z.boolean().optional(),
 });
@@ -50,7 +57,7 @@ export const UploadRequestSchema = z.object({
 
 export const CommitRequestSchema = z.object({
   sessionId: z.string().min(1),
-  manifest: z.array(ManifestEntrySchema).max(MAX_MANIFEST_ENTRIES),
+  manifest: ManifestSchema,
 });
 
 // The raw bytes of a body as sent, which is what both sides hash.

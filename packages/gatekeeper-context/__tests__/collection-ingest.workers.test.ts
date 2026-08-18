@@ -123,6 +123,39 @@ describe("collection publication", () => {
     expect(await collection.listContextDocuments()).toEqual([]);
   });
 
+  it("refuses a commit where an uploaded extra pays for a document that never arrived", async () => {
+    // The gate is about sets, not counts. Here one document is missing and one the plan did not ask
+    // for was uploaded anyway (an unchanged file a publisher re-sent), so a count comparison sees
+    // "one needed, one staged" and applies. It must not: the commit would be recorded against the
+    // new sha with new.md absent, and the next plan would answer "unchanged" — the file would never
+    // be published at all.
+    await publish(collection, token, "c1", { "old.md": "# Old" });
+
+    let manifest = [await entry("old.md", "# Old"), await entry("new.md", "# New")];
+    let plan = await collection.planIngest("c2", manifest, false);
+    if (plan.status !== "planned") throw new Error("expected a session");
+    expect(plan.needed).toEqual(["new.md"]);
+
+    // Upload the unchanged document instead of the needed one.
+    await collection.stageDocuments(plan.sessionId, [upload("old.md", "# Old", await hashOf("# Old"))]);
+
+    expect(await collection.commitIngest(plan.sessionId, manifest))
+      .toEqual({ status: "incomplete", missing: 1 });
+    // Nothing was applied: the collection still holds its previous content and commit.
+    expect((await collection.listContextDocuments()).map(d => d.path)).toEqual(["old.md"]);
+    expect((await collection.getMetadata()).content).toMatchObject({ commit: "c1" });
+  });
+
+  it("commits when every manifest path is either staged or already stored with that hash", async () => {
+    // The other half of the same gate: an unchanged document counts as resolved by what is stored,
+    // so a normal delta publication — one changed file, the rest untouched — still applies.
+    await publish(collection, token, "c1", { "keep.md": "# Keep", "edit.md": "# V1" });
+
+    let outcome = await publish(collection, token, "c2", { "keep.md": "# Keep", "edit.md": "# V2" });
+    expect(outcome).toMatchObject({ status: "applied", added: 0, updated: 1, deleted: 0 });
+    expect(await collection.getContextDocument("edit.md")).toMatchObject({ body: "# V2" });
+  });
+
   it("refuses a commit whose manifest differs from the planned one", async () => {
     let manifest = [await entry("a.md", "# A")];
     let plan = await collection.planIngest("c1", manifest, false);
