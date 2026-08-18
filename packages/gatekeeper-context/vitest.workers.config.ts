@@ -23,8 +23,11 @@ export default defineConfig({
         // limiter-before-resolve ordering is exercised for real, not stubbed. limit is 1 rather than
         // production's 60 so worker-entrypoint.workers.test.ts can trip it deterministically in one
         // extra request instead of sixty.
+        // The global ceiling is set far above the per-collection limit so it never fires first and
+        // masks which key a test is actually exercising.
         ratelimits: {
           INGEST_RATE_LIMITER: { namespace_id: "2001", simple: { limit: 1, period: 60 } },
+          INGEST_GLOBAL_RATE_LIMITER: { namespace_id: "2002", simple: { limit: 1000, period: 60 } },
         },
       },
     }),

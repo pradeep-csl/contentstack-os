@@ -33,13 +33,19 @@
     }
   ],
 
-  // Bounds the public CI ingestion endpoint. Keyed per collection path, so one noisy repository
-  // cannot starve the others.
+  // Bounds the public CI ingestion endpoint. The first is keyed per collection, so one noisy
+  // repository cannot starve the others; the second is a single key for the whole endpoint, which is
+  // what bounds a caller spreading requests across collection ids to mint a budget each.
   "ratelimits": [
     {
       "name": "INGEST_RATE_LIMITER",
       "namespace_id": "2001",
       "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      "name": "INGEST_GLOBAL_RATE_LIMITER",
+      "namespace_id": "2002",
+      "simple": { "limit": 600, "period": 60 }
     }
   ],
 

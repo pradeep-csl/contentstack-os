@@ -5,7 +5,10 @@ import type {
 import { handleIngestRequest } from "../src/ingest-handler.js";
 import { MAX_INGEST_BODY_BYTES, sha256Hex } from "../src/ingest-manifest.js";
 
-const BASE = "https://workshop.example.com/gatekeeper/context/ingest/dev/col-1";
+// A real UUID: the handler refuses to resolve a collection whose id is not shaped like one, so a
+// made-up fixture id would make every request below a 401.
+const COLLECTION_ID = "3f2504e0-4f89-11d3-9a0c-0305e82c3301";
+const BASE = `https://workshop.example.com/gatekeeper/context/ingest/dev/${COLLECTION_ID}`;
 
 async function hashOf(text: string): Promise<string> {
   return sha256Hex(new TextEncoder().encode(text));
@@ -19,8 +22,11 @@ function fakeResolver(outcomes: Outcomes, tokenValid = true) {
   let staged: string[][] = [];
   let committed: { sessionId: string; entries: number }[] = [];
 
-  let resolve: ResolveIngestTarget = () => ({
+  let resolved: string[] = [];
+
+  let resolve: ResolveIngestTarget = (_domain, collectionId) => ({
     async verifyIngestToken() {
+      resolved.push(collectionId);
       return tokenValid;
     },
     async planIngest(commit, manifest, allowEmpty) {
@@ -39,7 +45,7 @@ function fakeResolver(outcomes: Outcomes, tokenValid = true) {
     },
   });
 
-  return { resolve, planned, staged, committed };
+  return { resolve, planned, staged, committed, resolved };
 }
 
 function post(action: string, body: unknown, init: RequestInit = {}): Request {
@@ -84,6 +90,19 @@ describe("routing and authentication", () => {
     expect(none!.status).toBe(401);
     expect(basic!.status).toBe(401);
     expect(planned).toEqual([]);
+  });
+
+  it("rejects a collection id that is not a UUID without resolving a collection", async () => {
+    // Collection ids are crypto.randomUUID(); resolving one instantiates a Durable Object for
+    // whatever was asked for, so anything else must be refused before that happens. Otherwise every
+    // random id an enumerating caller invents costs an object instantiation.
+    let { resolve, resolved } = fakeResolver({});
+    let response = await handleIngestRequest(new Request(
+      "https://workshop.example.com/gatekeeper/context/ingest/dev/not-a-uuid/plan",
+      { method: "POST", headers: { authorization: "Bearer secret-token" }, body: "{}" }), resolve);
+
+    expect(response!.status).toBe(401);
+    expect(resolved).toEqual([]);
   });
 
   it("rejects the token before reading the body", async () => {
@@ -175,6 +194,20 @@ describe("plan", () => {
     }), resolve);
 
     expect(response!.status).toBe(400);
+    expect(planned).toEqual([]);
+  });
+
+  it("rejects a manifest that lists the same path twice", async () => {
+    // Two entries, one path: staging is keyed by path, so the collection could never hold the state
+    // this describes, and the publication would be uncommittable however much was uploaded.
+    let { resolve, planned } = fakeResolver({});
+    let hash = await hashOf("A");
+    let response = await handleIngestRequest(post("plan", {
+      commit: "c4b", manifest: [{ path: "a.md", hash }, { path: "a.md", hash }],
+    }), resolve);
+
+    expect(response!.status).toBe(400);
+    expect(await response!.json()).toMatchObject({ error: expect.stringContaining("duplicate") });
     expect(planned).toEqual([]);
   });
 

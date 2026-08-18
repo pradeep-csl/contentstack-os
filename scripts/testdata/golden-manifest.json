@@ -159,6 +159,15 @@
             "period": 60
           },
           "type": "ratelimit"
+        },
+        {
+          "name": "INGEST_GLOBAL_RATE_LIMITER",
+          "namespace_id": "2002",
+          "simple": {
+            "limit": 600,
+            "period": 60
+          },
+          "type": "ratelimit"
         }
       ],
       "compatibilityDate": "2026-02-02",

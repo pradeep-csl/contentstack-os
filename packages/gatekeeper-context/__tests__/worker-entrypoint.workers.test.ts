@@ -6,6 +6,13 @@ import { SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 
 const ORIGIN = "http://gatekeeper-context";
+const PREFIX = "/gatekeeper/context/ingest/test";
+
+// Collection ids are UUIDs, and the handler refuses anything else before it resolves a collection,
+// so each test that must reach the collection uses a real one. Distinct per test, because the
+// per-collection rate limiter is keyed on exactly this and the test config's limit is 1.
+const RATE_LIMIT_ID = "6f9619ff-8b86-d011-b42d-00cf4fc964ff";
+const ENCODING_ID = "1b4e28ba-2fa1-11d2-883f-0016d3cca427";
 
 function post(path: string, headers: HeadersInit = {}, body: unknown = { commit: "c1", manifest: [] }) {
   return SELF.fetch(`${ORIGIN}${path}`, {
@@ -23,13 +30,13 @@ describe("worker entrypoint", () => {
   });
 
   it("rejects an unauthenticated ingestion request with 401, proving fetch wires into handleIngestRequest", async () => {
-    let response = await post("/gatekeeper/context/ingest/test/entrypoint-401/plan");
+    let response = await post(`${PREFIX}/f81d4fae-7dec-11d0-a765-00a0c91e6bf6/plan`);
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "unauthorized" });
   });
 
   it("404s an unknown action under the ingestion prefix", async () => {
-    let response = await post("/gatekeeper/context/ingest/test/entrypoint-404/frobnicate");
+    let response = await post(`${PREFIX}/886313e1-3b8a-5372-9b90-0c9aee199e5d/frobnicate`);
     expect(response.status).toBe(404);
   });
 
@@ -42,7 +49,7 @@ describe("worker entrypoint", () => {
     // present-but-wrong token instead forces the request through resolve() and
     // verifyIngestToken() before it can fail, so the sequence below actually turns on the limiter.
     let headers = { authorization: "Bearer bogus" };
-    let path = "/gatekeeper/context/ingest/test/entrypoint-ratelimit/plan";
+    let path = `${PREFIX}/${RATE_LIMIT_ID}/plan`;
 
     // Under the limit: the limiter lets the request through, so it reaches resolve() and
     // verifyIngestToken(), which reject the bogus token with 401 — the same path the "unauthenticated"
@@ -58,5 +65,21 @@ describe("worker entrypoint", () => {
     let second = await post(path, headers);
     expect(second.status).toBe(429);
     expect(await second.json()).toEqual({ error: "rate limited" });
+  });
+
+  it("charges two spellings of one collection path to the same budget", async () => {
+    // The handler normalizes the path — empty segments dropped, each segment decoded — before it
+    // resolves the collection, so these two URLs address one Durable Object. Keying the limiter on
+    // the raw pathname would give them a budget each, and an unauthenticated caller could mint as
+    // many budgets as it can spell the same path. A present-but-wrong token, so both requests get
+    // past the handler's own missing-token check and the limiter is what decides the second one.
+    let headers = { authorization: "Bearer bogus" };
+
+    let first = await post(`${PREFIX}/${ENCODING_ID}/plan`, headers);
+    expect(first.status).toBe(401);
+
+    // Same route, spelled with an empty segment and a percent-encoded action.
+    let second = await post(`${PREFIX}//${ENCODING_ID}/%70lan`, headers);
+    expect(second.status).toBe(429);
   });
 });

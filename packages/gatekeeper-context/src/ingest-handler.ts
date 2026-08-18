@@ -2,15 +2,49 @@
 // injected resolver rather than a Durable Object namespace, so routing, ordering and status codes are
 // testable without a Worker runtime.
 
-import type { ContextDocument } from "./context-types.js";
+import { type ContextDocument, VENDOR_ID } from "./context-types.js";
 import {
   CommitRequestSchema, MAX_INGEST_BODY_BYTES, type ManifestEntry, PlanRequestSchema,
   UploadRequestSchema, type UploadRejection, normalizeUpload, validateUpload,
 } from "./ingest-manifest.js";
+import { obsContext } from "./observability.js";
 
 // The router forwards requests unmodified, so the gatekeeper sees its own prefix. Exported so the
 // worker entrypoint can rate-limit ingestion requests without restating the path.
 export const INGEST_PATH_PREFIX = "/gatekeeper/context/ingest/";
+
+// Collection ids are crypto.randomUUID() (see context-api.ts), so anything else addresses no
+// collection that can exist.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const logger = obsContext.createLogger({
+  component: "gatekeeper.context", vendorId: VENDOR_ID,
+});
+
+// The three routes CI posts to.
+export type IngestAction = "plan" | "upload" | "commit";
+
+// What an ingestion URL addresses, decoded — the same values the handler resolves the collection
+// with, so a caller (the worker entrypoint) can key on the collection's real identity rather than on
+// the many path spellings that reach it.
+export type IngestRoute = { domain: string; collectionId: string; action: IngestAction };
+
+// Parse an ingestion path, or return null when it addresses no route — either because it is not
+// under the ingestion prefix at all, or because it is malformed beneath it.
+export function parseIngestPath(pathname: string): IngestRoute | null {
+  if (!pathname.startsWith(INGEST_PATH_PREFIX)) return null;
+  let segments = pathname.slice(INGEST_PATH_PREFIX.length).split("/").filter(s => s.length > 0);
+  if (segments.length !== 3) return null;
+  let [domain, collectionId, action] = segments.map(decodeURIComponent);
+  if (action !== "plan" && action !== "upload" && action !== "commit") return null;
+  return { domain, collectionId, action };
+}
+
+// Whether an id can name a collection at all. Checked before the collection is resolved, because
+// resolving instantiates a Durable Object for whatever was asked for.
+export function isCollectionId(collectionId: string): boolean {
+  return UUID_RE.test(collectionId);
+}
 
 // A document ready to stage.
 export type StagedDocument = ContextDocument & { hash: string };
@@ -53,15 +87,12 @@ function json(status: number, body: unknown): Response {
 // Handle an ingestion request, or return null when this is not one so the caller can fall through.
 export async function handleIngestRequest(
     request: Request, resolve: ResolveIngestTarget): Promise<Response | null> {
-  let url = new URL(request.url);
-  if (!url.pathname.startsWith(INGEST_PATH_PREFIX)) return null;
+  let pathname = new URL(request.url).pathname;
+  if (!pathname.startsWith(INGEST_PATH_PREFIX)) return null;
 
-  let segments = url.pathname.slice(INGEST_PATH_PREFIX.length).split("/").filter(s => s.length > 0);
-  if (segments.length !== 3) return json(404, { error: "not found" });
-  let [domain, collectionId, action] = segments.map(decodeURIComponent);
-  if (action !== "plan" && action !== "upload" && action !== "commit") {
-    return json(404, { error: "not found" });
-  }
+  let route = parseIngestPath(pathname);
+  if (!route) return json(404, { error: "not found" });
+  let { domain, collectionId, action } = route;
 
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ error: "method not allowed" }), {
@@ -69,26 +100,33 @@ export async function handleIngestRequest(
     });
   }
 
+  // An id that is not shaped like a collection id names no collection, and must not reach resolve():
+  // that instantiates a Durable Object for whatever was asked for, which is how an enumerating
+  // caller would drive billing. Checked first so every id logged below is a bounded one — before
+  // this point it is unbounded caller input.
+  if (!isCollectionId(collectionId)) return unauthorized(action, undefined, "unknown-collection");
+
   // The token carries all authority; the path carries none.
   let authorization = request.headers.get("authorization") ?? "";
   let token = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : "";
-  if (!token) return json(401, { error: "unauthorized" });
+  if (!token) return unauthorized(action, collectionId, "missing-token");
 
   // Authenticate before touching the body. The reverse order lets anyone with a junk token force a
   // multi-megabyte read and parse against a public endpoint.
   let target = resolve(domain, collectionId);
-  if (!await target.verifyIngestToken(token)) return json(401, { error: "unauthorized" });
+  if (!await target.verifyIngestToken(token)) {
+    return unauthorized(action, collectionId, "bad-token");
+  }
 
   let declared = Number(request.headers.get("content-length") ?? "");
   if (Number.isFinite(declared) && declared > MAX_INGEST_BODY_BYTES) {
-    return json(413, { error: "payload too large" });
+    return tooLarge(action, collectionId, declared);
   }
 
   let raw = await request.text();
   // Content-Length is a claim, not a guarantee; check what actually arrived.
-  if (new TextEncoder().encode(raw).length > MAX_INGEST_BODY_BYTES) {
-    return json(413, { error: "payload too large" });
-  }
+  let received = new TextEncoder().encode(raw).length;
+  if (received > MAX_INGEST_BODY_BYTES) return tooLarge(action, collectionId, received);
 
   let body: unknown;
   try {
@@ -98,8 +136,27 @@ export async function handleIngestRequest(
   }
 
   if (action === "plan") return handlePlan(body, target);
-  if (action === "upload") return handleUpload(body, target);
+  if (action === "upload") return handleUpload(body, target, collectionId);
   return handleCommit(body, target);
+}
+
+// Rejections are logged, never their cause's contents: token custody is the only thing protecting
+// this endpoint, so a run of 401s is the one signal that a token has leaked or is being guessed.
+function unauthorized(
+    operation: IngestAction, collectionId: string | undefined, outcome: string): Response {
+  logger.warn("rejected an unauthenticated ingestion request", {
+    event: "context.ingest.rejected", operation, collectionId, outcome,
+  });
+  return json(401, { error: "unauthorized" });
+}
+
+function tooLarge(operation: IngestAction, collectionId: string, bodyBytes: number): Response {
+  logger.warn("rejected an oversized ingestion request", {
+    event: "context.ingest.rejected",
+    operation, collectionId, outcome: "payload-too-large",
+    bodyBytes, maxBodyBytes: MAX_INGEST_BODY_BYTES,
+  });
+  return json(413, { error: "payload too large" });
 }
 
 async function handlePlan(body: unknown, target: IngestTarget): Promise<Response> {
@@ -127,7 +184,8 @@ async function handlePlan(body: unknown, target: IngestTarget): Promise<Response
   }
 }
 
-async function handleUpload(body: unknown, target: IngestTarget): Promise<Response> {
+async function handleUpload(
+    body: unknown, target: IngestTarget, collectionId: string): Promise<Response> {
   let parsed = UploadRequestSchema.safeParse(body);
   if (!parsed.success) return json(400, { error: describe(parsed.error.issues) });
 
@@ -139,6 +197,13 @@ async function handleUpload(body: unknown, target: IngestTarget): Promise<Respon
     if (rejection) rejected.push(rejection);
   }
   if (rejected.length > 0) {
+    // Counts and reasons only: the paths are the publisher's file names and the bodies are content.
+    logger.warn("rejected documents in an ingestion upload", {
+      event: "context.ingest.rejected",
+      operation: "upload", collectionId, outcome: "documents-rejected",
+      rejected: rejected.length,
+      reasons: [...new Set(rejected.map(rejection => rejection.reason))].toSorted().join(","),
+    });
     return json(400, { error: "one or more documents were rejected", rejected });
   }
 
