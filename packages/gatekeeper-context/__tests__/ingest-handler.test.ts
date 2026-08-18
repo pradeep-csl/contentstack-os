@@ -3,7 +3,7 @@ import type {
   CommitOutcome, PlanOutcome, ResolveIngestTarget, StageOutcome,
 } from "../src/ingest-handler.js";
 import { handleIngestRequest } from "../src/ingest-handler.js";
-import { sha256Hex } from "../src/ingest-manifest.js";
+import { MAX_INGEST_BODY_BYTES, sha256Hex } from "../src/ingest-manifest.js";
 
 const BASE = "https://workshop.example.com/gatekeeper/context/ingest/dev/col-1";
 
@@ -97,6 +97,40 @@ describe("routing and authentication", () => {
     }), resolve);
 
     expect(response!.status).toBe(401);
+    expect(planned).toEqual([]);
+  });
+});
+
+describe("size limits", () => {
+  it("413s a request whose declared Content-Length exceeds the cap, without reading the body", async () => {
+    // The header precheck is a cheap short-circuit: it must fire on the declared size alone, before
+    // any read is attempted, so a hostile Content-Length can't force a large read.
+    let { resolve, planned } = fakeResolver({});
+    let response = await handleIngestRequest(new Request(`${BASE}/plan`, {
+      method: "POST",
+      headers: {
+        authorization: "Bearer secret-token",
+        "content-length": String(MAX_INGEST_BODY_BYTES + 1),
+      },
+      body: "tiny",
+    }), resolve);
+
+    expect(response!.status).toBe(413);
+    expect(planned).toEqual([]);
+  });
+
+  it("413s a body that exceeds the cap even when Content-Length understates it", async () => {
+    // Content-Length is a claim, not a guarantee: a caller can send a small declared size alongside a
+    // large body, so the actual bytes received must be checked too, independent of the header.
+    let { resolve, planned } = fakeResolver({});
+    let oversized = "x".repeat(MAX_INGEST_BODY_BYTES + 1);
+    let response = await handleIngestRequest(new Request(`${BASE}/plan`, {
+      method: "POST",
+      headers: { authorization: "Bearer secret-token", "content-length": "1" },
+      body: oversized,
+    }), resolve);
+
+    expect(response!.status).toBe(413);
     expect(planned).toEqual([]);
   });
 });
