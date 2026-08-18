@@ -83,7 +83,8 @@ description: When and why to read this page.
 |---|---|---|
 | Single request | 5 MB | Rejected; the publisher batches below this automatically. |
 | Files per publication | 5,000 | The publication is rejected. |
-| Single document | 1.4 MB | The document is rejected by name; exclude it or split it. |
+| Single text document | ~1.4 MB | The document is rejected by name; exclude it or split it. |
+| Single binary file | ~1 MB | The document is rejected by name; exclude it or split it. Binary files are base64-encoded before the limit is checked, and base64 adds roughly a third more bytes, so the usable ceiling for raw binary content is lower than for text. |
 
 ## Before you onboard a repository
 

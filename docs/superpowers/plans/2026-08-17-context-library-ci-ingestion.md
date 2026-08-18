@@ -2516,7 +2516,9 @@ async function flush() {
 
 for (const path of plan.needed) {
   const document = { path, ...bodies.get(path), hash: hashes.get(path) };
-  const size = JSON.stringify(document).length;
+  // UTF-8 bytes, not string length: the server caps the request in bytes, and multi-byte text
+  // (CJK especially) is up to 3x larger than its JS string length suggests.
+  const size = Buffer.byteLength(JSON.stringify(document), "utf8");
   if (batchBytes + size > MAX_BATCH_BYTES) await flush();
   batch.push(document);
   batchBytes += size;
@@ -2642,7 +2644,8 @@ description: When and why to read this page.
 |---|---|---|
 | Single request | 5 MB | Rejected; the publisher batches below this automatically. |
 | Files per publication | 5,000 | The publication is rejected. |
-| Single document | 1.4 MB | The document is rejected by name; exclude it or split it. |
+| Single text document | 1.4 MB | The document is rejected by name; exclude it or split it. |
+| Single binary file | ~1 MB raw | Binaries are base64-encoded before the 1.4 MB check, so ~1/3 of the budget goes to encoding overhead. |
 
 ## Before you onboard a repository
 

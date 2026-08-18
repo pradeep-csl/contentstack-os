@@ -25,6 +25,9 @@ const MAX_BATCH_BYTES = 3 * 1024 * 1024;
 // An include list, not an exclude list: an exclude list has to anticipate every LICENSE, lockfile and
 // CI config that would otherwise become "knowledge" an agent surfaces. Widen deliberately.
 const INCLUDE = /^(docs\/.*|.*\.mdx?|.*\.markdown|.*\.txt)$/i;
+// Assumes matched files are valid UTF-8. A file that isn't will be lossily re-encoded by
+// buffer.toString("utf8") below, so its uploaded body won't match the hash computed from the raw
+// buffer; the server rejects it as a named "hash-mismatch" rather than silently corrupting it.
 const TEXT = /\.(md|mdx|markdown|txt|json|ya?ml|csv)$/i;
 
 async function post(action, body) {
@@ -82,7 +85,10 @@ async function flush() {
 
 for (const path of plan.needed) {
   const document = { path, ...bodies.get(path), hash: hashes.get(path) };
-  const size = JSON.stringify(document).length;
+  // The server's cap is on UTF-8 bytes on the wire, not JS string length: a plain .length here would
+  // undercount multi-byte content (e.g. CJK text) by up to 3x and could send a batch that's well past
+  // MAX_BATCH_BYTES on the wire while still believing it was under it.
+  const size = Buffer.byteLength(JSON.stringify(document), "utf8");
   if (batchBytes + size > MAX_BATCH_BYTES) await flush();
   batch.push(document);
   batchBytes += size;
