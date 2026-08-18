@@ -11,7 +11,7 @@
     "typecheck:app": "tsc -p tsconfig.app.json && tsc -p tsconfig.vite.json",
     "types:check": "pnpm run typecheck:app && pnpm run build:app && tsc --noEmit",
     "build": "pnpm run typecheck:app && pnpm run build:app && tsc",
-    "test": "vitest run"
+    "test": "vitest run && vitest run -c vitest.workers.config.ts"
   },
   "dependencies": {
     "@gadgets/backend-utils": "workspace:*",
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@cloudflare/kumo": "^2.9.0",
+    "@cloudflare/vitest-pool-workers": "^0.16.20",
     "@codemirror/commands": "6.10.3",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-json": "^6.0.2",
@@ -44,6 +45,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "emoji-mart": "^5.6.0",
+    "miniflare": "4.20260625.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
@@ -54,7 +56,7 @@
     "vite": "^7.3.6",
     "vite-plugin-singlefile": "^2.3.3",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^3.2.7",
+    "vitest": "^4.1.10",
     "wrangler": "^4.115.0"
   }
 }
