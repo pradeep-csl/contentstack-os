@@ -228,9 +228,17 @@ held open without hibernation, objects that call themselves recursively, and unb
 from untrusted input. This design has none of the first three: no alarms, no sockets, no self-calls,
 and every request is short-lived.
 
-The fourth applied and is closed deliberately: resolving a collection instantiates a Durable Object for
-**whatever path was requested**, so the public endpoint is bounded by a `ratelimits` binding keyed on
-the collection path. That rate limiter is the single most important cost control in the design —
+One contention point is worth naming, because it is not obvious from the per-collection design: every
+public collection in a sharing domain shares **one KV key** for the domain's public-collections
+snapshot (`publicCollectionsKvKey`), rewritten in full on every publish. Cloudflare KV permits roughly
+one write per second to a single key. A dozen departments merging occasionally stay far below that;
+bulk onboarding, or several CI jobs finishing together, can contend — and combined with the ordering
+wart above, contention surfaces as failed-looking publishes. The hot spot predates this design, which
+merely adds a frequent writer to it.
+
+The fourth runaway mode applied and is closed deliberately: resolving a collection instantiates a
+Durable Object for **whatever path was requested**, so the public endpoint is bounded by a
+`ratelimits` binding keyed on the collection path. That rate limiter is the single most important cost control in the design —
 without it, an unauthenticated caller can drive request and duration billing at will.
 
 ## Retrieval cost (known, measured separately)
@@ -314,6 +322,7 @@ session, and the commit transaction is atomic, so no publish is ever partially a
 | Rate limit exceeded | 429 before the collection is consulted. |
 | Abandoned session | Superseded by the next `plan`, which discards it. |
 | Partial write | Not possible — commit is one transaction. |
+| Public-collections snapshot write fails after commit | **Known wart.** `#propagate()` is awaited *after* the commit transaction, so a KV failure rejects `commitIngest` even though the content is committed. CI reports a failed publish for work that succeeded; the next merge's `plan` returns `unchanged` and it self-heals. Making the snapshot best-effort would fix the signal. |
 
 ## Constraints
 
