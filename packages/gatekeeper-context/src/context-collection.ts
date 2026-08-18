@@ -16,13 +16,13 @@ import { readArtifactRepoDocuments } from "./artifact-sync.js";
 import {
   isSkillManifestPath, parseSkillManifest, type SkillIndexEntry,
 } from "./agent-skill.js";
+import { baseName, validateDocumentPath } from "./document-path.js";
 import { obsContext } from "./observability.js";
 
 const logger = obsContext.createLogger({
   component: "gatekeeper.context", vendorId: VENDOR_ID,
 });
 
-const MAX_DOCUMENT_PATH_LENGTH = 1024;
 // Git tokens created through the web UI are valid for one year,
 // the maximum TTL supported by Artifacts.
 const GIT_TOKEN_TTL_SECONDS = 31_536_000;
@@ -33,34 +33,6 @@ const GIT_BRANCH_RE = /^(?!\/)(?!.*\/$)[A-Za-z0-9/._-]{1,255}$/;
 // Older collections build this path list on first use. Increase the version when parsing rules
 // change.
 const SKILL_INDEX_VERSION = 1;
-
-// Validate a document path before using it as a storage key.
-function validateDocumentPath(path: string): void {
-  if (typeof path !== "string" || path.length === 0) {
-    throw new Error("Document path is required.");
-  }
-  if (path.length > MAX_DOCUMENT_PATH_LENGTH) {
-    throw new Error(`Document path is too long (max ${MAX_DOCUMENT_PATH_LENGTH} characters).`);
-  }
-  if (path.startsWith("/")) {
-    throw new Error("Document path must be relative (no leading '/').");
-  }
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f\u007f]/.test(path)) {
-    throw new Error("Document path must not contain control characters.");
-  }
-  for (let segment of path.split("/")) {
-    if (segment === "" || segment === "." || segment === "..") {
-      throw new Error("Document path must not contain empty, '.', or '..' segments.");
-    }
-  }
-}
-
-// Last path segment; document names derive from paths.
-function baseName(path: string): string {
-  let i = path.lastIndexOf("/");
-  return i < 0 ? path : path.slice(i + 1);
-}
 
 // Lowercased file extension (without the dot), or "" if none.
 function extOf(path: string): string {
