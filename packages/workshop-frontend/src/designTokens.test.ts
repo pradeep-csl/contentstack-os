@@ -109,26 +109,48 @@ describe('Venus light palette', () => {
     expect(line).toMatch(/^#[0-9a-f]{8}$/)
   })
 
-  it('meets WCAG AA for body text on both light surfaces', () => {
-    const base = token(light, '--color-kumo-base')
-    const elevated = token(light, '--color-kumo-elevated')
-    const body = token(light, '--text-color-kumo-default')
-    expect(contrast(body, base)).toBeGreaterThanOrEqual(4.5)
-    expect(contrast(body, elevated)).toBeGreaterThanOrEqual(4.5)
+  it('meets WCAG AA for white label text on the primary button', () => {
+    expect(contrast('#ffffff', token(light, '--color-kumo-brand'))).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('meets WCAG AA for brand, link and status text on the base surface', () => {
+  // Text that carries meaning. Every one of these must be readable on every surface it can land
+  // on. Supersedes (and subsumes) the narrower "body text on both light surfaces" and "brand,
+  // link and status text on the base surface" checks: every token and surface those covered is
+  // covered here too, plus --text-color-kumo-strong/--text-color-kumo-info and the tint surface.
+  // Moved from scripts/design-tokens.test.js (ruling R23) so there is one WCAG implementation,
+  // not two that can quietly disagree.
+  it('every content text token clears WCAG AA on every light surface', () => {
     const base = token(light, '--color-kumo-base')
+    const surfaces = [base, token(light, '--color-kumo-elevated'), token(light, '--color-kumo-tint')]
     for (const name of [
-      '--text-color-kumo-brand', '--text-color-kumo-link', '--text-color-kumo-subtle',
-      '--text-color-kumo-success', '--text-color-kumo-danger', '--text-color-kumo-warning',
+      '--text-color-kumo-strong', '--text-color-kumo-default', '--text-color-kumo-subtle',
+      '--text-color-kumo-link', '--text-color-kumo-brand', '--text-color-kumo-danger',
+      '--text-color-kumo-success', '--text-color-kumo-warning', '--text-color-kumo-info',
     ]) {
-      expect(contrast(token(light, name), base), `${name} on ${base}`).toBeGreaterThanOrEqual(4.5)
+      const value = token(light, name)
+      for (const surface of surfaces) {
+        expect(contrast(value, surface), `${name} on ${surface}`).toBeGreaterThanOrEqual(4.5)
+      }
     }
   })
 
-  it('meets WCAG AA for white label text on the primary button', () => {
-    expect(contrast('#ffffff', token(light, '--color-kumo-brand'))).toBeGreaterThanOrEqual(4.5)
+  // The inverse guard. `inactive` marks a control the user cannot operate; if it becomes
+  // readable it stops communicating that, and content starts being written in it again — which
+  // is the exact regression this whole change is remediating. Moved from
+  // scripts/design-tokens.test.js (ruling R23).
+  it('keeps inactive below AA, so it cannot be reused for content', () => {
+    const base = token(light, '--color-kumo-base')
+    const ratio = contrast(token(light, '--text-color-kumo-inactive'), base)
+    expect(ratio).toBeLessThan(4.5)
+  })
+
+  // Placeholders are measured to sit only on `base` or a transparent parent, never on `tint`.
+  // Moved from scripts/design-tokens.test.js (ruling R23).
+  it('meets WCAG AA for placeholder text on the surfaces placeholders actually occupy', () => {
+    const placeholder = token(light, '--text-color-kumo-placeholder')
+    for (const surface of [token(light, '--color-kumo-base'), token(light, '--color-kumo-elevated')]) {
+      expect(contrast(placeholder, surface), `placeholder on ${surface}`).toBeGreaterThanOrEqual(4.5)
+    }
   })
 })
 
