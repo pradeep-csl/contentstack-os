@@ -26,7 +26,7 @@ export function htmlResponse(body: string, status = 200): Response {
 export const PAGE_STYLE = `
   :root {
     color-scheme: light dark;
-    --font: "FT Kunst Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             "Helvetica Neue", sans-serif;
     --base: #ffffff;
     --control: #ffffff;
