@@ -126,32 +126,17 @@ function tsxFiles(dir, out = []) {
 
 const repoPath = (file) => relative(ROOT, file).split(sep).join('/')
 
-// Files still using `text-kumo-inactive` for something other than a disabled control. Shrinks only.
-// Populate in Step 2 from the actual failure output; do not guess.
-const PENDING_INACTIVE = new Set([
-  // Chat message revert/discard/deny controls: the element carrying the class is the button
-  // itself, and it has a `disabled` prop of its own (footerDisabled / isDiscarding / isProc /
-  // isAgentActive) — genuine disabled-state usage, not content.
-  'packages/workshop-frontend/src/ChatInterface.tsx',
-  // The share-dialog collaborator-removal Cancel button carries `disabled={busy}` on itself.
-  'packages/workshop-frontend/src/ShareModal.tsx',
-  // Approve/deny resolve buttons carry `disabled` on the same <button> the class is applied to.
-  'packages/workshop-frontend/src/components/ResolveButton.tsx',
-])
+// `inactive` is 2.48:1: the colour of a control the user cannot operate. It is legitimate only
+// when the style is scoped to the disabled state (`disabled:`, `group-disabled:`,
+// `peer-disabled:`, optionally chained after other variants). A bare `text-kumo-inactive` is
+// content at 2.48:1, which is the defect this guard exists to prevent — it was used that way
+// 212 times. No allowlist: every occurrence must justify itself on its own class string.
+const BARE_INACTIVE = /(?<!disabled:)(?<!group-disabled:)(?<!peer-disabled:)\btext-kumo-inactive\b/
 
-test('text-kumo-inactive is not used for content outside the pending allowlist', () => {
+test('text-kumo-inactive is only ever scoped to a disabled state', () => {
   const offenders = []
   for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
-    const rel = repoPath(file)
-    if (PENDING_INACTIVE.has(rel)) continue
-    if (readFileSync(file, 'utf8').includes('text-kumo-inactive')) offenders.push(rel)
+    if (BARE_INACTIVE.test(readFileSync(file, 'utf8'))) offenders.push(repoPath(file))
   }
-  assert.deepEqual(offenders, [], 'move these to subtle/placeholder, or add to PENDING_INACTIVE')
-})
-
-test('the inactive allowlist has no stale entries', () => {
-  const stale = [...PENDING_INACTIVE].filter(
-    (rel) => !readFileSync(join(ROOT, rel), 'utf8').includes('text-kumo-inactive'),
-  )
-  assert.deepEqual(stale, [], 'these are clean — remove them from PENDING_INACTIVE')
+  assert.deepEqual(offenders, [], 'use text-kumo-subtle for content, or scope it with disabled:')
 })

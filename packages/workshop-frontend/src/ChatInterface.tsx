@@ -1740,7 +1740,7 @@ const ToolGroupRow = memo(function ToolGroupRow({
               type="button"
               disabled={footerDisabled}
               onClick={() => onFooterRevert(footerChangeSequence)}
-              className="flex cursor-pointer items-center rounded-md p-1 text-kumo-inactive transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={footerLabel}
             >
               <ArrowUUpLeft size={15} />
@@ -3634,7 +3634,7 @@ function DiscardPendingChangesPopover({
             type="button"
             disabled={isDiscarding}
             onClick={() => onOpenChange(false)}
-            className="flex h-6 cursor-pointer items-center rounded-md px-2 text-[12px] font-medium tracking-[-0.15px] text-kumo-inactive transition-colors enabled:hover:bg-kumo-tint enabled:hover:text-kumo-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-6 cursor-pointer items-center rounded-md px-2 text-[12px] font-medium tracking-[-0.15px] text-kumo-subtle transition-colors enabled:hover:bg-kumo-tint enabled:hover:text-kumo-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring disabled:cursor-not-allowed disabled:opacity-40"
           >
             Cancel
           </button>
@@ -6109,7 +6109,7 @@ function ChatInterface({
                   type="button"
                   onClick={() => handleDenyConnection(msg.requestId)}
                   disabled={isProc}
-                  className="cursor-pointer rounded-md px-2 py-1 font-medium text-kumo-inactive transition-colors duration-150 ease-out hover:text-kumo-danger focus-visible:text-kumo-danger focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded-md px-2 py-1 font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-danger focus-visible:text-kumo-danger focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Deny
                 </button>
@@ -6774,7 +6774,7 @@ function ChatInterface({
                       </span>
                       <WorkshopIconButton
                         onClick={() => setIsEditingTitle(true)}
-                        className="!h-8 !w-8 flex-shrink-0 text-kumo-subtle hover:text-kumo-subtle"
+                        className="!h-8 !w-8 flex-shrink-0 text-kumo-subtle hover:text-kumo-default"
                         title="Rename chat"
                         aria-label="Rename chat"
                       >
@@ -6954,7 +6954,7 @@ function ChatInterface({
                                     type="button"
                                     disabled={isAgentActive}
                                     onClick={() => handleRevertChanges(entry.message.sequence)}
-                                    className="flex cursor-pointer items-center rounded-md p-1 text-kumo-inactive transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
                                     aria-label={discardLabel}
                                   >
                                     <ArrowUUpLeft size={15} />
@@ -7176,7 +7176,7 @@ function ChatInterface({
                                         type="button"
                                         disabled={isAgentActive}
                                         onClick={() => handleRevertChanges(pendingChange.revertFrom)}
-                                        className="flex cursor-pointer items-center rounded-md p-1 text-kumo-inactive transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
                                         aria-label={label}
                                       >
                                         <ArrowUUpLeft size={15} />
@@ -7430,7 +7430,7 @@ function ChatInterface({
                                   type="button"
                                   disabled={isAgentActive}
                                   onClick={handleDiscardDraftChanges}
-                                  className="cursor-pointer rounded-md px-1 py-0.5 font-medium text-kumo-inactive transition-colors duration-150 ease-out hover:text-kumo-danger focus-visible:text-kumo-danger focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                                  className="cursor-pointer rounded-md px-1 py-0.5 font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-danger focus-visible:text-kumo-danger focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                   Discard
                                 </button>

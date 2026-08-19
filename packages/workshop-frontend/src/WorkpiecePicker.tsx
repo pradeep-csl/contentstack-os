@@ -63,7 +63,7 @@ export default function WorkpiecePicker({
         title={expanded ? 'Collapse outputs' : 'Expand outputs'}
         aria-label={expanded ? 'Collapse outputs' : 'Expand outputs'}
         aria-expanded={expanded}
-        className={`flex h-12 flex-shrink-0 cursor-pointer items-center text-kumo-subtle transition-colors hover:text-kumo-subtle ${
+        className={`flex h-12 flex-shrink-0 cursor-pointer items-center text-kumo-subtle transition-colors hover:text-kumo-default ${
           expanded ? 'justify-between px-3' : 'justify-center'
         }`}
       >

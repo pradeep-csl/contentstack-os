@@ -171,7 +171,7 @@ function InlineConfirm({
         onClick={onCancel}
         disabled={busy}
         aria-label="Cancel"
-        className="grid h-7 w-7 cursor-pointer place-items-center rounded-lg text-kumo-inactive transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-default active:scale-[0.96] disabled:opacity-60"
+        className="grid h-7 w-7 cursor-pointer place-items-center rounded-lg text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-default active:scale-[0.96] disabled:opacity-60"
       >
         <X size={14} />
       </button>

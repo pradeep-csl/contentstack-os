@@ -502,7 +502,7 @@ function SidebarSection({
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-6 cursor-pointer items-center gap-1 px-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle transition-colors hover:text-kumo-subtle"
+        className="flex h-6 cursor-pointer items-center gap-1 px-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle transition-colors hover:text-kumo-default"
       >
         <CaretDown
           size={10}

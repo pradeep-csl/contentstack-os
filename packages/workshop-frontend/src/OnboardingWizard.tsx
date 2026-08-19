@@ -447,7 +447,7 @@ export default function OnboardingWizard({
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full">
-                        <Camera size={22} className="text-kumo-subtle group-hover:text-kumo-subtle transition-colors" />
+                        <Camera size={22} className="text-kumo-subtle group-hover:text-kumo-default transition-colors" />
                       </div>
                     )}
                     {avatarProcessing && (
@@ -722,10 +722,8 @@ export default function OnboardingWizard({
                   className={`
                     flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg
                     transition-all duration-150
-                    ${!finishing
-                      ? 'text-kumo-inverse bg-kumo-brand hover:bg-kumo-brand-hover'
-                      : 'text-kumo-subtle bg-kumo-tint cursor-not-allowed'
-                    }
+                    disabled:cursor-not-allowed disabled:bg-kumo-tint disabled:text-kumo-inactive
+                    ${!finishing ? 'text-kumo-inverse bg-kumo-brand hover:bg-kumo-brand-hover' : ''}
                   `}
                 >
                   {finishing ? (
