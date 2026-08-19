@@ -177,10 +177,15 @@ test('text-kumo-inactive is only ever scoped to a disabled state', () => {
 })
 
 // Sizing must come from the text-ui-* scale. Bans ad-hoc pixel literals, Tailwind's bare names
-// (which belong to Kumo's compiled components now — see the --text-* note in styles.css), and
-// px letter-spacing, which the scale supplies in em where it is wanted at all.
+// (which belong to Kumo's compiled components now — see the --text-* note in styles.css), px
+// letter-spacing, and the named `tracking-tight`/`tracking-tighter` utilities.
+// The named negative-tracking ban is unconditional, not size-gated like the px form: the scale
+// already supplies letter-spacing at every step where negative tracking belongs (xl -0.01em,
+// 2xl -0.015em, 3xl -0.02em), so a spot override — bracket or named — is exactly the ad-hoc
+// pattern this plan removes. If a heading genuinely needs tighter tracking, change the scale,
+// don't override it at one call site.
 // Everything left here still carries a 7b item: `text-[13px]`/`text-[20px]`/`text-base`/`text-xl`/
-// `text-2xl`/`text-3xl` (per-element judgement), a `leading-*`/`tracking-tight|tighter|normal|wide`
+// `text-2xl`/`text-3xl` (per-element judgement), a `leading-*`/`tracking-normal|wide|wider`
 // collision, or a deferred px-tracking site (size 17px+, or a non-standard decimal size this
 // codemod's mapping table doesn't cover, e.g. `text-[11.5px]`/`text-[12.5px]`).
 const PENDING_SIZES = new Set([
@@ -216,6 +221,7 @@ const PENDING_SIZES = new Set([
   'packages/workshop-frontend/src/gatekeeper-modal/AccountChooser.tsx',
   'packages/workshop-frontend/src/routes/blueprints.tsx',
   'packages/workshop-frontend/src/routes/gatekeepers.tsx',
+  'packages/workshop-frontend/src/routes/index.tsx',
   'packages/workshop-frontend/src/routes/outputs.tsx',
   'packages/workshop-frontend/src/routes/providers.tsx',
   'packages/workshop-frontend/src/routes/workspaces.tsx',
@@ -225,7 +231,11 @@ const PENDING_SIZES = new Set([
 // distinct ad-hoc size in this tree (21 sites) and not one the mapping table below has an answer
 // for — it must still be caught so it lands in PENDING_SIZES rather than passing silently.
 const BANNED_SIZE = /\btext-\[[\d.]+px\]|\btext-(?:xs|sm|base|lg|xl|2xl|3xl)\b/
-const BANNED_TRACKING = /\btracking-\[-?[\d.]+px\]/
+// The named forms are unconditional (see the comment above PENDING_SIZES): tracking-tight and
+// tracking-tighter are negative letter-spacing exactly like tracking-[-0.35px] is, just spelled
+// with a keyword instead of a bracket — the guard has to catch both or a named override sails
+// through unnoticed, which is exactly what happened at Header.tsx.
+const BANNED_TRACKING = /\btracking-\[-?[\d.]+px\]|\btracking-tight(?:er)?\b/
 
 // Table-driven proof that the regex targets the old scale and leaves the new one alone —
 // verified before the codemod runs, since a guard that flags the state being migrated toward
@@ -249,9 +259,21 @@ test('BANNED_SIZE flags the old scale and leaves text-ui-* alone', () => {
   }
 })
 
-test('BANNED_TRACKING flags px letter-spacing', () => {
-  assert.ok(BANNED_TRACKING.test('tracking-[-0.25px]'))
-  assert.ok(!BANNED_TRACKING.test('tracking-tight'))
+const BANNED_TRACKING_CASES = [
+  ['tracking-[-0.25px]', true],
+  ['tracking-[0.3px]', true],
+  ['tracking-tight', true],
+  ['tracking-tighter', true],
+  ['tracking-normal', false],
+  ['tracking-wide', false],
+  ['tracking-wider', false],
+  ['tracking-widest', false],
+]
+
+test('BANNED_TRACKING flags px letter-spacing and named negative tracking', () => {
+  for (const [token, wantBanned] of BANNED_TRACKING_CASES) {
+    assert.equal(BANNED_TRACKING.test(token), wantBanned, `${token}: expected banned=${wantBanned}`)
+  }
 })
 
 test('sizing comes from the text-ui-* scale outside the pending allowlist', () => {
