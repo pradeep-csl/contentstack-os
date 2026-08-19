@@ -733,9 +733,15 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     return this.storage.gadgets.get(id) || null;
   }
 
-  async newGadget(id: string, title: string): Promise<void> {
+  // Register a workspace in this user's collection.
+  //
+  // `lastActive` marks it fully created at birth (see isFullyCreated) -- the explicit-creation
+  // path, where the user named the workspace before it has any content, so it has to show up in
+  // their lists right away. Omit it for the speculative path, where the workspace stays provisional
+  // and hidden until real activity records a time.
+  async newGadget(id: string, title: string, lastActive?: Date): Promise<void> {
     let created = new Date();
-    this.storage.gadgets.put({id, title, created});
+    this.storage.gadgets.put({id, title, created, ...(lastActive ? {lastActive} : {})});
   }
 
   async ensureGadgetRegistered(id: string, title: string): Promise<void> {

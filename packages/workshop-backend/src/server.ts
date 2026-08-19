@@ -277,6 +277,35 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
     return result;
   }
 
+  async createWorkspace(title?: string): Promise<RpcStub<Overseer>> {
+    let chosen = (title ?? "").trim();
+    let id = this.overseers.newUniqueId().toString();
+    // A last-active time at birth: the user named this workspace, so it is real even while empty.
+    await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE, new Date());
+    recordAnalytics(this.ctx, this.env, {
+      event_name: "gadget_created",
+      user_id: this.user.id.toString(),
+      gadget_id: id,
+      source: "named",
+    });
+    let result = await this.openGadget(id);
+    if (!result) {
+      throw new Error("Open failed despite newly-created workspace?");
+    }
+    // setTitle is the one writer that keeps the Overseer's own title and the user's record in step,
+    // so route the chosen name through it rather than seeding the two copies by hand. It also
+    // latches titleChosenByUser, which is exactly right here: the user typed this name, so no
+    // automatic naming should ever replace it.
+    //
+    // A blank name deliberately skips this: the workspace keeps the default title AND stays eligible
+    // for automatic naming, so someone who couldn't be bothered to name it still ends up with
+    // something better than "Untitled Workspace".
+    if (chosen) {
+      await result.setTitle(chosen);
+    }
+    return result;
+  }
+
   async listGadgets(): Promise<GadgetMetadataWithTimestamps[]> {
     return this.user.listGadgets();
   }

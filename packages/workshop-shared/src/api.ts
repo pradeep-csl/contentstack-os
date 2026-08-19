@@ -460,7 +460,7 @@ export interface AuthenticatedApi extends RpcTarget {
     configureObservers?: RpcStub<ObserverConfigCallback>
   ): Promise<RpcStub<Overseer>>;
 
-  // Create a new workspace. It will start out titled "Untitled Workspace".
+  // Create a new workspace. It will start out titled per `DEFAULT_WORKSPACE_TITLE`.
   //
   // Note: A gadget is considered "provisional" until it has some sort of activity, such as a
   //   chat message or code edit. Provisional gadgets do not appear on the home page and will be
@@ -471,6 +471,18 @@ export interface AuthenticatedApi extends RpcTarget {
   //
   // TODO(multi-gadget): This should be renamed to newWorkspace().
   newGadget(): Promise<RpcStub<Overseer>>;
+
+  // Create a new workspace that exists as soon as this call returns, titled `title` (trimmed;
+  // falls back to DEFAULT_WORKSPACE_TITLE when blank or absent).
+  //
+  // Unlike newGadget(), the result is never provisional: it appears in listGadgets() before it has
+  // any chat or code, because the user asked for it by name rather than starting to type. Use
+  // newGadget() for the speculative path where the user may never send anything at all.
+  //
+  // A non-blank `title` counts as user-chosen, so auto-naming will not later replace it.
+  //
+  // TODO(multi-gadget): newGadget() should be renamed to newWorkspace() to sit beside this.
+  createWorkspace(title?: string): Promise<RpcStub<Overseer>>;
 
   // List metadata about all the user's Gadgets. Used to display the front-page listing.
   //

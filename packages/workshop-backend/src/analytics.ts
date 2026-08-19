@@ -32,8 +32,9 @@ export type ProductAnalyticsGadgetInput =
       user_id: string;
       gadget_id?: string;
       gadget_owner_user_id?: string;
-      // Whether the gadget was created from empty chat or via blueprint.
-      source: "blank" | "blueprint";
+      // Whether the gadget was created from an empty chat, named up front by the user, or from a
+      // blueprint.
+      source: "blank" | "named" | "blueprint";
       blueprint_id?: string;
     }
   | {
