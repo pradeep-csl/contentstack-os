@@ -62,6 +62,17 @@
   --text-color-kumo-success: #007a52;
   --text-color-kumo-danger: #d62400;
   --text-color-kumo-warning: #704b00;
+  /* Placeholders are measured to sit only on `base` or a transparent parent, never on `tint`:
+     4.94:1 on base, 4.60:1 on elevated. Do not put a placeholder on a tinted surface. */
+  --text-color-kumo-placeholder: #66708a;
+  /* Kumo's own fallback is a generic blue; this is the Venus aqua darkened to clear AA. */
+  --text-color-kumo-info: #0057c2;
+  /* Badge text. Undeclared, these fell back to Kumo's neutrals — and, for `orange`, to a literal
+     orange across 57 badge uses, which is exactly the colour the Venus re-skin removed. */
+  --text-color-kumo-badge-orange-subtle: #704b00;
+  --text-color-kumo-badge-teal-subtle: #1f6f78;
+  --text-color-kumo-badge-neutral-subtle: #5b6580;
+  --text-color-kumo-badge-inverted: #ffffff;
 
   /* ===== CUSTOM BRAND TOKENS ===== */
   --color-accent-100: #6c5ce7;
@@ -188,6 +199,12 @@
   --text-color-kumo-success: #48dba2;
   --text-color-kumo-danger: #ff735f;
   --text-color-kumo-warning: #ffbc36;
+  --text-color-kumo-placeholder: oklch(0.62 0.02 285);
+  --text-color-kumo-info: #74b4ff;
+  --text-color-kumo-badge-orange-subtle: #ffbc36;
+  --text-color-kumo-badge-teal-subtle: #6fd3dd;
+  --text-color-kumo-badge-neutral-subtle: oklch(0.7 0.02 285);
+  --text-color-kumo-badge-inverted: oklch(0.15 0.015 285);
 
   --color-accent-100: #6c5ce7;
   --color-accent-200: #ada4f4;
