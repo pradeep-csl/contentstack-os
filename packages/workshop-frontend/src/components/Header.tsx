@@ -47,7 +47,7 @@ export default function Header() {
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2">
             <SiteLogo size={22} className="shrink-0" />
-            <span className="text-ui-lg font-semibold text-kumo-default">
+            <span className="text-ui-lg font-semibold text-kumo-strong">
               {siteName}
             </span>
           </Link>

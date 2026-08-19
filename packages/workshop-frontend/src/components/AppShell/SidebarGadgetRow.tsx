@@ -53,8 +53,8 @@ export default function SidebarGadgetRow({
     <Link
       to="/workspace/$id"
       params={{ id: gadget.id }}
-      className="group flex h-8 items-center gap-2 rounded-lg pl-1.5 pr-1 text-ui-md text-kumo-default transition-colors hover:bg-kumo-tint"
-      activeProps={{ className: 'flex h-8 items-center gap-2 rounded-lg pl-1.5 pr-1 text-ui-md bg-kumo-fill text-kumo-strong font-medium' }}
+      className="group flex h-[34px] items-center gap-2 rounded-lg pl-1.5 pr-1 text-ui-md text-kumo-default transition-colors hover:bg-kumo-tint"
+      activeProps={{ className: 'flex h-[34px] items-center gap-2 rounded-lg pl-1.5 pr-1 text-ui-md bg-kumo-fill text-kumo-strong font-medium' }}
       onClick={(e) => {
         if (renaming) e.preventDefault()
       }}

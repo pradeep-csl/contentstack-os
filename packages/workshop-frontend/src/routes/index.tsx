@@ -150,7 +150,7 @@ export function HomePageContent({ prompt }: HomeSearch) {
       <div className="flex w-full max-w-2xl flex-col items-stretch gap-8">
         {/* Hero */}
         <header className="text-center">
-          <h1 className="text-ui-3xl font-semibold text-kumo-strong sm:text-ui-3xl">
+          <h1 className="text-ui-3xl font-semibold text-kumo-strong">
             What are we working on?
           </h1>
           {/* 15px, not 14: against a 30px headline the smaller step read as a caption under a

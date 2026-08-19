@@ -61,8 +61,8 @@
   --text-ui-2xl: 1.375rem;             /* 22px — subsection headings */
   --text-ui-2xl--line-height: 1.75rem;
   --text-ui-2xl--letter-spacing: -0.015em;
-  --text-ui-3xl: 1.75rem;              /* 28px — page headings */
-  --text-ui-3xl--line-height: 2.125rem;
+  --text-ui-3xl: 1.875rem;             /* 30px — page headings */
+  --text-ui-3xl--line-height: 2.25rem;
   --text-ui-3xl--letter-spacing: -0.02em;
 }
 
