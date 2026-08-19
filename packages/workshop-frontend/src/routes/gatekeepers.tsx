@@ -150,7 +150,7 @@ function ConnectorCard({
         {reconnectBusy ? 'Opening...' : 'Reconnect'}
       </button>
     ) : (
-      <div className="grid h-7 w-7 place-items-center text-kumo-inactive transition-colors group-hover:text-kumo-default">
+      <div className="grid h-7 w-7 place-items-center text-kumo-subtle transition-colors group-hover:text-kumo-default">
         {state === 'available' ? (
           <Plus size={16} weight="bold" />
         ) : (
@@ -243,7 +243,7 @@ function SectionEyebrow({ label, count }: { label: string; count?: number }) {
       </h2>
       <div className="h-px flex-1 bg-kumo-line" />
       {typeof count === 'number' && (
-        <span className="text-[11px] leading-4 font-semibold tracking-[-0.1px] text-kumo-inactive">
+        <span className="text-[11px] leading-4 font-semibold tracking-[-0.1px] text-kumo-subtle">
           {count}
         </span>
       )}
@@ -757,14 +757,14 @@ function ConnectorsPage() {
           <div className="relative flex-1">
             <MagnifyingGlass
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle"
             />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search gatekeepers…"
-              className="h-10 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive transition-[border-color,box-shadow] focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-10 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
           <ViewToggle view={view} onChange={setView} />

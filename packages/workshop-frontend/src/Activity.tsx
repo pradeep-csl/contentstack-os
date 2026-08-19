@@ -213,7 +213,7 @@ export default function Activity({
               <span className="text-[12.5px] font-medium leading-[17px] tracking-[-0.15px] text-kumo-default">
                 {pendingActions.length} {pendingActions.length === 1 ? 'request' : 'requests'} waiting
               </span>
-              <span className="ml-auto text-[11.5px] leading-[17px] text-kumo-inactive">Oldest first</span>
+              <span className="ml-auto text-[11.5px] leading-[17px] text-kumo-subtle">Oldest first</span>
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
               {pendingActions.map(record => {
@@ -267,7 +267,7 @@ export default function Activity({
                 {filter.label}
               </button>
             ))}
-            <span className="ml-auto pr-2 text-[11.5px] leading-[17px] tabular-nums text-kumo-inactive">
+            <span className="ml-auto pr-2 text-[11.5px] leading-[17px] tabular-nums text-kumo-subtle">
               {historyShown} {historyShown === 1 ? 'event' : 'events'}
             </span>
 
@@ -295,7 +295,7 @@ export default function Activity({
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto">
-              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive">
+              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
                 <span>Time</span>
                 <span>Event</span>
                 <span>Status</span>
@@ -303,7 +303,7 @@ export default function Activity({
               </div>
               {historyGroups.map(group => (
                 <section key={group.label}>
-                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive backdrop-blur-sm">
+                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle backdrop-blur-sm">
                     {group.label}
                   </h3>
                   {group.records.map(record => (
@@ -462,7 +462,7 @@ function AutoApprovalPanel({
                     <span className="block truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
                       {entry.actionKind.label}
                     </span>
-                    <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-inactive">
+                    <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
                       {entry.orphaned
                         ? 'This connection no longer offers this action; the rule still applies.'
                         : entry.enabled
@@ -520,10 +520,10 @@ function ReviewRequest({
             </h3>
             <CaretRight
               size={12}
-              className={`flex-shrink-0 text-kumo-inactive transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+              className={`flex-shrink-0 text-kumo-subtle transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
             />
           </button>
-          <p className="mt-0.5 truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-inactive">
+          <p className="mt-0.5 truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
             {resourceUrl ? (
               <a
                 href={resourceUrl}
@@ -583,15 +583,15 @@ function HistoryRow({
         aria-expanded={expanded}
         className="group grid w-full cursor-pointer grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line/70 px-5 py-[7px] text-left transition-colors hover:bg-kumo-elevated/50"
       >
-        <time className="text-[11.5px] tabular-nums leading-4 text-kumo-inactive">
+        <time className="text-[11.5px] tabular-nums leading-4 text-kumo-subtle">
           {formatClockTime(at)}
         </time>
         <span className="flex min-w-0 items-center gap-2">
-          <TypeIcon record={record} className="flex-shrink-0 text-kumo-inactive" />
+          <TypeIcon record={record} className="flex-shrink-0 text-kumo-subtle" />
           <span className="truncate text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default">
             {record.description.title}
           </span>
-          <span className="hidden flex-shrink-0 truncate text-[12px] leading-4 tracking-[-0.1px] text-kumo-inactive sm:inline">
+          <span className="hidden flex-shrink-0 truncate text-[12px] leading-4 tracking-[-0.1px] text-kumo-subtle sm:inline">
             {record.resourceTitle}
           </span>
         </span>
@@ -601,7 +601,7 @@ function HistoryRow({
         </span>
         <CaretRight
           size={12}
-          className={`text-kumo-inactive transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+          className={`text-kumo-subtle transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
         />
       </button>
 
@@ -612,7 +612,7 @@ function HistoryRow({
               {record.description.description}
             </p>
           )}
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] text-kumo-inactive">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] text-kumo-subtle">
             <span>{formatFullDate(at)}</span>
             <span className="text-kumo-subtle">{record.resourceTitle}</span>
             {resolvedBy && (

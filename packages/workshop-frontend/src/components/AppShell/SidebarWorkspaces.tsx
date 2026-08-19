@@ -415,10 +415,10 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
         count={favorites.length}
         open={favOpen}
         onToggle={() => setFavOpen((o) => !o)}
-        icon={<Star size={12} weight="regular" className="text-kumo-inactive" />}
+        icon={<Star size={12} weight="regular" className="text-kumo-subtle" />}
       >
         {favorites.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-inactive">
+          <p className="px-2.5 py-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
             Favorite a workspace to keep it here.
           </p>
         ) : (
@@ -450,7 +450,7 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
             ))}
           </div>
         ) : recent.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-inactive">
+          <p className="px-2.5 py-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
             {search ? 'No matches.' : 'No workspaces yet.'}
           </p>
         ) : (
@@ -502,7 +502,7 @@ function SidebarSection({
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-6 cursor-pointer items-center gap-1 px-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive transition-colors hover:text-kumo-subtle"
+        className="flex h-6 cursor-pointer items-center gap-1 px-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle transition-colors hover:text-kumo-subtle"
       >
         <CaretDown
           size={10}
@@ -514,7 +514,7 @@ function SidebarSection({
         {/* Only once there's something to count. A "0" beside an empty section is noise, and for a
             new user every section in the rail is empty at the same time. */}
         {count !== undefined && count > 0 && (
-          <span className="ml-1 text-kumo-inactive">{count}</span>
+          <span className="ml-1 text-kumo-subtle">{count}</span>
         )}
       </button>
       {open && <div className="mt-0.5">{children}</div>}

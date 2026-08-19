@@ -31,7 +31,7 @@ export default function ComposerFormatMenuItems({
 
   return (
     <>
-      <p className="px-2 pb-1 pt-1.5 text-[10px] font-medium uppercase leading-4 tracking-[0.06em] text-kumo-inactive">
+      <p className="px-2 pb-1 pt-1.5 text-[10px] font-medium uppercase leading-4 tracking-[0.06em] text-kumo-subtle">
         Start with
       </p>
       {formats.map((format) => (
@@ -41,7 +41,7 @@ export default function ComposerFormatMenuItems({
           disabled={creating !== null}
           onClick={() => choose(format)}
         >
-          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center text-kumo-inactive">
+          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center text-kumo-subtle">
             <FormatGlyph
               output={format.output}
               size="md"

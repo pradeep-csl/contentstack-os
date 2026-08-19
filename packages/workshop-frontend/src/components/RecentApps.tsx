@@ -48,7 +48,7 @@ function AppRow({ gadget }: { gadget: GadgetMetadataWithTimestamps }) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-kumo-default truncate">
+        <h3 className="text-sm font-medium text-kumo-strong truncate">
           {gadget.title || 'Untitled Workspace'}
         </h3>
         {gadget.owner && (
@@ -61,7 +61,7 @@ function AppRow({ gadget }: { gadget: GadgetMetadataWithTimestamps }) {
       {/* Status + time */}
       <div className="flex items-center gap-3 flex-shrink-0">
 
-        <span className="hidden md:flex items-center gap-1 text-xs text-kumo-inactive">
+        <span className="hidden md:flex items-center gap-1 text-xs text-kumo-subtle">
           <Clock size={10} />
           {formatRelativeTime(gadget.lastActive)}
         </span>
@@ -118,7 +118,7 @@ export default function RecentApps() {
   if (gadgets.length === 0) {
     return (
       <section className="w-full max-w-2xl mx-auto">
-        <div className="text-center py-8 text-kumo-inactive text-sm">
+        <div className="text-center py-8 text-kumo-subtle text-sm">
           No workspaces yet. Create your first one above!
         </div>
       </section>

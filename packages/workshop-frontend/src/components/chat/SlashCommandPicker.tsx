@@ -260,10 +260,10 @@ export function useSlashCommandPicker({
               onClick={() => select(choice)}
             >
               <span className="max-w-[45%] shrink-0 truncate">
-                <span className="text-kumo-inactive">/</span>{choice.name}
+                <span className="text-kumo-subtle">/</span>{choice.name}
               </span>
               <span className="min-w-0 flex-1 truncate text-kumo-subtle">{choice.description}</span>
-              <span className="max-w-[30%] shrink-0 truncate text-[11.5px] leading-4 text-kumo-inactive">
+              <span className="max-w-[30%] shrink-0 truncate text-[11.5px] leading-4 text-kumo-subtle">
                 {choice.providerLabel}
               </span>
               {optionIndex === index && selectable && <TabHint />}

@@ -808,9 +808,9 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
             )}
             <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
               <span>By {meta.author.name}</span>
-              <span className="text-kumo-inactive">•</span>
+              <span className="text-kumo-subtle">•</span>
               <span>v{meta.version}</span>
-              <span className="text-kumo-inactive">•</span>
+              <span className="text-kumo-subtle">•</span>
               <span>Updated {new Date(meta.lastUpdated).toLocaleDateString()}</span>
             </div>
           </div>
@@ -951,10 +951,10 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
           {bindingEntries.length > 0 ? (
             <section>
               <div className="mb-2 flex items-center gap-2 px-1">
-                <h2 className="text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-inactive">
+                <h2 className="text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
                   Required connections
                 </h2>
-                <span className="text-[12px] font-medium tracking-[-0.1px] text-kumo-inactive">
+                <span className="text-[12px] font-medium tracking-[-0.1px] text-kumo-subtle">
                   {bindingEntries.length}
                 </span>
               </div>

@@ -90,20 +90,20 @@ export default function BlueprintsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-3 pb-3">
-        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-inactive">
+        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
           Featured
         </span>
         <div className="relative sm:w-64">
           <MagnifyingGlass
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search blueprints…"
-            className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+            className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
           />
         </div>
       </div>
@@ -197,7 +197,7 @@ function FeaturedBlueprintCard({
           </p>
           <p
             className={`mt-0.5 line-clamp-1 text-[12px] leading-4 tracking-[-0.2px] ${
-              blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-inactive"
+              blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-subtle"
             }`}
           >
             {blueprint.metadata.description || "No description"}
@@ -243,7 +243,7 @@ function FeaturedBlueprintRow({
         </p>
         <p
           className={`mt-0.5 line-clamp-1 text-[12px] leading-4 tracking-[-0.2px] ${
-            blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-inactive"
+            blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-subtle"
           }`}
         >
           {blueprint.metadata.description || "No description"}

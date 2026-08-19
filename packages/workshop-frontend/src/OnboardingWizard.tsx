@@ -447,7 +447,7 @@ export default function OnboardingWizard({
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full">
-                        <Camera size={22} className="text-kumo-inactive group-hover:text-kumo-subtle transition-colors" />
+                        <Camera size={22} className="text-kumo-subtle group-hover:text-kumo-subtle transition-colors" />
                       </div>
                     )}
                     {avatarProcessing && (
@@ -469,7 +469,7 @@ export default function OnboardingWizard({
                       e.target.value = ''
                     }}
                   />
-                  <p className="text-xs text-kumo-inactive mt-1.5">
+                  <p className="text-xs text-kumo-subtle mt-1.5">
                     {avatarPreview ? 'Change' : 'Add photo'}
                   </p>
                 </div>
@@ -488,7 +488,7 @@ export default function OnboardingWizard({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="How should we call you?"
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-kumo-line bg-kumo-base text-kumo-default placeholder:text-kumo-inactive focus:outline-none focus:border-kumo-brand transition-colors"
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-kumo-line bg-kumo-base text-kumo-default placeholder:text-kumo-placeholder focus:outline-none focus:border-kumo-brand transition-colors"
                   />
                 </div>
               </div>
@@ -510,14 +510,14 @@ export default function OnboardingWizard({
                   <div className="relative mb-3">
                     <MagnifyingGlass
                       size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle"
                     />
                     <input
                       type="text"
                       value={modelSearch}
                       onChange={(e) => setModelSearch(e.target.value)}
                       placeholder="Search models…"
-                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
                     />
                   </div>
                 )}
@@ -582,7 +582,7 @@ export default function OnboardingWizard({
                           <p className="text-sm text-kumo-subtle mb-1">
                             {models.length === 0 ? 'No models configured yet' : 'No models match your search'}
                           </p>
-                          <p className="text-xs text-kumo-inactive">
+                          <p className="text-xs text-kumo-subtle">
                             {models.length === 0 ? 'Add a model to get started' : 'Try a different name'}
                           </p>
                         </div>
@@ -679,7 +679,7 @@ export default function OnboardingWizard({
                   </div>
                 )}
 
-                <p className="text-xs text-kumo-inactive mt-4 text-center">
+                <p className="text-xs text-kumo-subtle mt-4 text-center">
                   Optional &middot; you can manage connections any time
                 </p>
               </div>
@@ -724,7 +724,7 @@ export default function OnboardingWizard({
                     transition-all duration-150
                     ${!finishing
                       ? 'text-kumo-inverse bg-kumo-brand hover:bg-kumo-brand-hover'
-                      : 'text-kumo-inactive bg-kumo-tint cursor-not-allowed'
+                      : 'text-kumo-subtle bg-kumo-tint cursor-not-allowed'
                     }
                   `}
                 >

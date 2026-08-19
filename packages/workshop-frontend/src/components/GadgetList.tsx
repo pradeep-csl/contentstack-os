@@ -99,11 +99,11 @@ function AppRow({
                 if (e.key === 'Enter') commitRename()
                 if (e.key === 'Escape') setIsRenaming(false)
               }}
-              className="text-sm font-medium text-kumo-default bg-transparent border-b border-kumo-brand outline-none w-full min-w-0"
+              className="text-sm font-medium text-kumo-strong bg-transparent border-b border-kumo-brand outline-none w-full min-w-0"
               onClick={(e) => e.preventDefault()}
             />
           ) : (
-            <h3 className="text-sm font-medium text-kumo-default truncate">
+            <h3 className="text-sm font-medium text-kumo-strong truncate">
               {gadget.title || 'Untitled Workspace'}
             </h3>
           )}
@@ -116,7 +116,7 @@ function AppRow({
       </div>
 
       {/* Time */}
-      <span className="hidden lg:flex items-center gap-1 text-xs text-kumo-inactive flex-shrink-0">
+      <span className="hidden lg:flex items-center gap-1 text-xs text-kumo-subtle flex-shrink-0">
         <Clock size={10} />
         {formatRelativeTime(gadget.lastActive)}
       </span>
@@ -337,7 +337,7 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
             Your workspaces
           </h2>
           {!loading && gadgets.length === 0 && !loadError && (
-            <p className="mt-1 text-sm text-kumo-inactive">
+            <p className="mt-1 text-sm text-kumo-subtle">
               You haven&apos;t created any workspaces yet
             </p>
           )}
@@ -350,14 +350,14 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
           <div className="relative">
             <MagnifyingGlass
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle"
             />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search workspaces…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
           </div>
         ) : filtered.length === 0 ? (
           search ? (
-            <div className="text-center py-12 text-kumo-inactive text-sm">
+            <div className="text-center py-12 text-kumo-subtle text-sm">
               No workspaces found
             </div>
           ) : (
@@ -508,10 +508,10 @@ function HomeFeaturedBlueprintCard({
             <Hexagon size={13} className="text-white/75" weight="bold" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="m-0 truncate text-[13px] leading-[18px] font-semibold tracking-[-0.25px] text-kumo-default">
+            <p className="m-0 truncate text-[13px] leading-[18px] font-semibold tracking-[-0.25px] text-kumo-strong">
               {blueprint.metadata.title}
             </p>
-            <p className={`mt-0.5 line-clamp-2 min-h-8 text-[12px] leading-4 tracking-[-0.2px] ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-inactive italic'}`}>
+            <p className={`mt-0.5 line-clamp-2 min-h-8 text-[12px] leading-4 tracking-[-0.2px] ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-subtle italic'}`}>
               {blueprint.metadata.description || 'No description'}
             </p>
             {badges.length > 0 && (

@@ -26,7 +26,7 @@ function ThemeModeButton() {
           type="button"
           aria-label={`${label}. Switch to ${nextMode}.`}
           onClick={() => setThemeMode(nextMode)}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-kumo-inactive transition-colors hover:bg-kumo-tint hover:text-kumo-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring focus-visible:ring-offset-2 focus-visible:ring-offset-kumo-elevated"
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring focus-visible:ring-offset-2 focus-visible:ring-offset-kumo-elevated"
         >
           {themeMode === 'system' ? (
             <Desktop size={15} />
@@ -66,7 +66,7 @@ function StripLink({
         collapsed ? 'w-8 justify-center' : 'px-2',
         active
           ? 'bg-kumo-fill text-kumo-brand'
-          : 'text-kumo-inactive hover:bg-kumo-tint hover:text-kumo-default',
+          : 'text-kumo-subtle hover:bg-kumo-tint hover:text-kumo-default',
       ].join(' ')}
     >
       {children}

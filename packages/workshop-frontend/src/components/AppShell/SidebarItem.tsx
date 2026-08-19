@@ -63,7 +63,7 @@ export default function SidebarItem({
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1 truncate">{label}</span>
-          {trailing && <span className="shrink-0 text-kumo-inactive">{trailing}</span>}
+          {trailing && <span className="shrink-0 text-kumo-subtle">{trailing}</span>}
         </>
       )}
     </Link>

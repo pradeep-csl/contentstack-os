@@ -246,7 +246,7 @@ export default function ConnectConnectorModal({
 
           {supportedResources.length > 0 && (
             <div className="mt-5">
-              <h3 className="mb-2 text-[12px] leading-4 font-semibold uppercase tracking-[0.6px] text-kumo-inactive">
+              <h3 className="mb-2 text-[12px] leading-4 font-semibold uppercase tracking-[0.6px] text-kumo-subtle">
                 {granular
                   ? isManage
                     ? 'Resources'

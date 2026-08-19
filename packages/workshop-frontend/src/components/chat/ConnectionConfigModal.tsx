@@ -101,7 +101,7 @@ export default function ConnectionConfigModal({
         {/* Resource list */}
         <div className="max-h-56 overflow-y-auto px-5 pb-4">
           {resources.length === 0 ? (
-            <p className="text-sm text-kumo-inactive text-center py-4">
+            <p className="text-sm text-kumo-subtle text-center py-4">
               No resources added yet
             </p>
           ) : (
@@ -116,7 +116,7 @@ export default function ConnectionConfigModal({
                   </span>
                   <button
                     onClick={() => handleRemove(r.id)}
-                    className="p-0.5 text-kumo-inactive opacity-0 group-hover:opacity-100 hover:text-kumo-danger rounded transition-all"
+                    className="p-0.5 text-kumo-subtle opacity-0 group-hover:opacity-100 hover:text-kumo-danger rounded transition-all"
                   >
                     <X size={12} />
                   </button>

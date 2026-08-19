@@ -116,7 +116,7 @@ export default function FileSidebar({
   return (
     <div className="flex h-full w-[244px] flex-col border-r border-kumo-line bg-kumo-base">
       <div className="flex h-9 shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-kumo-inactive">
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
           Files
         </span>
         <WorkshopIconButton
@@ -366,7 +366,7 @@ function FileRow({
           autoCapitalize="off"
           autoCorrect="off"
           aria-label={`Rename ${filename}`}
-          className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] tracking-[-0.2px] text-kumo-default outline-none placeholder:text-kumo-inactive"
+          className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] tracking-[-0.2px] text-kumo-default outline-none placeholder:text-kumo-placeholder"
         />
       ) : (
         <button
@@ -396,7 +396,7 @@ function FileRow({
               <WorkshopIconButton
                 aria-label={`Actions for ${filename}`}
                 onClick={(event) => event.stopPropagation()}
-                className="!h-5 !w-5 text-kumo-inactive opacity-0 hover:bg-kumo-tint hover:text-kumo-default focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100"
+                className="!h-5 !w-5 text-kumo-subtle opacity-0 hover:bg-kumo-tint hover:text-kumo-default focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100"
               >
                 <DotsThree size={14} weight="bold" />
               </WorkshopIconButton>

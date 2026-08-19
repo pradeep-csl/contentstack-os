@@ -90,7 +90,7 @@ function RoleMenu({
             aria-label={ariaLabel}
           >
             {roleLabel(value)}
-            <CaretDown size={11} weight="bold" className="text-kumo-inactive transition-transform duration-150 ease-out group-data-[popup-open]:rotate-180" />
+            <CaretDown size={11} weight="bold" className="text-kumo-subtle transition-transform duration-150 ease-out group-data-[popup-open]:rotate-180" />
           </button>
         }
       />
@@ -261,7 +261,7 @@ function RecipientVerification({
                 {requirement.resourceTitle}
               </p>
               {requirement.resourceUrl && (
-                <p className="truncate font-mono text-[11px] leading-4 text-kumo-inactive">
+                <p className="truncate font-mono text-[11px] leading-4 text-kumo-subtle">
                   {requirement.resourceUrl}
                 </p>
               )}
@@ -275,7 +275,7 @@ function RecipientVerification({
   return (
     <section aria-labelledby={headingId} className="mt-4">
       <div className="mb-2 flex items-center gap-1.5 px-1">
-        <ShieldCheck size={13} className="text-kumo-inactive" />
+        <ShieldCheck size={13} className="text-kumo-subtle" />
         <h3 id={headingId} className="text-[12px] leading-4 font-medium tracking-[-0.15px] text-kumo-subtle">
           {heading}
         </h3>
@@ -819,7 +819,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
               data-lpignore="true"
               data-bwignore="true"
               data-form-type="other"
-              className="h-9 min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default outline-none placeholder:text-kumo-inactive disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default outline-none placeholder:text-kumo-placeholder disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:hidden"
               disabled={sharingProhibited}
             />
             <RoleMenu
@@ -849,7 +849,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                   <p className="text-[13px] leading-[18px] font-medium text-kumo-default">
                     Added {invitedName}
                   </p>
-                  <span className="text-[11px] leading-4 text-kumo-inactive">
+                  <span className="text-[11px] leading-4 text-kumo-subtle">
                     {invitedLinkCopied ? 'Link copied to your clipboard' : 'Send them this link to open it'}
                   </span>
                 </div>
@@ -880,7 +880,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                         <p className="text-[13px] leading-[18px] font-medium text-kumo-default">
                           {newShareLinkCopied ? 'Link copied' : 'Link ready'}
                         </p>
-                        <span className="text-[11px] leading-4 text-kumo-inactive">
+                        <span className="text-[11px] leading-4 text-kumo-subtle">
                           You can copy it again anytime from Share links
                         </span>
                       </div>
@@ -909,7 +909,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                       onKeyDown={(e) => { if (e.key === 'Enter') handleCreateShareLink() }}
                       placeholder="Name this link (optional)…"
                       aria-label="Share link name (optional)"
-                      className="h-9 min-w-0 flex-1 border-0 bg-transparent p-0 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default outline-none placeholder:text-kumo-inactive"
+                      className="h-9 min-w-0 flex-1 border-0 bg-transparent p-0 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default outline-none placeholder:text-kumo-placeholder"
                       disabled={creatingLink || sharingProhibited}
                     />
                     <RoleMenu
@@ -1045,7 +1045,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                               }}
                               placeholder="Name this link…"
                               aria-label="Share link name"
-                              className="block w-full border-0 bg-transparent p-0 text-[13px] leading-[17px] font-medium tracking-[-0.25px] text-kumo-default outline-none shadow-[inset_0_-1px_0_0_var(--color-kumo-line)] transition-shadow placeholder:font-normal placeholder:text-kumo-inactive focus:shadow-[inset_0_-1px_0_0_var(--color-kumo-fill)]"
+                              className="block w-full border-0 bg-transparent p-0 text-[13px] leading-[17px] font-medium tracking-[-0.25px] text-kumo-default outline-none shadow-[inset_0_-1px_0_0_var(--color-kumo-line)] transition-shadow placeholder:font-normal placeholder:text-kumo-placeholder focus:shadow-[inset_0_-1px_0_0_var(--color-kumo-fill)]"
                               disabled={savingShareLinkNote}
                             />
                           ) : (

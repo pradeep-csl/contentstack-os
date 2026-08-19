@@ -135,7 +135,7 @@ export default function AdminFormatsPanel({
           }
         />
         <DropdownMenu.Content className={MENU_CONTENT}>
-          <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive">
+          <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
             Offer as a standard format
           </p>
           {available.map((candidate) => (
@@ -149,7 +149,7 @@ export default function AdminFormatsPanel({
                 <span className="block truncate text-[13px] text-kumo-default">
                   {candidate.title || 'Untitled blueprint'}
                 </span>
-                <span className="block truncate text-[11px] text-kumo-inactive">
+                <span className="block truncate text-[11px] text-kumo-subtle">
                   {candidate.declared
                     ? `Produces ${candidate.declared.plural}`
                     : 'No declared format. You’ll name it.'}
@@ -167,11 +167,11 @@ export default function AdminFormatsPanel({
 function PreviewStrip({ formats }: { formats: AdminFormat[] }) {
   return (
     <div className="mb-5 rounded-lg border border-dashed border-kumo-line bg-kumo-tint/40 p-4">
-      <p className="mb-2.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive">
+      <p className="mb-2.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
         What people will see
       </p>
       {formats.length === 0 ? (
-        <p className="text-[13px] italic text-kumo-inactive">
+        <p className="text-[13px] italic text-kumo-subtle">
           Nothing yet. People will only see “New workspace”.
         </p>
       ) : (
@@ -269,7 +269,7 @@ function FormatRow({
             </span>
           </span>
 
-          <span className="shrink-0 text-kumo-inactive">
+          <span className="shrink-0 text-kumo-subtle">
             {open ? <CaretDown size={13} /> : <CaretRight size={13} />}
           </span>
         </button>
@@ -351,7 +351,7 @@ function FormatRow({
                       the Outputs page, and that shouldn't be discovered there. */}
                   <figure className="hidden shrink-0 flex-col items-center gap-1.5 sm:flex">
                     <FormatPreview output={format.output} width={112} />
-                    <figcaption className="text-[10px] uppercase tracking-[0.06em] text-kumo-inactive">
+                    <figcaption className="text-[10px] uppercase tracking-[0.06em] text-kumo-subtle">
                       On Outputs
                     </figcaption>
                   </figure>
@@ -373,7 +373,7 @@ function FormatRow({
                     only its last line, and showing the label alone made an empty hint look like the
                     agent had been told nothing. Mirrors #listStandardFormats in overseer.ts. */}
                 {format.output && (
-                  <p className="mt-2 flex items-start gap-1.5 rounded-md bg-kumo-tint/60 px-2.5 py-2 font-mono text-[11px] leading-4 text-kumo-subtle">
+                  <p className="mt-2 flex items-start gap-1.5 rounded-md bg-kumo-tint/60 px-2.5 py-2 font-mono text-[11px] leading-4 text-kumo-default">
                     <Sparkle size={12} className="mt-0.5 shrink-0" />
                     <span className="min-w-0">
                       <span className="block">
@@ -381,7 +381,7 @@ function FormatRow({
                         {format.agentHint ? ` -- ${format.agentHint}` : ''}
                       </span>
                       {format.blueprintDescription && (
-                        <span className="mt-0.5 block text-kumo-inactive">
+                        <span className="mt-0.5 block text-kumo-subtle">
                           {format.blueprintDescription}
                         </span>
                       )}
@@ -488,7 +488,7 @@ function OverrideField({
 
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive">
+      <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
         {label}
         {overridden && (
           <span className="ml-1 normal-case tracking-normal text-kumo-subtle">(overridden)</span>
@@ -524,7 +524,7 @@ function IconPicker({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive">
+      <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
         Icon
       </span>
       <DropdownMenu>

@@ -11,7 +11,7 @@ export default function NewFormatRow({ label = 'Start with' }: { label?: string 
 
   return (
     <div className="flex flex-col items-center gap-2.5">
-      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-kumo-inactive">
+      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
         {label}
       </span>
       <div className="flex flex-wrap items-center justify-center gap-2">

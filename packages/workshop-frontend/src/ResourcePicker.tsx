@@ -511,7 +511,7 @@ export default function ResourcePicker({
                   </span>
                   <span
                     title={resource.urlPattern}
-                    className="min-w-0 flex-1 truncate text-right font-mono text-[11.5px] leading-4 text-kumo-inactive"
+                    className="min-w-0 flex-1 truncate text-right font-mono text-[11.5px] leading-4 text-kumo-subtle"
                   >
                     {resource.urlPattern.replace(/^https?:\/\//, '')}
                   </span>
@@ -588,7 +588,7 @@ export default function ResourcePicker({
                           {account.description.uniqueName || account.description.displayName}
                         </span>
                         {hostname && hostname !== '*' && (
-                          <span className="block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-inactive">
+                          <span className="block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
                             {hostname}
                           </span>
                         )}
@@ -608,7 +608,7 @@ export default function ResourcePicker({
                       ) : isActive && !searchHasPlaceholders ? (
                         <TabHint />
                       ) : (
-                        <CaretRight size={12} className="flex-shrink-0 text-kumo-inactive" />
+                        <CaretRight size={12} className="flex-shrink-0 text-kumo-subtle" />
                       )}
                     </div>
                   )
@@ -636,7 +636,7 @@ export default function ResourcePicker({
                       cursor: connectingVendor === vendor.id ? 'wait' : 'pointer',
                     }}
                   >
-                    <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border border-dashed border-kumo-line text-kumo-inactive">
+                    <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-md border border-dashed border-kumo-line text-kumo-subtle">
                       {connectingVendor === vendor.id ? (
                         <span className="h-3 w-3 animate-spin rounded-full border-2 border-kumo-brand border-t-transparent" />
                       ) : (

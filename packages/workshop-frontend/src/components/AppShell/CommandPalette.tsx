@@ -261,7 +261,7 @@ export default function CommandPalette({
         id: `ws-${g.id}`,
         label: g.title || 'Untitled workspace',
         hint: 'Workspace',
-        icon: <SquaresFour size={15} className="text-kumo-inactive" />,
+        icon: <SquaresFour size={15} className="text-kumo-subtle" />,
         run: () => navigate({ to: '/workspace/$id', params: { id: g.id } }),
       }))
 
@@ -271,7 +271,7 @@ export default function CommandPalette({
         id: `bp-${b.id}`,
         label: b.title,
         hint: 'Blueprint',
-        icon: <Blueprint size={15} className="text-kumo-inactive" />,
+        icon: <Blueprint size={15} className="text-kumo-subtle" />,
         run: () => navigate({ to: '/blueprint/$id', params: { id: b.id } }),
       }))
 
@@ -350,30 +350,30 @@ export default function CommandPalette({
       <div className="absolute inset-0 bg-black/20" aria-hidden="true" onMouseDown={onClose} />
       <div className="themed-floating-shadow-lg relative w-full max-w-xl overflow-hidden rounded-xl border border-kumo-line bg-kumo-base">
         <div className="flex items-center gap-2.5 border-b border-kumo-line px-3.5">
-          <MagnifyingGlass size={16} className="shrink-0 text-kumo-inactive" />
+          <MagnifyingGlass size={16} className="shrink-0 text-kumo-subtle" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search workspaces and actions…"
-            className="h-12 w-full bg-transparent text-[14px] leading-5 tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive focus:outline-none"
+            className="h-12 w-full bg-transparent text-[14px] leading-5 tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder focus:outline-none"
           />
-          <kbd className="shrink-0 rounded border border-kumo-line px-1.5 py-0.5 font-sans text-[10px] leading-none text-kumo-inactive">
+          <kbd className="shrink-0 rounded border border-kumo-line px-1.5 py-0.5 font-sans text-[10px] leading-none text-kumo-subtle">
             ESC
           </kbd>
         </div>
 
         <div ref={listRef} className="sidebar-scroll max-h-[min(60vh,420px)] overflow-y-auto p-1.5">
           {flat.length === 0 ? (
-            <p className="px-3 py-6 text-center text-[13px] text-kumo-inactive">No results.</p>
+            <p className="px-3 py-6 text-center text-[13px] text-kumo-subtle">No results.</p>
           ) : (
             groups.map((group, gi) => {
               // Compute the flat index offset for this group so keyboard nav stays in sync.
               const start = groups.slice(0, gi).reduce((n, g) => n + g.items.length, 0)
               return (
                 <div key={group.heading} className="mb-1 last:mb-0">
-                  <p className="px-2.5 pt-1.5 pb-1 text-[11px] font-medium uppercase tracking-[0.4px] text-kumo-inactive">
+                  <p className="px-2.5 pt-1.5 pb-1 text-[11px] font-medium uppercase tracking-[0.4px] text-kumo-subtle">
                     {group.heading}
                   </p>
                   {group.items.map((cmd, j) => {
@@ -395,7 +395,7 @@ export default function CommandPalette({
                         </span>
                         <span className="min-w-0 flex-1 truncate">{highlight(cmd.label, cmd.indices)}</span>
                         {cmd.hint && (
-                          <span className="shrink-0 text-[11px] text-kumo-inactive">{cmd.hint}</span>
+                          <span className="shrink-0 text-[11px] text-kumo-subtle">{cmd.hint}</span>
                         )}
                       </button>
                     )
@@ -407,7 +407,7 @@ export default function CommandPalette({
         </div>
 
         {/* Footer hint strip — standard command-palette keyboard legend. */}
-        <div className="flex items-center gap-3 border-t border-kumo-line px-3.5 py-2 text-[11px] text-kumo-inactive">
+        <div className="flex items-center gap-3 border-t border-kumo-line px-3.5 py-2 text-[11px] text-kumo-subtle">
           <span className="flex items-center gap-1">
             <kbd className="rounded border border-kumo-line px-1 py-0.5 font-sans leading-none">↑</kbd>
             <kbd className="rounded border border-kumo-line px-1 py-0.5 font-sans leading-none">↓</kbd>

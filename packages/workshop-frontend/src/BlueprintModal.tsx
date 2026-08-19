@@ -385,7 +385,7 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                         </div>
                       )}
                       {clearScreenshot && !newScreenshotUrl && (
-                        <div className="mt-3 rounded-lg border border-dashed border-kumo-line bg-kumo-tint px-3 py-2 text-[12px] leading-4 text-kumo-subtle">
+                        <div className="mt-3 rounded-lg border border-dashed border-kumo-line bg-kumo-tint px-3 py-2 text-[12px] leading-4 text-kumo-default">
                           Screenshot will be removed when you save.
                         </div>
                       )}
@@ -652,7 +652,7 @@ function BlueprintRow({
             {bp.description}
           </p>
         ) : (
-          <p className="m-0 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-inactive">
+          <p className="m-0 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
             No description
           </p>
         )}

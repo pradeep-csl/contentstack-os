@@ -7,7 +7,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -110,4 +110,48 @@ test('placeholder clears AA on the surfaces placeholders actually occupy', () =>
     const ratio = contrast(theme.get('--text-color-kumo-placeholder'), surface)
     assert.ok(ratio >= 4.5, `placeholder on ${surface} is ${ratio.toFixed(2)}:1`)
   }
+})
+
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'dist-app', '.wrangler', 'generated', 'build', '.git'])
+
+function tsxFiles(dir, out = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SKIP_DIRS.has(entry.name)) continue
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) tsxFiles(full, out)
+    else if (entry.name.endsWith('.tsx')) out.push(full)
+  }
+  return out
+}
+
+const repoPath = (file) => relative(ROOT, file).split(sep).join('/')
+
+// Files still using `text-kumo-inactive` for something other than a disabled control. Shrinks only.
+// Populate in Step 2 from the actual failure output; do not guess.
+const PENDING_INACTIVE = new Set([
+  // Chat message revert/discard/deny controls: the element carrying the class is the button
+  // itself, and it has a `disabled` prop of its own (footerDisabled / isDiscarding / isProc /
+  // isAgentActive) — genuine disabled-state usage, not content.
+  'packages/workshop-frontend/src/ChatInterface.tsx',
+  // The share-dialog collaborator-removal Cancel button carries `disabled={busy}` on itself.
+  'packages/workshop-frontend/src/ShareModal.tsx',
+  // Approve/deny resolve buttons carry `disabled` on the same <button> the class is applied to.
+  'packages/workshop-frontend/src/components/ResolveButton.tsx',
+])
+
+test('text-kumo-inactive is not used for content outside the pending allowlist', () => {
+  const offenders = []
+  for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
+    const rel = repoPath(file)
+    if (PENDING_INACTIVE.has(rel)) continue
+    if (readFileSync(file, 'utf8').includes('text-kumo-inactive')) offenders.push(rel)
+  }
+  assert.deepEqual(offenders, [], 'move these to subtle/placeholder, or add to PENDING_INACTIVE')
+})
+
+test('the inactive allowlist has no stale entries', () => {
+  const stale = [...PENDING_INACTIVE].filter(
+    (rel) => !readFileSync(join(ROOT, rel), 'utf8').includes('text-kumo-inactive'),
+  )
+  assert.deepEqual(stale, [], 'these are clean — remove them from PENDING_INACTIVE')
 })

@@ -84,7 +84,7 @@ export default function UsageSettings() {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="px-1 text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-inactive">
+      <h2 className="px-1 text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
         Usage &amp; billing
       </h2>
       <div className="rounded-xl border border-kumo-line bg-kumo-base p-5">

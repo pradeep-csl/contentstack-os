@@ -98,7 +98,7 @@ export function BindingBadge({
 
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-kumo-fill px-2 py-[3px] text-[11px] font-medium leading-none tracking-[-0.1px] text-kumo-subtle">
-      <span className="flex items-center text-kumo-inactive">{icon}</span>
+      <span className="flex items-center text-kumo-subtle">{icon}</span>
       {vendorDescription?.displayName ?? badge.label}
     </span>
   );
@@ -140,10 +140,10 @@ export function BlueprintCard({
             <Hexagon size={16} className="text-white/75" weight="bold" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="m-0 line-clamp-2 text-[15px] leading-5 font-medium tracking-[-0.25px] text-kumo-default">
+            <p className="m-0 line-clamp-2 text-[15px] leading-5 font-medium tracking-[-0.25px] text-kumo-strong">
               {metadata.title}
             </p>
-            <p className={`mt-1.5 line-clamp-2 min-h-8 text-[12px] leading-4 font-normal tracking-[-0.2px] ${metadata.description ? "text-kumo-subtle" : "text-kumo-inactive italic"}`}>
+            <p className={`mt-1.5 line-clamp-2 min-h-8 text-[12px] leading-4 font-normal tracking-[-0.2px] ${metadata.description ? "text-kumo-subtle" : "text-kumo-subtle italic"}`}>
               {metadata.description || "No description"}
             </p>
           </div>

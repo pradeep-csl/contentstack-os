@@ -900,13 +900,13 @@ export default function GatekeeperModal({
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="shrink-0 border-b border-kumo-line bg-kumo-base px-5 py-4">
               <div className="relative">
-                <MagnifyingGlass size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive" />
+                <MagnifyingGlass size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle" />
                 <input
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="Search services, apps, data sources..."
                   autoFocus
-                  className="h-10 w-full rounded-xl border border-kumo-line bg-kumo-base pl-9 pr-3 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive shadow-none outline-none transition-[border-color,box-shadow] focus:border-kumo-ring focus:ring-2 focus:ring-kumo-ring/10"
+                  className="h-10 w-full rounded-xl border border-kumo-line bg-kumo-base pl-9 pr-3 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder shadow-none outline-none transition-[border-color,box-shadow] focus:border-kumo-ring focus:ring-2 focus:ring-kumo-ring/10"
                 />
               </div>
             </div>
@@ -1014,7 +1014,7 @@ function ConnectionTypeRow({
           {connection.vendor} · {connection.description}
         </p>
       </div>
-      <CaretRight size={14} className="shrink-0 text-kumo-inactive transition-transform group-hover:translate-x-0.5 group-hover:text-kumo-default" />
+      <CaretRight size={14} className="shrink-0 text-kumo-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-kumo-default" />
     </button>
   )
 }
@@ -1095,7 +1095,7 @@ function ConnectionGroupRow({
         </div>
         <CaretDown
           size={14}
-          className={`shrink-0 text-kumo-inactive transition-transform group-hover:text-kumo-default ${expanded ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-kumo-subtle transition-transform group-hover:text-kumo-default ${expanded ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -1125,7 +1125,7 @@ function ConnectionGroupRow({
                   {item.description}
                 </p>
               </div>
-              <CaretRight size={13} className="shrink-0 text-kumo-inactive transition-transform group-hover:translate-x-0.5 group-hover:text-kumo-default" />
+              <CaretRight size={13} className="shrink-0 text-kumo-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-kumo-default" />
             </button>
           ))}
         </div>

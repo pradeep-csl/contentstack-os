@@ -25,7 +25,7 @@ export default function ViewToggle({
           className={`grid h-8 w-8 cursor-pointer place-items-center rounded-md transition-colors ${
             view === value
               ? 'bg-kumo-fill text-kumo-strong'
-              : 'text-kumo-inactive hover:text-kumo-default'
+              : 'text-kumo-subtle hover:text-kumo-default'
           }`}
         >
           <Icon size={16} weight={view === value ? 'bold' : 'regular'} />

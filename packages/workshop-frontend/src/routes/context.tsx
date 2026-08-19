@@ -48,7 +48,7 @@ function ContextRow({ item }: { item: ContextItem }) {
           {label} · {item.detail}
         </p>
       </div>
-      <span className="hidden shrink-0 text-xs tracking-[-0.1px] text-kumo-inactive lg:block">
+      <span className="hidden shrink-0 text-xs tracking-[-0.1px] text-kumo-subtle lg:block">
         {item.updated}
       </span>
     </div>

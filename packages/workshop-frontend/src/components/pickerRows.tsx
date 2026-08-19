@@ -2,7 +2,7 @@
 // own padding, and a selection that reads as the thing Tab will act on.
 
 export const PICKER_CAPTION =
-  'text-[11px] font-medium uppercase leading-4 tracking-[0.06em] text-kumo-inactive'
+  'text-[11px] font-medium uppercase leading-4 tracking-[0.06em] text-kumo-subtle'
 
 export const PICKER_ROW =
   'flex cursor-pointer items-center gap-2.5 px-3.5 py-1.5 transition-colors hover:bg-kumo-tint'

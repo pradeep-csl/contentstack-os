@@ -6,7 +6,7 @@ export function SectionEyebrow({ label, count }: { label: string; count?: number
       </h2>
       <div className="h-px flex-1 bg-kumo-line" />
       {typeof count === 'number' && (
-        <span className="text-[11px] leading-4 font-semibold tracking-[-0.1px] text-kumo-inactive">
+        <span className="text-[11px] leading-4 font-semibold tracking-[-0.1px] text-kumo-subtle">
           {count}
         </span>
       )}

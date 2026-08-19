@@ -197,7 +197,7 @@ function OutputRow({
         </p>
       </div>
       {/* Fixed-width meta columns so rows line up like a table. */}
-      <div className="hidden shrink-0 items-center gap-6 text-xs text-kumo-inactive lg:flex">
+      <div className="hidden shrink-0 items-center gap-6 text-xs text-kumo-subtle lg:flex">
         <OutputProvenance owner={output.owner} />
         <span className="flex w-40 items-center justify-end gap-1 whitespace-nowrap">
           <Clock size={10} />
@@ -234,7 +234,7 @@ function FilterChip({
       }`}
     >
       {label}
-      <span className={active ? 'text-kumo-subtle' : 'text-kumo-inactive'}>{count}</span>
+      <span className={active ? 'text-kumo-subtle' : 'text-kumo-subtle'}>{count}</span>
     </button>
   )
 }
@@ -282,7 +282,7 @@ function ScopeSelect({
           >
             <CurrentIcon size={14} className="shrink-0" />
             {current.label}
-            <CaretDown size={11} className="shrink-0 text-kumo-inactive" />
+            <CaretDown size={11} className="shrink-0 text-kumo-subtle" />
           </button>
         }
       />
@@ -302,7 +302,7 @@ function ScopeSelect({
             >
               <Icon size={13} className="mr-2 flex-shrink-0 text-kumo-subtle" />
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              <span className="ml-3 flex-shrink-0 tabular-nums text-kumo-inactive">
+              <span className="ml-3 flex-shrink-0 tabular-nums text-kumo-subtle">
                 {counts[option.value]}
               </span>
               <Check
@@ -618,13 +618,13 @@ function OutputsPage() {
             />
           )}
           <div className="relative sm:w-56">
-            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive" />
+            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search outputs…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>

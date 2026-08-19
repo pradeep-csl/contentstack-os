@@ -306,7 +306,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                               </Tooltip>
                             )}
                           </p>
-                          <p className="mt-0.5 truncate text-[11px] leading-4 tracking-[-0.1px] text-kumo-inactive">
+                          <p className="mt-0.5 truncate text-[11px] leading-4 tracking-[-0.1px] text-kumo-subtle">
                             Referenced in code as: <span className="font-mono text-kumo-subtle">{gk.name}</span>
                           </p>
                         </div>
@@ -409,7 +409,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                             </p>
                           )}
                           {hook.resourceTitle && (
-                            <p className="mt-0.5 truncate text-[11px] leading-4 tracking-[-0.1px] text-kumo-inactive">
+                            <p className="mt-0.5 truncate text-[11px] leading-4 tracking-[-0.1px] text-kumo-subtle">
                               {hook.resourceTitle}
                             </p>
                           )}

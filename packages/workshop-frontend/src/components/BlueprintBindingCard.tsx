@@ -69,7 +69,7 @@ export function BlueprintBindingCard({
             placeholder="Connection name"
             className="!h-8 w-full bg-kumo-base text-[13px] leading-5 font-medium tracking-[-0.25px]"
           />
-          <p className="mt-1 text-[11px] leading-4 tracking-[-0.1px] text-kumo-inactive">
+          <p className="mt-1 text-[11px] leading-4 tracking-[-0.1px] text-kumo-subtle">
             Referenced in code as: <span className="font-mono text-kumo-subtle">{bindingName}</span>
           </p>
         </div>

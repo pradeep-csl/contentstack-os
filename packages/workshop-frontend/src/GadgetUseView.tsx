@@ -67,14 +67,14 @@ export default function GadgetUseView({
             <SiteLogo size={22} />
           </Link>
 
-          <span className="text-kumo-inactive flex-shrink-0">/</span>
+          <span className="text-kumo-subtle flex-shrink-0">/</span>
 
           <span className="text-[14px] leading-5 font-medium tracking-[-0.25px] text-kumo-default truncate">
             {metadata.title}
           </span>
 
           {metadata.owner && (
-            <span className="text-xs text-kumo-inactive flex-shrink-0">
+            <span className="text-xs text-kumo-subtle flex-shrink-0">
               by {metadata.owner.name}
             </span>
           )}

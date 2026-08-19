@@ -63,7 +63,7 @@ export default function WorkpiecePicker({
         title={expanded ? 'Collapse outputs' : 'Expand outputs'}
         aria-label={expanded ? 'Collapse outputs' : 'Expand outputs'}
         aria-expanded={expanded}
-        className={`flex h-12 flex-shrink-0 cursor-pointer items-center text-kumo-inactive transition-colors hover:text-kumo-subtle ${
+        className={`flex h-12 flex-shrink-0 cursor-pointer items-center text-kumo-subtle transition-colors hover:text-kumo-subtle ${
           expanded ? 'justify-between px-3' : 'justify-center'
         }`}
       >
@@ -138,7 +138,7 @@ export default function WorkpiecePicker({
                   <FormatGlyph
                     output={gadget.output}
                     size={expanded ? 'md' : 'lg'}
-                    className={`flex-shrink-0 ${isSelected ? 'text-kumo-strong' : 'text-kumo-inactive'}`}
+                    className={`flex-shrink-0 ${isSelected ? 'text-kumo-strong' : 'text-kumo-subtle'}`}
                     weight={isSelected ? 'fill' : 'regular'}
                   />
                   {expanded && (
@@ -161,8 +161,8 @@ export default function WorkpiecePicker({
                       role="img"
                       aria-label="Hooks enabled"
                       className={expanded
-                        ? 'flex-shrink-0 text-kumo-inactive'
-                        : 'absolute bottom-0.5 left-0.5 rounded-full border border-kumo-base bg-kumo-base text-kumo-inactive'}
+                        ? 'flex-shrink-0 text-kumo-subtle'
+                        : 'absolute bottom-0.5 left-0.5 rounded-full border border-kumo-base bg-kumo-base text-kumo-subtle'}
                     >
                       <Lightning size={expanded ? 14 : 10} weight="fill" />
                     </span>
@@ -191,7 +191,7 @@ export default function WorkpiecePicker({
               expanded ? 'h-8 gap-2 px-2 text-left' : 'h-9 w-9 justify-center self-center'
             }`}
           >
-            <Pulse size={expanded ? 15 : 17} className="flex-shrink-0 text-kumo-inactive" />
+            <Pulse size={expanded ? 15 : 17} className="flex-shrink-0 text-kumo-subtle" />
             {expanded && <span className="min-w-0 flex-1 truncate">View activity</span>}
             {expanded ? (
               <CountBadge count={pendingActivityCount} />

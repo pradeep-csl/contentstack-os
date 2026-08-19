@@ -65,7 +65,7 @@ export default function Sidebar({
         <Link to="/" aria-label={siteName} className="flex min-w-0 items-center gap-2">
           <SiteLogo size={20} className="shrink-0" />
           {!collapsed && (
-            <span className="truncate text-[14px] leading-5 font-semibold tracking-[-0.25px] text-kumo-default">
+            <span className="truncate text-[14px] leading-5 font-semibold tracking-[-0.25px] text-kumo-strong">
               {siteName}
             </span>
           )}
@@ -90,7 +90,7 @@ export default function Sidebar({
               onClick={onToggleCollapsed}
               aria-label="Collapse sidebar"
               title="Collapse sidebar"
-              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-kumo-inactive transition-colors hover:bg-kumo-tint hover:text-kumo-default"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default"
             >
               <SidebarSimple size={15} />
             </button>
@@ -105,7 +105,7 @@ export default function Sidebar({
           onClick={onToggleCollapsed}
           aria-label="Expand sidebar"
           title="Expand sidebar"
-          className="mx-auto mt-2 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-kumo-inactive transition-colors hover:bg-kumo-tint hover:text-kumo-default"
+          className="mx-auto mt-2 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default"
         >
           <SidebarSimple size={15} className="rotate-180" />
         </button>

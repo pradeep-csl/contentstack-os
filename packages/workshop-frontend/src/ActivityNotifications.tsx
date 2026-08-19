@@ -61,7 +61,7 @@ export default function ActivityNotifications({
         className="themed-floating-shadow !z-[1100] !w-[min(340px,calc(100vw-24px))] !min-w-0 overflow-hidden rounded-lg border border-kumo-line !outline-none bg-kumo-base !p-0 [&>:first-child]:hidden"
       >
         <div className="flex items-center justify-between gap-2 px-3.5 pb-1 pt-2.5">
-          <Popover.Title className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-inactive">
+          <Popover.Title className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
             Needs review
           </Popover.Title>
           <CountBadge count={pending.length} />
@@ -89,7 +89,7 @@ export default function ActivityNotifications({
                       <span className="block truncate text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
                         {action.description.title}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-inactive">
+                      <span className="mt-0.5 block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
                         {action.resourceTitle}
                         <span className="px-1">·</span>
                         {formatRelativeTime(action.createdAt)}
@@ -128,7 +128,7 @@ export default function ActivityNotifications({
                 ? `View all ${pending.length} requests`
                 : 'View all activity'}
             </span>
-            <ArrowRight size={13} className="text-kumo-inactive" />
+            <ArrowRight size={13} className="text-kumo-subtle" />
           </button>
         </div>
       </Popover.Content>
