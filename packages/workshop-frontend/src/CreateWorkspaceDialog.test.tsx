@@ -103,4 +103,18 @@ describe('CreateWorkspaceDialog', () => {
     await act(async () => buttonLabelled('Creating...').click())
     expect(onConfirm).not.toHaveBeenCalled()
   })
+
+  // The disabled Create button blocks a click at the DOM level, so the test above never reaches
+  // submit()'s own `if (isCreating) return` guard. The form's Enter-key path has no DOM-level
+  // disabled block, so this is the only route that actually exercises that guard.
+  it('refuses a form submit (Enter key path) while creating', async () => {
+    const { onConfirm } = await render({ isCreating: true })
+    await act(async () => {
+      nameInput().closest('form')!.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true }),
+      )
+    })
+
+    expect(onConfirm).not.toHaveBeenCalled()
+  })
 })
