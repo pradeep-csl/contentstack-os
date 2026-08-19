@@ -66,12 +66,12 @@ function ModelRow({
             {model.name}
           </span>
           {gatewayLabel(model.gateway) && (
-            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle">
+            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-subtle">
               {gatewayLabel(model.gateway)}
             </span>
           )}
           {isQuick && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[rgba(255,72,1,0.10)] px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-wide text-kumo-brand">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[rgba(255,72,1,0.10)] px-1.5 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-brand">
               <Lightning size={9} weight="fill" />
               quick
             </span>

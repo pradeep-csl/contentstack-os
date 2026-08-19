@@ -3353,7 +3353,7 @@ export const ChatInput = ({
                       >
                         <span className="min-w-0 flex-1 truncate">{model.name}</span>
                         {gatewayLabel(model.gateway) && (
-                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle">
+                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-subtle">
                             {gatewayLabel(model.gateway)}
                           </span>
                         )}

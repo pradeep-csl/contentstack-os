@@ -558,7 +558,7 @@ export default function OnboardingWizard({
                             <p className="text-ui-md font-medium text-kumo-default truncate">
                               {model.name}
                               {gatewayLabel(model.gateway) && (
-                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle">
+                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs font-semibold uppercase text-kumo-subtle">
                                   {gatewayLabel(model.gateway)}
                                 </span>
                               )}

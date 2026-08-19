@@ -260,6 +260,51 @@ test('BANNED_TRACKING flags px letter-spacing and named negative tracking', () =
   }
 })
 
+// `text-ui-2xs` is the one step in the scale that bakes in its own letter-spacing
+// (+0.06em). A sibling `tracking-*` utility on the same line has equal specificity and
+// wins on source order, silently overriding it — which is exactly what happened when a
+// PX-TRACK cleanup swapped a px bracket for the named `tracking-wide` (0.025em) without
+// checking it against the token's own value, undoing more than half the intended spacing.
+//
+// Scoped to the named keywords, not `tracking-[Nem]` brackets: those are a separate,
+// much wider pre-existing convention (dozens of sites, most spelling out the scale's own
+// 0.06em explicitly) that predates this remediation and is out of its scope. The named
+// forms are the failure mode that actually occurred — a spot override that reads as
+// harmless but silently wins.
+const TWOXS_TOKEN = /\btext-ui-2xs\b/
+const NAMED_TRACKING = /\btracking-(?:tight|tighter|normal|wide|wider|widest)\b/
+
+function has2xsNamedTrackingCollision(line) {
+  return TWOXS_TOKEN.test(line) && NAMED_TRACKING.test(line)
+}
+
+const TWOXS_TRACKING_CASES = [
+  ['text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle', true],
+  ['text-ui-2xs font-semibold uppercase tracking-wider text-kumo-subtle', true],
+  ['text-ui-2xs font-semibold uppercase tracking-normal text-kumo-subtle', true],
+  ['text-ui-xs font-semibold uppercase tracking-wider text-kumo-subtle', false],
+  ['text-ui-2xs font-semibold uppercase text-kumo-subtle', false],
+  ['text-ui-2xs font-semibold uppercase tracking-[0.06em] text-kumo-subtle', false],
+]
+
+test('the 2xs/tracking classifier flags only text-ui-2xs lines carrying a named tracking utility', () => {
+  for (const [line, want] of TWOXS_TRACKING_CASES) {
+    assert.equal(has2xsNamedTrackingCollision(line), want, `${line}: expected ${want}`)
+  }
+})
+
+test('text-ui-2xs never shares a line with a named tracking-* utility', () => {
+  const offenders = []
+  for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
+    const rel = repoPath(file)
+    const lines = readFileSync(file, 'utf8').split('\n')
+    lines.forEach((line, i) => {
+      if (has2xsNamedTrackingCollision(line)) offenders.push(`${rel}:${i + 1}`)
+    })
+  }
+  assert.deepEqual(offenders, [], 'text-ui-2xs already supplies +0.06em — delete the tracking-* override')
+})
+
 test('sizing comes from the text-ui-* scale outside the pending allowlist', () => {
   const offenders = []
   for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
