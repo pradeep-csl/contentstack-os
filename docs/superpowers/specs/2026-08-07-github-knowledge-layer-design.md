@@ -230,11 +230,21 @@ and every request is short-lived.
 
 One contention point is worth naming, because it is not obvious from the per-collection design: every
 public collection in a sharing domain shares **one KV key** for the domain's public-collections
-snapshot (`publicCollectionsKvKey`), rewritten in full on every publish. Cloudflare KV permits roughly
-one write per second to a single key. A dozen departments merging occasionally stay far below that;
-bulk onboarding, or several CI jobs finishing together, can contend — and combined with the ordering
-wart above, contention surfaces as failed-looking publishes. The hot spot predates this design, which
-merely adds a frequent writer to it.
+snapshot (`publicCollectionsKvKey`). Cloudflare KV permits roughly one write per second to a single
+key, so a naive rewrite-on-every-publish would have every publication in the domain contend on it —
+worse as CI jobs finish together or during bulk onboarding.
+
+**Fixed.** `LibraryRegistryDurableObject.syncPublic` rewrites the snapshot only when a field its
+consumers actually read for identity — `title`, `description`, `icon`, `visibility` — has changed;
+`documentCount` and `lastUpdated` no longer trigger a write. A plain publish only changes those two
+fields, so publishing no longer touches this KV key at all. Membership changes still go through
+`addPublic`/`removePublic`, which write unconditionally. The trade-off: the snapshot's `documentCount`
+and `lastUpdated` go stale between identity edits. That is acceptable because nothing reads the
+snapshot's `documentCount` (`getEnabledCollections` reads only `id`; `loadEnabledContextCollections`
+reads `id`/`title`/`description`/`icon`/`lastUpdated` but not `documentCount`; agent listings fetch
+`documentCount` fresh from each collection's own Durable Object, never from the snapshot), and
+`lastUpdated` here is presentation recency only. The hot spot predates this design, which no longer
+adds a frequent writer to it.
 
 The fourth runaway mode applied and is closed deliberately: resolving a collection instantiates a
 Durable Object for **whatever path was requested**, so the public endpoint is bounded by a
@@ -322,7 +332,7 @@ session, and the commit transaction is atomic, so no publish is ever partially a
 | Rate limit exceeded | 429 before the collection is consulted. |
 | Abandoned session | Superseded by the next `plan`, which discards it. |
 | Partial write | Not possible — commit is one transaction. |
-| Public-collections snapshot write fails after commit | **Known wart.** `#propagate()` is awaited *after* the commit transaction, so a KV failure rejects `commitIngest` even though the content is committed. CI reports a failed publish for work that succeeded; the next merge's `plan` returns `unchanged` and it self-heals. Making the snapshot best-effort would fix the signal. |
+| Public-collections snapshot write fails after commit | **Fixed.** `commitIngest` still awaits `#propagate()` in the same position — after the commit transaction, so the happy path still refreshes the snapshot before returning — but now catches a rejection and logs it at `warn` instead of letting it fail the call. The content is already committed by that point, so a refresh failure (e.g. a KV outage) can no longer turn a successful publish into a reported failure. The other `#propagate()` callers (`putContextDocument`, `deleteContextDocument`, `moveContextDocument`) are interactive web edits and are unchanged: failing loudly there is still correct. |
 
 ## Constraints
 
