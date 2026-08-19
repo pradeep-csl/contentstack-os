@@ -672,7 +672,23 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
         }
       }
     }
+    result.quickModel ??= this.#defaultQuickModel(result.aiModel);
     return result;
+  }
+
+  // The quick model to use when no gateway supplies one and the user has not picked one. Without
+  // this, quick tasks silently do not happen for such a user -- most visibly, every chat stays
+  // titled "New Chat". A deployment with no gateway holds no credential of its own, so the only
+  // usable key is one the user already configured: the model resolved for this request, else their
+  // preferred model, else whatever they have. Costlier per title than a dedicated small model,
+  // which is why an explicit quickModel still wins.
+  #defaultQuickModel(resolved: UserAiModelRecord | undefined): AiModelConfig | undefined {
+    if (resolved) return resolved.config;
+    let preferredId = this.storage.preferredModel.get();
+    let preferred = preferredId
+        ? resolveGatewayModel(this.env, preferredId) ?? this.storage.aiModels.get(preferredId)
+        : undefined;
+    return (preferred ?? [...this.storage.aiModels.list()][0])?.config;
   }
 
   async getExternalMessageChatContext(existingChatModelId: string | null): Promise<UserChatContext> {
