@@ -404,7 +404,7 @@ export default function CodeDiffEditor({
   if (!filename || (!originalYText && !modifiedYText)) {
     return (
       <div
-        className="flex items-center justify-center bg-kumo-base text-[13px] leading-[18px] text-kumo-subtle"
+        className="flex items-center justify-center bg-kumo-base text-ui-sm text-kumo-subtle"
         style={{ height }}
       >
         {!filename ? 'Select a file to view changes' : 'Loading diff...'}

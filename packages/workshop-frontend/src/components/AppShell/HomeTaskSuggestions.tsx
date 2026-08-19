@@ -108,7 +108,7 @@ function SuggestionRow({
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] leading-[18px] font-medium text-kumo-strong">
+          <span className="block truncate text-ui-md font-medium text-kumo-strong">
             {label}
           </span>
           <span className="block truncate text-ui-xs leading-4 text-kumo-subtle">

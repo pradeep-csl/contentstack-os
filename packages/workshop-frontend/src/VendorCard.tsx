@@ -32,7 +32,7 @@ export default function VendorCard({
         fallback={<LinkSimple size={22} />}
       />
       <div className="flex-1">
-        <Text variant="body" bold as="span" DANGEROUS_className="block text-base">
+        <Text variant="body" bold as="span" DANGEROUS_className="block text-ui-lg">
           {vendor.displayName}
         </Text>
         {vendor.url && (

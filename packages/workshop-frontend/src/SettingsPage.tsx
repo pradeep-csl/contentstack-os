@@ -14,7 +14,7 @@ import { useDocumentTitle } from './useDocumentTitle'
 // the gatekeepers toolbar, the command palette). Kept here so the profile page reads as part of the
 // system rather than a stack of default Kumo cards.
 const PRIMARY_BTN =
-  'press inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-kumo-brand-hover disabled:cursor-not-allowed disabled:opacity-60'
+  'press inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-ui-sm font-medium text-white transition-colors hover:bg-kumo-brand-hover disabled:cursor-not-allowed disabled:opacity-60'
 const ICON_BTN =
   'press grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default'
 const INPUT =
@@ -240,7 +240,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] flex-1 items-center justify-center">
-        <p className="text-[13px] text-kumo-subtle">Loading profile…</p>
+        <p className="text-ui-sm text-kumo-subtle">Loading profile…</p>
       </div>
     )
   }
@@ -248,8 +248,8 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-6 pb-16 sm:px-10">
       <header className="px-1 pb-2 pt-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">Profile</h1>
-        <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
+        <h1 className="text-ui-3xl font-semibold text-kumo-default">Profile</h1>
+        <p className="mt-1 text-ui-md text-kumo-subtle">
           Manage your account details, avatar, and security.
         </p>
       </header>

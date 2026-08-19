@@ -361,7 +361,7 @@ export default function OnboardingWizard({
           }`}
         >
           <SiteLogo size={22} />
-          <span className="text-base font-semibold tracking-tight text-kumo-default">
+          <span className="text-ui-lg font-semibold text-kumo-default">
             {siteName}
           </span>
         </div>
@@ -369,7 +369,7 @@ export default function OnboardingWizard({
         {/* Header */}
         <div className="text-center mb-8">
           <h1
-            className={`text-3xl font-semibold text-kumo-default tracking-tight transition-all duration-500 delay-100 ${
+            className={`text-ui-3xl font-semibold text-kumo-default transition-all duration-500 delay-100 ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}
           >
@@ -517,7 +517,7 @@ export default function OnboardingWizard({
                       value={modelSearch}
                       onChange={(e) => setModelSearch(e.target.value)}
                       placeholder="Search models…"
-                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-ui-sm text-kumo-default placeholder:text-kumo-placeholder focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
                     />
                   </div>
                 )}
@@ -558,7 +558,7 @@ export default function OnboardingWizard({
                             <p className="text-ui-md font-medium text-kumo-default truncate">
                               {model.name}
                               {gatewayLabel(model.gateway) && (
-                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
+                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle">
                                   {gatewayLabel(model.gateway)}
                                 </span>
                               )}

@@ -196,10 +196,10 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
         <section>
           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h2 className="m-0 text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <h2 className="m-0 text-ui-xl leading-6 font-medium text-kumo-default">
                 Connections
               </h2>
-              <p className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+              <p className="mt-1 text-ui-sm font-normal text-kumo-subtle">
                 External resources this gadget can use.
               </p>
             </div>
@@ -213,7 +213,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
           </div>
 
           {loading ? (
-            <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-[13px] leading-[18px] font-normal text-kumo-subtle">
+            <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-ui-sm font-normal text-kumo-subtle">
               Loading connections...
             </div>
           ) : bindings.length === 0 ? (
@@ -240,7 +240,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                     {isDeleting ? (
                       <div className="flex flex-wrap items-center gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-danger">
+                          <p className="truncate text-ui-sm font-medium text-kumo-danger">
                             Delete {gk.resourceTitle}?
                           </p>
                           <p className="truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -296,7 +296,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                           {...(gk.vendorId ? vendorBranding.get(gk.vendorId) : undefined)}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="flex items-center gap-2 truncate text-[13px] leading-[18px] font-medium text-kumo-default">
+                          <p className="flex items-center gap-2 truncate text-ui-sm font-medium text-kumo-default">
                             <span className="min-w-0 truncate">{gk.resourceTitle}</span>
                             {isPending && (
                               <Tooltip content="Added in this chat; kept when you accept the chat's changes" asChild>
@@ -351,10 +351,10 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
         {!loading && hooks.length > 0 && (
           <section className="mt-8">
             <div className="mb-3">
-              <h2 className="m-0 text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <h2 className="m-0 text-ui-xl leading-6 font-medium text-kumo-default">
                 Hooks
               </h2>
-              <p className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+              <p className="mt-1 text-ui-sm font-normal text-kumo-subtle">
                 Callbacks that let connected resources wake up this gadget when events happen.
               </p>
             </div>
@@ -372,7 +372,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                     {isDeleting ? (
                       <div className="flex flex-wrap items-center gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-danger">
+                          <p className="truncate text-ui-sm font-medium text-kumo-danger">
                             Delete hook "{hook.description.title}"?
                           </p>
                           <p className="truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -400,7 +400,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                           {...(vendorId ? vendorBranding.get(vendorId) : undefined)}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">
+                          <p className="truncate text-ui-sm font-medium text-kumo-default">
                             {hook.description.title}
                           </p>
                           {hook.description.description && (
@@ -565,9 +565,9 @@ function BlueprintAnnotationModal({
 
           <div className="space-y-4 px-4 py-4 sm:px-5">
             {loadError ? (
-              <div className="text-[13px] text-kumo-subtle">{loadError}</div>
+              <div className="text-ui-sm text-kumo-subtle">{loadError}</div>
             ) : !data ? (
-              <div className="py-2 text-center text-[13px] text-kumo-subtle">Loading...</div>
+              <div className="py-2 text-center text-ui-sm text-kumo-subtle">Loading...</div>
             ) : (
               <>
                 <BlueprintBindingCard

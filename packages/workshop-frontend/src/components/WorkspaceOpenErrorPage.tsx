@@ -72,13 +72,13 @@ export default function WorkspaceOpenErrorPage({ kind, onRetry, onGoToWorkspaces
           id={titleId}
           ref={titleRef}
           tabIndex={-1}
-          className="mt-5 text-[20px] leading-7 font-semibold tracking-[-0.35px] text-kumo-default outline-none"
+          className="mt-5 text-ui-2xl leading-7 font-semibold text-kumo-default outline-none"
         >
           {title}
         </h1>
         <p
           id={descriptionId}
-          className="mt-2 text-[13px] leading-[18px] text-kumo-subtle"
+          className="mt-2 text-ui-md text-kumo-subtle"
         >
           {message}
         </p>

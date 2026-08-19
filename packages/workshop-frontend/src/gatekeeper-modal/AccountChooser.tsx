@@ -101,7 +101,7 @@ export function AccountChooser({
                   <AccountAvatar avatarUrl={account.description.avatar?.url} logoUrl={account.vendorDescription.logo?.url} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">{name}</p>
+                  <p className="truncate text-ui-sm font-medium text-kumo-default">{name}</p>
                   <p className={`truncate text-ui-xs leading-4 font-normal ${needsAccess ? 'text-kumo-brand' : 'text-kumo-subtle'}`}>
                     {expired
                       ? 'Expired credentials'

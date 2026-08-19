@@ -23,7 +23,7 @@ export const Route = createFileRoute('/providers')({ component: ProvidersPage })
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const PRIMARY_BTN =
-  'press inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-kumo-brand-hover'
+  'press inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-ui-sm font-medium text-white transition-colors hover:bg-kumo-brand-hover'
 
 // ─── model row ─────────────────────────────────────────────────────────────────
 
@@ -66,12 +66,12 @@ function ModelRow({
             {model.name}
           </span>
           {gatewayLabel(model.gateway) && (
-            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
+            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle">
               {gatewayLabel(model.gateway)}
             </span>
           )}
           {isQuick && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[rgba(255,72,1,0.10)] px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.4px] text-kumo-brand">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[rgba(255,72,1,0.10)] px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-wide text-kumo-brand">
               <Lightning size={9} weight="fill" />
               quick
             </span>
@@ -117,7 +117,7 @@ function ModelRow({
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-kumo-line bg-kumo-tint px-4 py-3 text-[13px] leading-[18px] text-kumo-default">
+    <div className="flex items-start gap-3 rounded-xl border border-kumo-line bg-kumo-tint px-4 py-3 text-ui-md text-kumo-default">
       {children}
     </div>
   )
@@ -194,8 +194,8 @@ function ProvidersPage() {
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 sm:px-10">
       <header className="flex items-end justify-between gap-4 px-3 pb-3 pt-10">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">AI providers</h1>
-          <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
+          <h1 className="text-ui-3xl font-semibold text-kumo-default">AI providers</h1>
+          <p className="mt-1 text-ui-md text-kumo-subtle">
             Configure the AI models available to your workspaces.
           </p>
         </div>
@@ -215,7 +215,7 @@ function ProvidersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search providers…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-ui-sm text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -276,7 +276,7 @@ function ProvidersPage() {
             </div>
             <div>
               <p className="text-ui-md font-medium text-kumo-default">No AI providers yet</p>
-              <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
+              <p className="mt-1 text-ui-sm text-kumo-subtle">
                 Add a provider to start building workspaces with AI.
               </p>
             </div>

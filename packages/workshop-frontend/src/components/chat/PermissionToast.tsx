@@ -72,7 +72,7 @@ function PermissionCard({
           {/* Resources being accessed */}
           {perm.resources && perm.resources.length > 0 && (
             <div className="px-3 py-2 rounded-md bg-kumo-tint/50">
-              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase tracking-wider block mb-1">
+              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase block mb-1">
                 Resources
               </span>
               {perm.resources.map((res) => (
@@ -85,7 +85,7 @@ function PermissionCard({
           )}
           {/* API scopes */}
           <div className="px-3 py-2 rounded-md bg-kumo-tint/50">
-            <span className="font-mono text-ui-2xs text-kumo-subtle uppercase tracking-wider block mb-1">
+            <span className="font-mono text-ui-2xs text-kumo-subtle uppercase block mb-1">
               API scopes
             </span>
             {perm.scopes.map((scope) => (

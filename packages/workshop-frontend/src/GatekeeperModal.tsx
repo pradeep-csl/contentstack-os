@@ -803,10 +803,10 @@ export default function GatekeeperModal({
       >
         <div ref={headerRef} className="shrink-0 flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
           <div className="min-w-0">
-            <Dialog.Title className="text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+            <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-default">
               {selectedConnection ? selectedConnection.title : 'Create New Connection'}
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+            <Dialog.Description className="mt-1 text-ui-sm font-normal text-kumo-subtle">
               {selectedConnection
                 ? selectedConnection.description
                 : 'Choose what this gadget should be able to use.'}
@@ -906,7 +906,7 @@ export default function GatekeeperModal({
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="Search services, apps, data sources..."
                   autoFocus
-                  className="h-10 w-full rounded-xl border border-kumo-line bg-kumo-base pl-9 pr-3 text-[13px] leading-[18px] font-normal text-kumo-default placeholder:text-kumo-placeholder shadow-none outline-none transition-[border-color,box-shadow] focus:border-kumo-ring focus:ring-2 focus:ring-kumo-ring/10"
+                  className="h-10 w-full rounded-xl border border-kumo-line bg-kumo-base pl-9 pr-3 text-ui-sm font-normal text-kumo-default placeholder:text-kumo-placeholder shadow-none outline-none transition-[border-color,box-shadow] focus:border-kumo-ring focus:ring-2 focus:ring-kumo-ring/10"
                 />
               </div>
             </div>
@@ -915,7 +915,7 @@ export default function GatekeeperModal({
               <div className="overflow-hidden rounded-xl border border-kumo-line bg-kumo-base">
                 {isSearching ? (
                   filteredConnections.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-[13px] leading-[18px] font-normal text-kumo-subtle">
+                    <div className="px-4 py-8 text-center text-ui-sm font-normal text-kumo-subtle">
                       No matching connection types.
                     </div>
                   ) : filteredConnections.map((connection, index) => (
@@ -928,7 +928,7 @@ export default function GatekeeperModal({
                   ))
                 ) : (
                   groupedConnections.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-[13px] leading-[18px] font-normal text-kumo-subtle">
+                    <div className="px-4 py-8 text-center text-ui-sm font-normal text-kumo-subtle">
                       No connection types available.
                     </div>
                   ) : groupedConnections.map((group, index) => (
@@ -1007,7 +1007,7 @@ function ConnectionTypeRow({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">
+        <p className="truncate text-ui-sm font-medium text-kumo-default">
           {connection.title}
         </p>
         <p className="mt-0.5 line-clamp-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -1086,7 +1086,7 @@ function ConnectionGroupRow({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">
+          <p className="truncate text-ui-sm font-medium text-kumo-default">
             {label}
           </p>
           <p className="mt-0.5 line-clamp-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -1118,10 +1118,10 @@ function ConnectionGroupRow({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12.5px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                <p className="truncate text-ui-sm font-medium text-kumo-default">
                   {item.title}
                 </p>
-                <p className="mt-0.5 line-clamp-1 text-[11.5px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                <p className="mt-0.5 line-clamp-1 text-ui-xs font-normal text-kumo-subtle">
                   {item.description}
                 </p>
               </div>

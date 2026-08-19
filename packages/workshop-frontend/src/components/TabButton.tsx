@@ -15,7 +15,7 @@ export function TabButton({ active, onClick, children, badgeCount = 0, className
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex ${heightClassName} cursor-pointer items-center gap-1.5 text-[13px] leading-[18px] transition-colors ${
+      className={`relative flex ${heightClassName} cursor-pointer items-center gap-1.5 text-ui-md transition-colors ${
         active
           ? 'font-medium text-kumo-default'
           : 'font-normal text-kumo-subtle hover:text-kumo-default'

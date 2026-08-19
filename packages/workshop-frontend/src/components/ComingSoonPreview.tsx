@@ -28,7 +28,7 @@ export default function ComingSoonPreview({
           </div>
           <div>
             <p className="text-ui-lg font-semibold text-kumo-default">{title}</p>
-            <p className="mx-auto mt-1 max-w-xs text-[13px] leading-[18px] text-kumo-subtle">
+            <p className="mx-auto mt-1 max-w-xs text-ui-sm text-kumo-subtle">
               {description}
             </p>
           </div>
