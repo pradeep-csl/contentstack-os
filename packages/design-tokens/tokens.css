@@ -50,8 +50,15 @@
   --color-kumo-tip-shadow: #47516114;
   --color-kumo-tip-stroke: transparent;
 
-  /* ===== TEXT =====
-     Three content rungs and one disabled rung. There is no room on white for four passing greys —
+  /* ===== TEXT ===== */
+  /* Roles, so nobody has to guess again:
+       strong      headings, page and card titles, the wordmark
+       default     body copy, nav labels, row titles
+       subtle      captions, metadata, timestamps, uppercase eyebrows, empty-state prose
+       placeholder input placeholders — and only on `base` or a transparent parent, never `tint`
+       inactive    disabled controls, and nothing else. It is 2.48:1 by design.
+     Enforced by tests, not by convention. */
+  /* Three content rungs and one disabled rung. There is no room on white for four passing greys —
      measurement puts the ceiling at three — so `inactive` is reserved for genuinely disabled
      controls and must never carry content. Ratios below are quoted base / elevated / tint against
      the surface values as of the surface-separation change (elevated #f4f7fb, tint #e9eef6) — the
