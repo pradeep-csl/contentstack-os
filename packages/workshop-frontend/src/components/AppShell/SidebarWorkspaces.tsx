@@ -52,10 +52,6 @@ type WorkspacesContextValue = {
   onRename: (g: GadgetMetadataWithTimestamps, newTitle: string) => void
   onShare: (g: GadgetMetadataWithTimestamps) => void
   onDelete: (g: GadgetMetadataWithTimestamps) => void
-
-  // Opens the create-workspace dialog. Exposed for completeness; the /workspaces route triggers it
-  // through createWorkspaceBus instead, since it renders outside this provider.
-  onCreateWorkspace: () => void
 }
 
 const WorkspacesContext = createContext<WorkspacesContextValue | null>(null)
@@ -97,6 +93,13 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
   }, [authenticatedApi])
 
   // The button lives in the /workspaces route, outside this provider — see createWorkspaceBus.
+  //
+  // Hazard: AppShell mounts two Sidebars (a CSS-hidden desktop one plus the mobile drawer), so two
+  // SidebarWorkspacesProvider instances -- and two of these listeners -- can be live at once. Today
+  // only the /workspaces button dispatches this event, and it's unreachable while the drawer is
+  // open, so only one listener ever fires. If a second dispatcher is ever wired up (e.g. the
+  // command palette), both providers will react and open two dialogs. Fix that at the dispatch site
+  // (e.g. route it through whichever Sidebar is actually visible), not here.
   useEffect(() => {
     const open = () => setCreateOpen(true)
     window.addEventListener(OPEN_CREATE_WORKSPACE_EVENT, open)
@@ -111,7 +114,16 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
       .listGadgets()
       .then((list) => {
         if (cancelled) return
-        setGadgets(list)
+        // Merge rather than replace: this effect only reruns if `authenticatedApi` itself changes
+        // (e.g. reconnect), but if that happens while a `listGadgets()` issued before an
+        // optimistic splice (see handleCreateConfirm) resolves after it, a plain replace would
+        // silently drop the just-created workspace until some later refetch. Keep any locally-known
+        // workspace the server's list doesn't (yet) mention; the server wins for everything else.
+        setGadgets((prev) => {
+          const known = new Set(list.map((g) => g.id))
+          const localOnly = prev.filter((g) => !known.has(g.id))
+          return [...list, ...localOnly]
+        })
         setGadgetsLoading(false)
       })
       .catch((err) => {
@@ -230,6 +242,7 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
   const handleCreateConfirm = useCallback(async (title: string) => {
     setIsCreating(true)
     let overseer: RpcStub<Overseer> | null = null
+    let createdId: string | null = null
     try {
       overseer = authenticatedApi.createWorkspace(title) // pipelining
       const metadata = await overseer.getMetadata()
@@ -238,13 +251,18 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
       const now = new Date()
       setGadgets((prev) => [{ ...metadata, created: now, lastActive: now }, ...prev])
       setCreateOpen(false)
-      navigate({ to: '/workspace/$id', params: { id: metadata.id } })
+      createdId = metadata.id
     } catch (err) {
       console.error('Failed to create workspace:', err)
       toasts.add({ title: 'Failed to create workspace', variant: 'error' })
     } finally {
       overseer?.[Symbol.dispose]()
       setIsCreating(false)
+    }
+    // Outside the try: the workspace above is already created, so a navigation failure must never
+    // surface as a false "Failed to create workspace" report.
+    if (createdId) {
+      navigate({ to: '/workspace/$id', params: { id: createdId } })
     }
   }, [authenticatedApi, navigate, toasts])
 
@@ -259,7 +277,6 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
     onRename,
     onShare,
     onDelete: setDeleteTarget,
-    onCreateWorkspace: () => setCreateOpen(true),
   }
 
   return (

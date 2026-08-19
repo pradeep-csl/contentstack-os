@@ -112,6 +112,40 @@ describe('create workspace from the rail-owned dialog', () => {
     expect(dispose).toHaveBeenCalled()
   })
 
+  it('keeps an optimistically added workspace after a stale (pre-creation) listGadgets() resolves', async () => {
+    // Simulates the load effect's listGadgets() being in flight (e.g. from a reconnect-triggered
+    // rerun) when a workspace is created: it resolves afterward with a list that predates the
+    // creation. A naive `setGadgets(list)` would wipe out the optimistic splice; the merge in the
+    // load effect must keep the locally-known workspace instead.
+    let resolveList!: () => void
+    testState.listGadgets.mockImplementationOnce(
+      () => new Promise<never[]>((resolve) => { resolveList = () => resolve([]) }),
+    )
+
+    const dispose = vi.fn<() => void>()
+    testState.createWorkspace.mockReturnValue({
+      getMetadata: async () => ({ id: 'ws-new', title: 'GTM Q3' }),
+      [Symbol.dispose]: dispose,
+    })
+
+    await mount()
+    await act(async () => { openCreateWorkspace() })
+
+    const input = document.body.querySelector<HTMLInputElement>('input:not([type]), input[type="text"]')!
+    await act(async () => { setInputValue(input, 'GTM Q3') })
+    await act(async () => buttonLabelled('Create').click())
+
+    expect(testState.navigate).toHaveBeenCalledWith({
+      to: '/workspace/$id',
+      params: { id: 'ws-new' },
+    })
+
+    // The stale, pre-creation fetch resolves last -- the new workspace must survive the merge.
+    await act(async () => { resolveList() })
+
+    expect(container!.textContent).toContain('GTM Q3')
+  })
+
   it('reports a failure and leaves the rail unchanged', async () => {
     testState.createWorkspace.mockReturnValue({
       getMetadata: async () => { throw new Error('nope') },
