@@ -265,6 +265,10 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
   // stray, one with `lastActive` set is immediately visible in the user's listing forever, since
   // there's no reaper to catch it later. `cause` is always what propagates: a cleanup failure is
   // logged, never thrown in its place.
+  //
+  // This deliberately unwinds only the *record*. If the workspace DO was already opened (it claims
+  // ownership and writes an initial code snapshot on first open), it is left behind unreferenced --
+  // an invisible orphan, traded knowingly for the visible one a surviving record would produce.
   async #cleanupFailedCreate(id: string, cause: unknown): Promise<never> {
     try {
       await this.user.deleteGadget(id);
@@ -276,18 +280,27 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
     throw cause;
   }
 
-  // Registers a workspace record and opens its Durable Object, rolling the registration back if the
-  // open fails. Shared by newGadget() (provisional; `lastActive` omitted) and createWorkspace()
-  // (explicit; `lastActive` set at birth -- see UserDurableObject.newGadget's doc comment).
-  async #createAndOpen(id: string, source: "blank" | "named", lastActive?: Date)
-      : Promise<RpcStub<Overseer>> {
-    await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE, lastActive);
+  // Report a workspace creation. Called only once the create has actually succeeded, so a create
+  // that rolled back is not counted as one.
+  #recordGadgetCreated(id: string, source: "blank" | "named"): void {
     recordAnalytics(this.ctx, this.env, {
       event_name: "gadget_created",
       user_id: this.user.id.toString(),
       gadget_id: id,
       source,
     });
+  }
+
+  // Registers a workspace record and opens its Durable Object, rolling the registration back if the
+  // open fails. The one place all three creation paths share; each owns its own analytics, since
+  // they report different sources and only the caller knows when its create is finished.
+  //
+  // `lastActive` is what makes the workspace non-provisional at birth -- set by createWorkspace()
+  // (the user named it, so it must be listed immediately), omitted by the speculative paths. See
+  // UserDurableObject.newGadget's doc comment.
+  async #registerAndOpen(id: string, title: string, lastActive?: Date)
+      : Promise<RpcStub<Overseer>> {
+    await this.user.newGadget(id, title, lastActive);
     let result;
     try {
       result = await this.openGadget(id);
@@ -301,14 +314,17 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
   }
 
   async newGadget(): Promise<RpcStub<Overseer>> {
-    return this.#createAndOpen(this.overseers.newUniqueId().toString(), "blank");
+    let id = this.overseers.newUniqueId().toString();
+    let result = await this.#registerAndOpen(id, DEFAULT_WORKSPACE_TITLE);
+    this.#recordGadgetCreated(id, "blank");
+    return result;
   }
 
   async createWorkspace(title?: string): Promise<RpcStub<Overseer>> {
     let chosen = (title ?? "").trim();
     let id = this.overseers.newUniqueId().toString();
     // A last-active time at birth: the user named this workspace, so it is real even while empty.
-    let result = await this.#createAndOpen(id, "named", new Date());
+    let result = await this.#registerAndOpen(id, DEFAULT_WORKSPACE_TITLE, new Date());
     // setTitle is the one writer that keeps the Overseer's own title and the user's record in step,
     // so route the chosen name through it rather than seeding the two copies by hand. It also
     // latches titleChosenByUser, which is exactly right here: the user typed this name, so no
@@ -325,6 +341,7 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
         return this.#cleanupFailedCreate(id, err);
       }
     }
+    this.#recordGadgetCreated(id, "named");
     return result;
   }
 
@@ -474,10 +491,10 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
     let codeBytes = await readBlueprintContent(this.env, blueprintId, kvRecord.metadata.version);
     if (!codeBytes) throw new Error("Blueprint content not found in R2.");
 
-    // 3. Create new Overseer DO (same as newGadget()).
+    // 3. Create new Overseer DO. Provisional like newGadget()'s -- no `lastActive` -- so a failure
+    //    part-way through the steps below leaves nothing in the user's listing.
     let id = this.overseers.newUniqueId().toString();
-    await this.user.newGadget(id, kvRecord.metadata.title);
-    let overseerResult = await this.#openGadgetInternal(id);
+    let overseerResult = await this.#registerAndOpen(id, kvRecord.metadata.title);
 
     // 4. Initialize from blueprint code.
     let overseerDo = this.overseers.get(this.overseers.idFromString(id));
@@ -576,8 +593,7 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
       source: "blueprint",
     });
 
-    // @ts-expect-error Cap'n Web RPC stubs and native RPC stubs are compatible but the type
-    //     system doesn't know this.
+    // No stub cast needed here: #registerAndOpen already returns the Cap'n Web-facing type.
     return overseerResult;
   }
 
