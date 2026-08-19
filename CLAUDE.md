@@ -102,7 +102,8 @@ IMPORTANT: Server-side logging uses `@gadgets/backend-utils/logger` (frontend br
   It is a no-op when the `ERROR_REPORTER` binding is absent (local dev / deployments without an issue
   destination). Only bounded scalars are retained as attributes; reported context obeys the same
   no-secrets rules as log fields.
-- Never add AI/LLM attribution or Co-Authored-By metadata anywhere including git commit messages.
+
+IMPORTANT: Never add AI/LLM attribution or Co-Authored-By metadata anywhere including git commit messages.
 
 IMPORTANT: Frontend error reporting is a separate, opt-in path:
 
