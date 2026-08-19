@@ -52,7 +52,9 @@
   /* ===== TEXT =====
      Three content rungs and one disabled rung. There is no room on white for four passing greys —
      measurement puts the ceiling at three — so `inactive` is reserved for genuinely disabled
-     controls and must never carry content. Ratios are against base / elevated / tint.
+     controls and must never carry content. Ratios below are quoted base / elevated / tint against
+     the surface values as of the surface-separation change (elevated #f4f7fb, tint #e9eef6) — the
+     darkest the surfaces get, so these are the floor rather than today's slightly roomier numbers.
 
      Deviates from Venus deliberately (spec T1): Venus's font-base, font-secondary and font-tertiary
      are 8.02 / 4.59 / 2.05 on white, and the latter two fail on our tint surface. */
