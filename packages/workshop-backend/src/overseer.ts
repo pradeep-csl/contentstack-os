@@ -687,6 +687,13 @@ function makeOverseerStorage(storage: DurableObjectStorage) {
       // The workspace title. (Each chat, gatekeeper, and gadget has its own title, elsewhere.)
       title: DEFAULT_WORKSPACE_TITLE,
 
+      // True once a person has named this workspace -- in the create dialog (createWorkspace) or by
+      // renaming it (setTitle). Automatic naming writes `title` directly and never sets this, so a
+      // workspace nobody has named still gets both automatic stages: the first chat's title, then a
+      // project name once code is written. Absent on records predating this field, which reads as
+      // false and so keeps their existing behavior.
+      titleChosenByUser: false,
+
       // If present, this gadget was migrated from version zero, when a workspace had only one
       // gadget. Many stored records that normally contain a `gadgetId` might be missing it; they
       // should be treated as referring to this gadget ID.
@@ -5175,7 +5182,8 @@ class OverseerImpl implements AgentHooks {
       // Also rename the gadget if this is the first chat. Since the gadget likely doesn't have
       // any code yet, the user still sees it as just a chat, and therefore it makes sense to
       // apply the same title as the chat itself.
-      if (chatId === 0 && isReplaceableWorkspaceTitle(this.storage.title.get()) && this.ownerId) {
+      if (chatId === 0 && !this.storage.titleChosenByUser.get() &&
+          isReplaceableWorkspaceTitle(this.storage.title.get()) && this.ownerId) {
         this.storage.title.put(result);
         let owner = this.users.get(this.users.idFromString(this.ownerId));
         await owner.updateTitle(this.ctx.id.toString(), result);
@@ -5191,8 +5199,14 @@ class OverseerImpl implements AgentHooks {
   }
 
   // Generate a title for the whole gadget, called only after code starts being written.
+  //
+  // Deliberately checks only the flag, not the title: at this point the title is usually the one
+  // generateThreadTitle already wrote, and renaming that to a project name is the whole point. Only
+  // a name a person chose is off limits. Returning early also skips paying for a discarded name.
   async generateGadgetTitle(chatId: number, modelConfig: AiModelConfig,
                             initiator: AiChatAuthorInfo) {
+    if (this.storage.titleChosenByUser.get()) return;
+
     try {
       let parts: string[] = [];
 
@@ -7231,8 +7245,11 @@ class OverseerClientInterface extends RpcTarget implements Overseer {
     return this.impl.addPresenceSubscriber(subscriber);
   }
 
+  // The only title writer that represents a person's choice, so it is also the one that latches
+  // `titleChosenByUser` and takes this workspace out of automatic naming for good.
   async setTitle(title: string): Promise<void> {
     this.impl.storage.title.put(title);
+    this.impl.storage.titleChosenByUser.put(true);
     await this.owner.updateTitle(this.impl.ctx.id.toString(), title);
   }
 
