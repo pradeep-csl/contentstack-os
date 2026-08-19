@@ -1,19 +1,19 @@
-import { Dialog, Input } from "@cloudflare/kumo";
-import { X } from "@phosphor-icons/react";
-import { useEffect, useState } from "react";
-import { WorkshopButton, WorkshopIconButton } from "./WorkshopControls";
+import { Dialog, Input } from '@cloudflare/kumo'
+import { X } from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
+import { WorkshopButton, WorkshopIconButton } from './WorkshopControls'
 
 // A UI guard against a pathological paste, not a validated limit: the server mirrors setTitle's
 // leniency and stores whatever it is given.
-const MAX_TITLE_LENGTH = 120;
+const MAX_TITLE_LENGTH = 120
 
 interface CreateWorkspaceDialogProps {
-  open: boolean;
+  open: boolean
   /** True while the create RPC is in flight; blocks a second submit and swaps the button label. */
-  isCreating?: boolean;
-  onOpenChange: (open: boolean) => void;
+  isCreating?: boolean
+  onOpenChange: (open: boolean) => void
   /** Receives the trimmed name, or '' when the user left the field blank. */
-  onConfirm: (title: string) => void;
+  onConfirm: (title: string) => void
 }
 
 // Names a workspace before it exists. Purely presentational -- the owner does the RPC, decides where
@@ -22,25 +22,25 @@ export default function CreateWorkspaceDialog({
   open,
   isCreating = false,
   onOpenChange,
-  onConfirm
+  onConfirm,
 }: CreateWorkspaceDialogProps) {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState('')
 
   // Every opening starts from an empty field rather than the previous attempt's text.
   useEffect(() => {
-    if (open) setTitle("");
-  }, [open]);
+    if (open) setTitle('')
+  }, [open])
 
   const submit = () => {
-    if (isCreating) return;
-    onConfirm(title.trim());
-  };
+    if (isCreating) return
+    onConfirm(title.trim())
+  }
 
   return (
     <Dialog.Root
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!isCreating) onOpenChange(nextOpen);
+        if (!isCreating) onOpenChange(nextOpen)
       }}
     >
       <Dialog
@@ -53,8 +53,7 @@ export default function CreateWorkspaceDialog({
               Create workspace
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
-              An isolated environment for a set of conversations, connections,
-              and outputs.
+              An isolated environment for a set of conversations, connections, and outputs.
             </Dialog.Description>
           </div>
           <Dialog.Close
@@ -75,8 +74,8 @@ export default function CreateWorkspaceDialog({
         <form
           className="px-5 py-4"
           onSubmit={(e) => {
-            e.preventDefault();
-            submit();
+            e.preventDefault()
+            submit()
           }}
         >
           <Input
@@ -105,10 +104,10 @@ export default function CreateWorkspaceDialog({
             disabled={isCreating}
             className="!h-9 min-w-[64px]"
           >
-            {isCreating ? "Creating..." : "Create"}
+            {isCreating ? 'Creating...' : 'Create'}
           </WorkshopButton>
         </div>
       </Dialog>
     </Dialog.Root>
-  );
+  )
 }

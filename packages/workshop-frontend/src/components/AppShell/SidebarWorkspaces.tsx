@@ -56,6 +56,24 @@ type WorkspacesContextValue = {
 
 const WorkspacesContext = createContext<WorkspacesContextValue | null>(null)
 
+// Fold a fresh server listing into what the rail is already showing.
+//
+// The load effect only reruns if `authenticatedApi` itself changes (e.g. a reconnect). If that
+// happens while a `listGadgets()` issued *before* an optimistic splice resolves *after* it, a plain
+// replace would silently drop the just-created workspace until some later refetch — so ids in
+// `unconfirmedIds` are carried over.
+//
+// Nothing else is: the server stays authoritative, so a workspace deleted in another tab, or one
+// whose share was revoked, disappears from the rail here rather than being resurrected. Exported
+// for its own tests; callers confirm ids out of `unconfirmedIds` before calling.
+export function mergeServerWorkspaces(
+  serverList: GadgetMetadataWithTimestamps[],
+  shown: GadgetMetadataWithTimestamps[],
+  unconfirmedIds: ReadonlySet<string>,
+): GadgetMetadataWithTimestamps[] {
+  return [...serverList, ...shown.filter((g) => unconfirmedIds.has(g.id))]
+}
+
 function useWorkspacesContext(): WorkspacesContextValue {
   const ctx = useContext(WorkspacesContext)
   if (!ctx) throw new Error('Sidebar workspaces components must be rendered inside SidebarWorkspacesProvider')
@@ -73,6 +91,10 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
   const navigate = useNavigate()
 
   const [gadgets, setGadgets] = useState<GadgetMetadataWithTimestamps[]>([])
+  // Workspaces added optimistically by handleCreateConfirm that no server listing has confirmed
+  // yet. These are the only entries a refetch preserves — see the load effect below — and an id
+  // leaves the set as soon as a listing mentions it, or the user deletes it.
+  const unconfirmedCreatedIds = useRef<Set<string>>(new Set())
   const [gadgetsLoading, setGadgetsLoading] = useState(true)
 
   const [search, setSearch] = useState('')
@@ -114,16 +136,9 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
       .listGadgets()
       .then((list) => {
         if (cancelled) return
-        // Merge rather than replace: this effect only reruns if `authenticatedApi` itself changes
-        // (e.g. reconnect), but if that happens while a `listGadgets()` issued before an
-        // optimistic splice (see handleCreateConfirm) resolves after it, a plain replace would
-        // silently drop the just-created workspace until some later refetch. Keep any locally-known
-        // workspace the server's list doesn't (yet) mention; the server wins for everything else.
-        setGadgets((prev) => {
-          const known = new Set(list.map((g) => g.id))
-          const localOnly = prev.filter((g) => !known.has(g.id))
-          return [...list, ...localOnly]
-        })
+        // Anything this listing mentions is confirmed; it no longer needs protecting.
+        for (const g of list) unconfirmedCreatedIds.current.delete(g.id)
+        setGadgets((prev) => mergeServerWorkspaces(list, prev, unconfirmedCreatedIds.current))
         setGadgetsLoading(false)
       })
       .catch((err) => {
@@ -225,6 +240,9 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
           overseer[Symbol.dispose]()
         }
       }
+      // Drop it from the unconfirmed set too, or deleting a workspace before any listing has
+      // confirmed it would let the next refetch bring it back.
+      unconfirmedCreatedIds.current.delete(deleteTarget.id)
       setGadgets((prev) => prev.filter((x) => x.id !== deleteTarget.id))
       toasts.add({
         title: deleteTarget.owner ? 'Workspace removed' : 'Workspace deleted',
@@ -249,6 +267,7 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
       // There's no live subscription behind `gadgets`, so splice the new workspace in rather than
       // refetching. `lastActive` must be a real Date: the Favorites/Recent sort dereferences it.
       const now = new Date()
+      unconfirmedCreatedIds.current.add(metadata.id)
       setGadgets((prev) => [{ ...metadata, created: now, lastActive: now }, ...prev])
       setCreateOpen(false)
       createdId = metadata.id

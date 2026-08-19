@@ -43,9 +43,11 @@ vi.mock('./ShareModal', () => ({ default: () => null }))
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
+import type { GadgetMetadataWithTimestamps } from '@gadgets/workshop-shared/api'
 import {
   SidebarWorkspacesProvider,
   SidebarWorkspacesLists,
+  mergeServerWorkspaces,
 } from './components/AppShell/SidebarWorkspaces'
 import { openCreateWorkspace } from './components/AppShell/createWorkspaceBus'
 
@@ -144,6 +146,30 @@ describe('create workspace from the rail-owned dialog', () => {
     await act(async () => { resolveList() })
 
     expect(container!.textContent).toContain('GTM Q3')
+  })
+
+  it('drops a workspace the server no longer lists, and stops protecting a confirmed one', () => {
+    // The other half of the merge: carrying over *every* locally-known workspace would make the
+    // server's list non-authoritative, so a workspace deleted in another tab -- or one whose share
+    // was revoked -- would keep reappearing on each reconnect. Only unconfirmed ids survive.
+    const ws = (id: string): GadgetMetadataWithTimestamps => ({
+      id, title: id, created: new Date(0), lastActive: new Date(0),
+    })
+
+    // 'ws-gone' came from an earlier listing and the server has now dropped it: it must not survive.
+    expect(
+      mergeServerWorkspaces([ws('ws-kept')], [ws('ws-kept'), ws('ws-gone')], new Set()).map((g) => g.id),
+    ).toEqual(['ws-kept'])
+
+    // An unconfirmed optimistic id survives a listing that predates it...
+    expect(
+      mergeServerWorkspaces([], [ws('ws-new')], new Set(['ws-new'])).map((g) => g.id),
+    ).toEqual(['ws-new'])
+
+    // ...but is not duplicated once a listing does mention it.
+    expect(
+      mergeServerWorkspaces([ws('ws-new')], [ws('ws-new')], new Set()).map((g) => g.id),
+    ).toEqual(['ws-new'])
   })
 
   it('reports a failure and leaves the rail unchanged', async () => {
