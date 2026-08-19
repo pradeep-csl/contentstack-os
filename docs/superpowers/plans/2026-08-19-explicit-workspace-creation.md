@@ -50,7 +50,7 @@ Explicit non-goals (deliberate, not oversights):
   - Legacy default title still in old records: `Untitled Gadget`
   - Dialog title: `Create workspace`
   - Dialog description: `An isolated environment for a set of conversations, connections, and outputs.`
-  - Name field label: `Name`, placeholder: `e.g. GTM Q3`, description: `Optional — you can rename it any time.`
+  - Name field label: `Name`, placeholder: `e.g. GTM Q3`, description: `you can rename it any time.`
   - Confirm button: `Create` / while creating: `Creating...`
   - Failure toast: `Failed to create workspace`
 - **Lint rules that will bite:** unused imports and unused local variables are **errors** (unused function params and caught errors are not).
@@ -61,26 +61,26 @@ Explicit non-goals (deliberate, not oversights):
 
 **Kernel PR (Tasks 1–3)**
 
-| File | Responsibility |
-|---|---|
-| `packages/workshop-shared/src/api.ts` | Modify: export `DEFAULT_WORKSPACE_TITLE`; add `createWorkspace(title?)` to `AuthenticatedApi`. |
-| `packages/workshop-backend/src/workspace-title.ts` | **Create.** One tiny, DO-free, unit-testable predicate: is a stored title a system default that auto-naming may replace? |
-| `packages/workshop-backend/src/overseer.ts` | Modify: use the const + predicate; guard `generateGadgetTitle` against user-chosen titles. |
-| `packages/workshop-backend/src/user.ts` | Modify: `newGadget()` takes an optional `lastActive` so a workspace can be born non-provisional. |
-| `packages/workshop-backend/src/server.ts` | Modify: implement `createWorkspace()`. |
-| `packages/workshop-backend/src/analytics.ts` | Modify: widen `gadget_created.source` with `"named"`. |
-| `packages/workshop-backend/__tests__/workspace-title.test.ts` | **Create.** Covers the predicate exhaustively. |
-| `packages/workshop-backend/__tests__/workspace-creation.test.ts` | **Create.** Covers the provisional-vs-real visibility rule against the real User DO. |
+| File                                                             | Responsibility                                                                                                           |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `packages/workshop-shared/src/api.ts`                            | Modify: export `DEFAULT_WORKSPACE_TITLE`; add `createWorkspace(title?)` to `AuthenticatedApi`.                           |
+| `packages/workshop-backend/src/workspace-title.ts`               | **Create.** One tiny, DO-free, unit-testable predicate: is a stored title a system default that auto-naming may replace? |
+| `packages/workshop-backend/src/overseer.ts`                      | Modify: use the const + predicate; guard `generateGadgetTitle` against user-chosen titles.                               |
+| `packages/workshop-backend/src/user.ts`                          | Modify: `newGadget()` takes an optional `lastActive` so a workspace can be born non-provisional.                         |
+| `packages/workshop-backend/src/server.ts`                        | Modify: implement `createWorkspace()`.                                                                                   |
+| `packages/workshop-backend/src/analytics.ts`                     | Modify: widen `gadget_created.source` with `"named"`.                                                                    |
+| `packages/workshop-backend/__tests__/workspace-title.test.ts`    | **Create.** Covers the predicate exhaustively.                                                                           |
+| `packages/workshop-backend/__tests__/workspace-creation.test.ts` | **Create.** Covers the provisional-vs-real visibility rule against the real User DO.                                     |
 
 **UI PR (Tasks 4–5)**
 
-| File | Responsibility |
-|---|---|
-| `packages/workshop-frontend/src/components/CreateWorkspaceDialog.tsx` | **Create.** Presentational dialog only — no RPC, no navigation. Modeled on `DeleteConfirmationDialog.tsx`. |
+| File                                                                       | Responsibility                                                                                             |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `packages/workshop-frontend/src/components/CreateWorkspaceDialog.tsx`      | **Create.** Presentational dialog only — no RPC, no navigation. Modeled on `DeleteConfirmationDialog.tsx`. |
 | `packages/workshop-frontend/src/components/AppShell/createWorkspaceBus.ts` | **Create.** Event bus so a route can ask the sidebar-owned dialog to open. Mirrors `commandPaletteBus.ts`. |
-| `packages/workshop-frontend/src/components/AppShell/SidebarWorkspaces.tsx` | Modify: own the dialog, do the RPC, splice the result into list state, navigate. |
-| `packages/workshop-frontend/src/routes/workspaces.tsx` | Modify: the button opens the dialog instead of linking to `/`. |
-| `packages/workshop-frontend/src/CreateWorkspaceDialog.test.tsx` | **Create.** Dialog behavior in jsdom. |
+| `packages/workshop-frontend/src/components/AppShell/SidebarWorkspaces.tsx` | Modify: own the dialog, do the RPC, splice the result into list state, navigate.                           |
+| `packages/workshop-frontend/src/routes/workspaces.tsx`                     | Modify: the button opens the dialog instead of linking to `/`.                                             |
+| `packages/workshop-frontend/src/CreateWorkspaceDialog.test.tsx`            | **Create.** Dialog behavior in jsdom.                                                                      |
 
 ### Two facts that constrain the design — do not "simplify" these away
 
@@ -95,6 +95,7 @@ Also note: the title is stored in **two** places — the Overseer's own `storage
 ## Task 1: Single source of truth for the default workspace title
 
 **Files:**
+
 - Modify: `packages/workshop-shared/src/api.ts` (insert above line 1187, `export type GadgetMetadata = {`)
 - Create: `packages/workshop-backend/src/workspace-title.ts`
 - Create: `packages/workshop-backend/__tests__/workspace-title.test.ts`
@@ -102,6 +103,7 @@ Also note: the title is stored in **two** places — the Overseer's own `storage
 - Modify: `packages/workshop-backend/src/server.ts:266`
 
 **Interfaces:**
+
 - Consumes: nothing (first task).
 - Produces:
   - `DEFAULT_WORKSPACE_TITLE: string` exported from `@gadgets/workshop-shared/api` (value `"Untitled Workspace"`).
@@ -179,7 +181,9 @@ const LEGACY_DEFAULT_GADGET_TITLE = "Untitled Gadget";
 // else was typed by a person -- at creation (createWorkspace) or later (setTitle) -- and must
 // survive both the first-chat rename and the first-code-merge rename.
 export function isReplaceableWorkspaceTitle(title: string): boolean {
-  return title === DEFAULT_WORKSPACE_TITLE || title === LEGACY_DEFAULT_GADGET_TITLE;
+  return (
+    title === DEFAULT_WORKSPACE_TITLE || title === LEGACY_DEFAULT_GADGET_TITLE
+  );
 }
 ```
 
@@ -224,13 +228,13 @@ to:
 In `packages/workshop-backend/src/server.ts`, add `DEFAULT_WORKSPACE_TITLE` to the existing `@gadgets/workshop-shared/api` import, then line 266, from:
 
 ```ts
-    await this.user.newGadget(id, "Untitled Workspace");
+await this.user.newGadget(id, "Untitled Workspace");
 ```
 
 to:
 
 ```ts
-    await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE);
+await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE);
 ```
 
 - [ ] **Step 7: Verify nothing else references the literals**
@@ -261,9 +265,11 @@ git commit -m "refactor(workspace): centralize the default workspace title"
 ## Task 2: Stop auto-naming from overwriting a name a person chose
 
 **Files:**
+
 - Modify: `packages/workshop-backend/src/overseer.ts` — storage values (immediately after the `title` field, line 687); `generateThreadTitle` guard (line 5177); `generateGadgetTitle` head (line 5192); `Overseer.setTitle` (lines 7233-7236)
 
 **Interfaces:**
+
 - Consumes: `isReplaceableWorkspaceTitle` from Task 1.
 - Produces: `storage.titleChosenByUser` (boolean, defaults `false`) — set by `Overseer.setTitle()`, which is how Task 3's `createWorkspace` inherits it for free.
 
@@ -274,7 +280,7 @@ A title-string check looks like the obvious guard and is **wrong**. Auto-naming 
 1. First chat in a fresh workspace → `generateThreadTitle` renames the workspace to the chat's title (e.g. `Go vs TypeScript: Language Comparison`), because the user still perceives it as just a chat.
 2. First accepted code merge → `generateGadgetTitle` renames it again to a project name (e.g. `Campaign Brief Generator`), because it has now become a thing rather than a conversation.
 
-By the time stage 2 runs, the title is **already a non-default string that automation wrote**. So `if (!isReplaceableWorkspaceTitle(title)) return;` would suppress stage 2 for *every workspace created through Home* — silently deleting the project-naming feature. A string cannot distinguish "automation wrote this" from "a person wrote this"; only a stored flag can.
+By the time stage 2 runs, the title is **already a non-default string that automation wrote**. So `if (!isReplaceableWorkspaceTitle(title)) return;` would suppress stage 2 for _every workspace created through Home_ — silently deleting the project-naming feature. A string cannot distinguish "automation wrote this" from "a person wrote this"; only a stored flag can.
 
 **What sets the flag:** `storage.title` has five writers. Only `Overseer.setTitle()` ([overseer.ts:7233](../../../packages/workshop-backend/src/overseer.ts#L7233)) represents a person naming the workspace — its four callers are all rename UI (`GadgetEditor.tsx:1215`, `GadgetList.tsx:312`, `SidebarWorkspaces.tsx:159`, and Task 3's `createWorkspace`). The two auto-namers write `storage.title` directly and so can never trip the flag. The remaining two writers — external-message workspace creation ([overseer.ts:6513](../../../packages/workshop-backend/src/overseer.ts#L6513)) and blueprint instantiation ([overseer.ts:6609](../../../packages/workshop-backend/src/overseer.ts#L6609)) — deliberately do **not** set it, which preserves their current behavior exactly (both are auto-renamed on first code merge today). Whether a blueprint's title deserves protection is a separate product question; leave it out of this PR.
 
@@ -360,7 +366,7 @@ to:
           isReplaceableWorkspaceTitle(this.storage.title.get()) && this.ownerId) {
 ```
 
-The title check stays: it is what stops this stage from clobbering a meaningful title on a record that predates the flag. The flag check additionally respects someone who deliberately renamed a workspace *to* `Untitled Workspace`.
+The title check stays: it is what stops this stage from clobbering a meaningful title on a record that predates the flag. The flag check additionally respects someone who deliberately renamed a workspace _to_ `Untitled Workspace`.
 
 - [ ] **Step 4: Verify types and existing tests**
 
@@ -373,14 +379,12 @@ Expected: PASS. No existing test asserts unconditional renaming. If one fails, r
 With `pnpm dev-server` running.
 
 Regression side — the Home two-stage flow must still work end to end:
+
 1. From Home, send a first message that will lead to code (e.g. "build me a tip calculator"). Confirm the workspace title becomes a chat-style title.
 2. Accept the agent's first code change. Confirm the workspace title changes **again**, to a project-style name.
 3. If it does not change at step 2, the flag is being set somewhere it shouldn't be — stop and fix before continuing.
 
-Protection side — a chosen name must survive:
-4. Rename that workspace to `Guard Check` with the pencil in the workspace header.
-5. Ask for another change that writes code and accept it.
-6. Confirm the title is still `Guard Check` in both the header and the sidebar.
+Protection side — a chosen name must survive: 4. Rename that workspace to `Guard Check` with the pencil in the workspace header. 5. Ask for another change that writes code and accept it. 6. Confirm the title is still `Guard Check` in both the header and the sidebar.
 
 - [ ] **Step 6: Commit**
 
@@ -394,6 +398,7 @@ git commit -m "fix(workspace): keep a user-chosen title through auto-naming"
 ## Task 3: `createWorkspace(title?)` — a workspace that exists before any chat
 
 **Files:**
+
 - Modify: `packages/workshop-backend/src/user.ts:736-739` (`newGadget`)
 - Modify: `packages/workshop-shared/src/api.ts` (insert after `newGadget()` at line 473)
 - Modify: `packages/workshop-backend/src/server.ts` (insert after `newGadget()`, line 278)
@@ -401,6 +406,7 @@ git commit -m "fix(workspace): keep a user-chosen title through auto-naming"
 - Create: `packages/workshop-backend/__tests__/workspace-creation.test.ts`
 
 **Interfaces:**
+
 - Consumes: `DEFAULT_WORKSPACE_TITLE` from Task 1.
 - Produces:
   - `UserDurableObject.newGadget(id: string, title: string, lastActive?: Date): Promise<void>` — third parameter added, existing two-argument callers unaffected.
@@ -424,7 +430,9 @@ declare module "cloudflare:workers" {
 }
 
 async function withUser(
-    name: string, body: (user: UserDurableObject) => Promise<void>): Promise<void> {
+  name: string,
+  body: (user: UserDurableObject) => Promise<void>
+): Promise<void> {
   await runInDurableObject(env.TEST_USER.getByName(name), body);
 }
 
@@ -515,16 +523,16 @@ Expected: PASS, 4 tests.
 In `packages/workshop-backend/src/analytics.ts`, replace lines 35-36:
 
 ```ts
-      // Whether the gadget was created from empty chat or via blueprint.
-      source: "blank" | "blueprint";
+// Whether the gadget was created from empty chat or via blueprint.
+source: "blank" | "blueprint";
 ```
 
 with:
 
 ```ts
-      // Whether the gadget was created from an empty chat, named up front by the user, or from a
-      // blueprint.
-      source: "blank" | "named" | "blueprint";
+// Whether the gadget was created from an empty chat, named up front by the user, or from a
+// blueprint.
+source: "blank" | "named" | "blueprint";
 ```
 
 - [ ] **Step 6: Declare `createWorkspace` on the RPC interface**
@@ -610,10 +618,12 @@ git commit -m "feat(workspace): add createWorkspace for named, non-provisional w
 ## Task 4: The create-workspace dialog
 
 **Files:**
+
 - Create: `packages/workshop-frontend/src/components/CreateWorkspaceDialog.tsx`
 - Create: `packages/workshop-frontend/src/CreateWorkspaceDialog.test.tsx`
 
 **Interfaces:**
+
 - Consumes: nothing from Tasks 1–3 (this component is presentational — no RPC, no navigation).
 - Produces: default export `CreateWorkspaceDialog` with props:
   ```ts
@@ -635,40 +645,45 @@ Create `packages/workshop-frontend/src/CreateWorkspaceDialog.test.tsx`:
 // @vitest-environment jsdom
 /* eslint-disable react/react-in-jsx-scope */
 
-import { act } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ToastProvider } from '@cloudflare/kumo'
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@cloudflare/kumo";
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
-;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
-
-import CreateWorkspaceDialog from './components/CreateWorkspaceDialog'
+import CreateWorkspaceDialog from "./components/CreateWorkspaceDialog";
 
 // Kumo's Dialog renders into a portal on document.body, not into the mount container, so every
 // query below goes through document.body.
 function nameInput(): HTMLInputElement {
-  const input = document.body.querySelector<HTMLInputElement>('input[type="text"]')
-  if (!input) throw new Error('No name input found')
-  return input
+  const input =
+    document.body.querySelector<HTMLInputElement>('input[type="text"]');
+  if (!input) throw new Error("No name input found");
+  return input;
 }
 
 function buttonLabelled(label: string): HTMLButtonElement {
-  const match = [...document.body.querySelectorAll('button')]
-    .find((b) => b.textContent?.trim() === label)
-  if (!match) throw new Error(`No button labelled ${label}`)
-  return match as HTMLButtonElement
+  const match = [...document.body.querySelectorAll("button")].find(
+    (b) => b.textContent?.trim() === label
+  );
+  if (!match) throw new Error(`No button labelled ${label}`);
+  return match as HTMLButtonElement;
 }
 
-describe('CreateWorkspaceDialog', () => {
-  let container: HTMLDivElement | undefined
-  let root: Root | undefined
+describe("CreateWorkspaceDialog", () => {
+  let container: HTMLDivElement | undefined;
+  let root: Root | undefined;
 
-  async function render(props: Partial<Parameters<typeof CreateWorkspaceDialog>[0]> = {}) {
-    const onConfirm = props.onConfirm ?? vi.fn()
-    const onOpenChange = props.onOpenChange ?? vi.fn()
-    container = document.createElement('div')
-    document.body.append(container)
-    root = createRoot(container)
+  async function render(
+    props: Partial<Parameters<typeof CreateWorkspaceDialog>[0]> = {}
+  ) {
+    const onConfirm = props.onConfirm ?? vi.fn();
+    const onOpenChange = props.onOpenChange ?? vi.fn();
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
     await act(async () => {
       root!.render(
         <ToastProvider>
@@ -678,61 +693,63 @@ describe('CreateWorkspaceDialog', () => {
             onOpenChange={onOpenChange}
             {...props}
           />
-        </ToastProvider>,
-      )
-    })
-    return { onConfirm, onOpenChange }
+        </ToastProvider>
+      );
+    });
+    return { onConfirm, onOpenChange };
   }
 
   async function type(value: string) {
-    const input = nameInput()
+    const input = nameInput();
     await act(async () => {
-      input.value = value
-      input.dispatchEvent(new Event('input', { bubbles: true }))
-    })
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   }
 
   afterEach(async () => {
-    await act(async () => root?.unmount())
-    container?.remove()
-    vi.clearAllMocks()
-  })
+    await act(async () => root?.unmount());
+    container?.remove();
+    vi.clearAllMocks();
+  });
 
-  it('passes the trimmed name to onConfirm', async () => {
-    const { onConfirm } = await render()
-    await type('  GTM Q3  ')
-    await act(async () => buttonLabelled('Create').click())
+  it("passes the trimmed name to onConfirm", async () => {
+    const { onConfirm } = await render();
+    await type("  GTM Q3  ");
+    await act(async () => buttonLabelled("Create").click());
 
-    expect(onConfirm).toHaveBeenCalledWith('GTM Q3')
-  })
+    expect(onConfirm).toHaveBeenCalledWith("GTM Q3");
+  });
 
-  it('allows creating without a name, passing an empty string', async () => {
-    const { onConfirm } = await render()
-    await act(async () => buttonLabelled('Create').click())
+  it("allows creating without a name, passing an empty string", async () => {
+    const { onConfirm } = await render();
+    await act(async () => buttonLabelled("Create").click());
 
-    expect(onConfirm).toHaveBeenCalledWith('')
-  })
+    expect(onConfirm).toHaveBeenCalledWith("");
+  });
 
-  it('submits on Enter in the name field', async () => {
-    const { onConfirm } = await render()
-    await type('GTM Q3')
+  it("submits on Enter in the name field", async () => {
+    const { onConfirm } = await render();
+    await type("GTM Q3");
     await act(async () => {
-      nameInput().closest('form')!.dispatchEvent(
-        new Event('submit', { bubbles: true, cancelable: true }),
-      )
-    })
+      nameInput()
+        .closest("form")!
+        .dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true })
+        );
+    });
 
-    expect(onConfirm).toHaveBeenCalledWith('GTM Q3')
-  })
+    expect(onConfirm).toHaveBeenCalledWith("GTM Q3");
+  });
 
-  it('shows progress and refuses a second submit while creating', async () => {
-    const { onConfirm } = await render({ isCreating: true })
+  it("shows progress and refuses a second submit while creating", async () => {
+    const { onConfirm } = await render({ isCreating: true });
 
-    expect(buttonLabelled('Creating...').disabled).toBe(true)
-    await act(async () => buttonLabelled('Creating...').click())
-    expect(onConfirm).not.toHaveBeenCalled()
-  })
-})
+    expect(buttonLabelled("Creating...").disabled).toBe(true);
+    await act(async () => buttonLabelled("Creating...").click());
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -746,22 +763,22 @@ Expected: FAIL — cannot resolve `./components/CreateWorkspaceDialog`.
 Create `packages/workshop-frontend/src/components/CreateWorkspaceDialog.tsx`:
 
 ```tsx
-import { Dialog, Input } from '@cloudflare/kumo'
-import { X } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
-import { WorkshopButton, WorkshopIconButton } from './WorkshopControls'
+import { Dialog, Input } from "@cloudflare/kumo";
+import { X } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { WorkshopButton, WorkshopIconButton } from "./WorkshopControls";
 
 // A UI guard against a pathological paste, not a validated limit: the server mirrors setTitle's
 // leniency and stores whatever it is given.
-const MAX_TITLE_LENGTH = 120
+const MAX_TITLE_LENGTH = 120;
 
 interface CreateWorkspaceDialogProps {
-  open: boolean
+  open: boolean;
   /** True while the create RPC is in flight; blocks a second submit and swaps the button label. */
-  isCreating?: boolean
-  onOpenChange: (open: boolean) => void
+  isCreating?: boolean;
+  onOpenChange: (open: boolean) => void;
   /** Receives the trimmed name, or '' when the user left the field blank. */
-  onConfirm: (title: string) => void
+  onConfirm: (title: string) => void;
 }
 
 // Names a workspace before it exists. Purely presentational -- the owner does the RPC, decides where
@@ -770,25 +787,25 @@ export default function CreateWorkspaceDialog({
   open,
   isCreating = false,
   onOpenChange,
-  onConfirm,
+  onConfirm
 }: CreateWorkspaceDialogProps) {
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState("");
 
   // Every opening starts from an empty field rather than the previous attempt's text.
   useEffect(() => {
-    if (open) setTitle('')
-  }, [open])
+    if (open) setTitle("");
+  }, [open]);
 
   const submit = () => {
-    if (isCreating) return
-    onConfirm(title.trim())
-  }
+    if (isCreating) return;
+    onConfirm(title.trim());
+  };
 
   return (
     <Dialog.Root
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!isCreating) onOpenChange(nextOpen)
+        if (!isCreating) onOpenChange(nextOpen);
       }}
     >
       <Dialog
@@ -801,7 +818,8 @@ export default function CreateWorkspaceDialog({
               Create workspace
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
-              An isolated environment for a set of conversations, connections, and outputs.
+              An isolated environment for a set of conversations, connections,
+              and outputs.
             </Dialog.Description>
           </div>
           <Dialog.Close
@@ -822,14 +840,14 @@ export default function CreateWorkspaceDialog({
         <form
           className="px-5 py-4"
           onSubmit={(e) => {
-            e.preventDefault()
-            submit()
+            e.preventDefault();
+            submit();
           }}
         >
           <Input
             label="Name"
             placeholder="e.g. GTM Q3"
-            description="Optional — you can rename it any time."
+            description="you can rename it any time."
             value={title}
             maxLength={MAX_TITLE_LENGTH}
             disabled={isCreating}
@@ -852,12 +870,12 @@ export default function CreateWorkspaceDialog({
             disabled={isCreating}
             className="!h-9 min-w-[64px]"
           >
-            {isCreating ? 'Creating...' : 'Create'}
+            {isCreating ? "Creating..." : "Create"}
           </WorkshopButton>
         </div>
       </Dialog>
     </Dialog.Root>
-  )
+  );
 }
 ```
 
@@ -880,11 +898,13 @@ git commit -m "feat(workspaces): add the create-workspace name dialog"
 ## Task 5: Wire the dialog to the `/workspaces` button
 
 **Files:**
+
 - Create: `packages/workshop-frontend/src/components/AppShell/createWorkspaceBus.ts`
 - Modify: `packages/workshop-frontend/src/components/AppShell/SidebarWorkspaces.tsx` (imports at 1-29; provider body from 68; context type at 39-53; context value at 212-223; dialog render at 225-257)
 - Modify: `packages/workshop-frontend/src/routes/workspaces.tsx:1-31`
 
 **Interfaces:**
+
 - Consumes: `AuthenticatedApi.createWorkspace(title?)` from Task 3; `CreateWorkspaceDialog` from Task 4.
 - Produces: `openCreateWorkspace(): void` and `OPEN_CREATE_WORKSPACE_EVENT: string` from `createWorkspaceBus.ts`.
 
@@ -898,124 +918,135 @@ Create `packages/workshop-frontend/src/createWorkspaceFlow.test.tsx`:
 // @vitest-environment jsdom
 /* eslint-disable react/react-in-jsx-scope */
 
-import { act } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
   addToast: vi.fn<(toast: unknown) => void>(),
   createWorkspace: vi.fn(),
   listGadgets: vi.fn<() => Promise<never[]>>(async () => []),
   navigate: vi.fn<(options: unknown) => void>(),
-  whoami: vi.fn(async () => null),
-}))
+  whoami: vi.fn(async () => null)
+}));
 
-vi.mock('@tanstack/react-router', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   useNavigate: () => testState.navigate,
-  Link: ({ children }: { children?: unknown }) => <span>{children as never}</span>,
-}))
+  Link: ({ children }: { children?: unknown }) => (
+    <span>{children as never}</span>
+  )
+}));
 
-vi.mock('@cloudflare/kumo', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@cloudflare/kumo')>()),
-  useKumoToastManager: () => ({ add: testState.addToast }),
-}))
+vi.mock("@cloudflare/kumo", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@cloudflare/kumo")>()),
+  useKumoToastManager: () => ({ add: testState.addToast })
+}));
 
-vi.mock('./AuthContext', () => ({
+vi.mock("./AuthContext", () => ({
   useAuthenticatedApi: () => ({
     authenticatedApi: {
       createWorkspace: testState.createWorkspace,
       listGadgets: testState.listGadgets,
-      whoami: testState.whoami,
-    },
-  }),
-}))
+      whoami: testState.whoami
+    }
+  })
+}));
 
-vi.mock('./ShareModal', () => ({ default: () => null }))
-
-;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+vi.mock("./ShareModal", () => ({ default: () => null }));
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 import {
   SidebarWorkspacesProvider,
-  SidebarWorkspacesLists,
-} from './components/AppShell/SidebarWorkspaces'
-import { openCreateWorkspace } from './components/AppShell/createWorkspaceBus'
+  SidebarWorkspacesLists
+} from "./components/AppShell/SidebarWorkspaces";
+import { openCreateWorkspace } from "./components/AppShell/createWorkspaceBus";
 
 function buttonLabelled(label: string): HTMLButtonElement {
-  const match = [...document.body.querySelectorAll('button')]
-    .find((b) => b.textContent?.trim() === label)
-  if (!match) throw new Error(`No button labelled ${label}`)
-  return match as HTMLButtonElement
+  const match = [...document.body.querySelectorAll("button")].find(
+    (b) => b.textContent?.trim() === label
+  );
+  if (!match) throw new Error(`No button labelled ${label}`);
+  return match as HTMLButtonElement;
 }
 
-describe('create workspace from the rail-owned dialog', () => {
-  let container: HTMLDivElement | undefined
-  let root: Root | undefined
+describe("create workspace from the rail-owned dialog", () => {
+  let container: HTMLDivElement | undefined;
+  let root: Root | undefined;
 
   afterEach(async () => {
-    await act(async () => root?.unmount())
-    container?.remove()
-    vi.clearAllMocks()
-  })
+    await act(async () => root?.unmount());
+    container?.remove();
+    vi.clearAllMocks();
+  });
 
   async function mount() {
-    container = document.createElement('div')
-    document.body.append(container)
-    root = createRoot(container)
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
     await act(async () => {
       root!.render(
         <SidebarWorkspacesProvider>
           <SidebarWorkspacesLists />
-        </SidebarWorkspacesProvider>,
-      )
-    })
+        </SidebarWorkspacesProvider>
+      );
+    });
   }
 
-  it('creates the workspace, shows it in the rail, and navigates into it', async () => {
-    const dispose = vi.fn()
+  it("creates the workspace, shows it in the rail, and navigates into it", async () => {
+    const dispose = vi.fn();
     testState.createWorkspace.mockReturnValue({
-      getMetadata: async () => ({ id: 'ws-new', title: 'GTM Q3' }),
-      [Symbol.dispose]: dispose,
-    })
+      getMetadata: async () => ({ id: "ws-new", title: "GTM Q3" }),
+      [Symbol.dispose]: dispose
+    });
 
-    await mount()
-    await act(async () => { openCreateWorkspace() })
-
-    const input = document.body.querySelector<HTMLInputElement>('input[type="text"]')!
+    await mount();
     await act(async () => {
-      input.value = 'GTM Q3'
-      input.dispatchEvent(new Event('input', { bubbles: true }))
-    })
-    await act(async () => buttonLabelled('Create').click())
+      openCreateWorkspace();
+    });
 
-    expect(testState.createWorkspace).toHaveBeenCalledWith('GTM Q3')
+    const input =
+      document.body.querySelector<HTMLInputElement>('input[type="text"]')!;
+    await act(async () => {
+      input.value = "GTM Q3";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => buttonLabelled("Create").click());
+
+    expect(testState.createWorkspace).toHaveBeenCalledWith("GTM Q3");
     expect(testState.navigate).toHaveBeenCalledWith({
-      to: '/workspace/$id',
-      params: { id: 'ws-new' },
-    })
+      to: "/workspace/$id",
+      params: { id: "ws-new" }
+    });
     // Appears in the rail without a refetch: listGadgets ran once, on mount.
-    expect(testState.listGadgets).toHaveBeenCalledTimes(1)
-    expect(container!.textContent).toContain('GTM Q3')
-    expect(dispose).toHaveBeenCalled()
-  })
+    expect(testState.listGadgets).toHaveBeenCalledTimes(1);
+    expect(container!.textContent).toContain("GTM Q3");
+    expect(dispose).toHaveBeenCalled();
+  });
 
-  it('reports a failure and leaves the rail unchanged', async () => {
+  it("reports a failure and leaves the rail unchanged", async () => {
     testState.createWorkspace.mockReturnValue({
-      getMetadata: async () => { throw new Error('nope') },
-      [Symbol.dispose]: vi.fn(),
-    })
+      getMetadata: async () => {
+        throw new Error("nope");
+      },
+      [Symbol.dispose]: vi.fn()
+    });
 
-    await mount()
-    await act(async () => { openCreateWorkspace() })
-    await act(async () => buttonLabelled('Create').click())
+    await mount();
+    await act(async () => {
+      openCreateWorkspace();
+    });
+    await act(async () => buttonLabelled("Create").click());
 
     expect(testState.addToast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Failed to create workspace' }),
-    )
-    expect(testState.navigate).not.toHaveBeenCalled()
-    expect(container!.textContent).not.toContain('GTM Q3')
-  })
-})
+      expect.objectContaining({ title: "Failed to create workspace" })
+    );
+    expect(testState.navigate).not.toHaveBeenCalled();
+    expect(container!.textContent).not.toContain("GTM Q3");
+  });
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -1033,10 +1064,10 @@ Create `packages/workshop-frontend/src/components/AppShell/createWorkspaceBus.ts
 // SidebarWorkspacesProvider (the only place that can splice the new workspace into the rail's list
 // state), but the button that opens it lives in the /workspaces route, which renders in a sibling
 // subtree outside that provider. An event avoids widening the provider to wrap the whole tree.
-export const OPEN_CREATE_WORKSPACE_EVENT = 'gadgets:open-create-workspace'
+export const OPEN_CREATE_WORKSPACE_EVENT = "gadgets:open-create-workspace";
 
 export function openCreateWorkspace(): void {
-  window.dispatchEvent(new CustomEvent(OPEN_CREATE_WORKSPACE_EVENT))
+  window.dispatchEvent(new CustomEvent(OPEN_CREATE_WORKSPACE_EVENT));
 }
 ```
 
@@ -1047,14 +1078,14 @@ In `packages/workshop-frontend/src/components/AppShell/SidebarWorkspaces.tsx`:
 **4a.** Change the router import on line 11 from `import { Link } from '@tanstack/react-router'` to:
 
 ```ts
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from "@tanstack/react-router";
 ```
 
 **4b.** Add these imports beside the existing ones (after line 28):
 
 ```ts
-import CreateWorkspaceDialog from '../CreateWorkspaceDialog'
-import { OPEN_CREATE_WORKSPACE_EVENT } from './createWorkspaceBus'
+import CreateWorkspaceDialog from "../CreateWorkspaceDialog";
+import { OPEN_CREATE_WORKSPACE_EVENT } from "./createWorkspaceBus";
 ```
 
 **4c.** Add to `WorkspacesContextValue` (after `onDelete` on line 52):
@@ -1068,51 +1099,57 @@ import { OPEN_CREATE_WORKSPACE_EVENT } from './createWorkspaceBus'
 **4d.** Inside `SidebarWorkspacesProvider`, after the `toasts` line (line 70), add:
 
 ```ts
-  const navigate = useNavigate()
+const navigate = useNavigate();
 ```
 
 **4e.** After the share/delete dialog state (after line 82), add:
 
 ```ts
-  // Create dialog state.
-  const [createOpen, setCreateOpen] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
+// Create dialog state.
+const [createOpen, setCreateOpen] = useState(false);
+const [isCreating, setIsCreating] = useState(false);
 ```
 
 **4f.** After the `whoami` effect (after line 86), add:
 
 ```ts
-  // The button lives in the /workspaces route, outside this provider — see createWorkspaceBus.
-  useEffect(() => {
-    const open = () => setCreateOpen(true)
-    window.addEventListener(OPEN_CREATE_WORKSPACE_EVENT, open)
-    return () => window.removeEventListener(OPEN_CREATE_WORKSPACE_EVENT, open)
-  }, [])
+// The button lives in the /workspaces route, outside this provider — see createWorkspaceBus.
+useEffect(() => {
+  const open = () => setCreateOpen(true);
+  window.addEventListener(OPEN_CREATE_WORKSPACE_EVENT, open);
+  return () => window.removeEventListener(OPEN_CREATE_WORKSPACE_EVENT, open);
+}, []);
 ```
 
 **4g.** After `handleDeleteConfirm` (after line 210), add the create handler. It follows `onShare`'s stub idiom exactly — assign the un-awaited call, pipeline a method off it, dispose in `finally`:
 
 ```ts
-  const handleCreateConfirm = useCallback(async (title: string) => {
-    setIsCreating(true)
-    let overseer: RpcStub<Overseer> | null = null
+const handleCreateConfirm = useCallback(
+  async (title: string) => {
+    setIsCreating(true);
+    let overseer: RpcStub<Overseer> | null = null;
     try {
-      overseer = authenticatedApi.createWorkspace(title) // pipelining
-      const metadata = await overseer.getMetadata()
+      overseer = authenticatedApi.createWorkspace(title); // pipelining
+      const metadata = await overseer.getMetadata();
       // There's no live subscription behind `gadgets`, so splice the new workspace in rather than
       // refetching. `lastActive` must be a real Date: the Favorites/Recent sort dereferences it.
-      const now = new Date()
-      setGadgets((prev) => [{ ...metadata, created: now, lastActive: now }, ...prev])
-      setCreateOpen(false)
-      navigate({ to: '/workspace/$id', params: { id: metadata.id } })
+      const now = new Date();
+      setGadgets((prev) => [
+        { ...metadata, created: now, lastActive: now },
+        ...prev
+      ]);
+      setCreateOpen(false);
+      navigate({ to: "/workspace/$id", params: { id: metadata.id } });
     } catch (err) {
-      console.error('Failed to create workspace:', err)
-      toasts.add({ title: 'Failed to create workspace', variant: 'error' })
+      console.error("Failed to create workspace:", err);
+      toasts.add({ title: "Failed to create workspace", variant: "error" });
     } finally {
-      overseer?.[Symbol.dispose]()
-      setIsCreating(false)
+      overseer?.[Symbol.dispose]();
+      setIsCreating(false);
     }
-  }, [authenticatedApi, navigate, toasts])
+  },
+  [authenticatedApi, navigate, toasts]
+);
 ```
 
 **4h.** Add to the context `value` object (after `onDelete: setDeleteTarget,` on line 222):
@@ -1124,14 +1161,15 @@ import { OPEN_CREATE_WORKSPACE_EVENT } from './createWorkspaceBus'
 **4i.** Render the dialog inside the provider, immediately before `{/* Delete confirm */}` (line 229):
 
 ```tsx
-      {/* Create workspace */}
-      <CreateWorkspaceDialog
-        open={createOpen}
-        isCreating={isCreating}
-        onOpenChange={setCreateOpen}
-        onConfirm={handleCreateConfirm}
-      />
-
+{
+  /* Create workspace */
+}
+<CreateWorkspaceDialog
+  open={createOpen}
+  isCreating={isCreating}
+  onOpenChange={setCreateOpen}
+  onConfirm={handleCreateConfirm}
+/>;
 ```
 
 - [ ] **Step 5: Run the test to verify it passes**
@@ -1147,26 +1185,28 @@ If `overseer = authenticatedApi.createWorkspace(title)` is a type error, do **no
 Replace `packages/workshop-frontend/src/routes/workspaces.tsx` lines 1-31's `Link` with a button. The new imports and header become:
 
 ```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { Plus } from '@phosphor-icons/react'
-import GadgetList from '../components/GadgetList'
-import { openCreateWorkspace } from '../components/AppShell/createWorkspaceBus'
-import { useDocumentTitle } from '../useDocumentTitle'
+import { createFileRoute } from "@tanstack/react-router";
+import { Plus } from "@phosphor-icons/react";
+import GadgetList from "../components/GadgetList";
+import { openCreateWorkspace } from "../components/AppShell/createWorkspaceBus";
+import { useDocumentTitle } from "../useDocumentTitle";
 ```
 
 and, replacing the comment and `<Link>` at lines 23-30:
 
 ```tsx
-        {/* Opens the name dialog owned by SidebarWorkspacesProvider, which creates the workspace,
-            shows it in the rail immediately, and navigates into it. */}
-        <button
-          type="button"
-          onClick={() => openCreateWorkspace()}
-          className="press inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium tracking-[-0.25px] text-white transition-colors hover:bg-kumo-brand-hover"
-        >
-          <Plus size={14} weight="bold" />
-          Create workspace
-        </button>
+{
+  /* Opens the name dialog owned by SidebarWorkspacesProvider, which creates the workspace,
+            shows it in the rail immediately, and navigates into it. */
+}
+<button
+  type="button"
+  onClick={() => openCreateWorkspace()}
+  className="press inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium tracking-[-0.25px] text-white transition-colors hover:bg-kumo-brand-hover"
+>
+  <Plus size={14} weight="bold" />
+  Create workspace
+</button>;
 ```
 
 Note `Link` is no longer imported — an unused import is a lint **error**.
@@ -1180,6 +1220,7 @@ Expected: PASS. `homePromptFlow.test.tsx` must still pass — Home is deliberate
 - [ ] **Step 8: Manual verification of the full spec**
 
 With `pnpm dev-server` running, walk the spec:
+
 1. Go to `/workspaces`, click `Create workspace` → the dialog opens with the name field focused.
 2. Type `GTM Q3`, press Enter → dialog closes.
 3. `GTM Q3` appears at the top of **Recent workspaces** in the rail, with no page reload.
@@ -1212,16 +1253,16 @@ Expected: all PASS. Report actual output — do not claim success without it.
 
 **Spec coverage**
 
-| Spec item | Task |
-|---|---|
-| 1. Button opens a name dialog | 4 (component), 5 (wiring + button) |
-| 2. Confirming creates a real empty workspace | 3 (`createWorkspace` + `lastActive` at birth) |
-| 3. Appears in Recent immediately, no reload | 5 (Step 4g optimistic splice; asserted in Step 1's test) |
-| 4. Navigates into the workspace, chat UI with empty list | 5 (Step 4g `navigate`); empty state already exists at `ChatInterface.tsx:6477-6480` |
-| 5. Starting a chat creates it inside the workspace | No change needed — existing `handleNewChatSend` → `overseer.newChat()`; verified in Task 5 Step 8.5 |
-| 6. A user-named workspace is never auto-renamed | 2 (`titleChosenByUser` flag latched by `setTitle`, checked by both auto-namers) |
-| Non-goal: Home unchanged | No task touches `routes/index.tsx`; `homePromptFlow.test.tsx` is a regression gate (Task 5 Step 7) |
-| Non-goal: blank name allowed | 3 (server-side trim + fallback), 4 (test: empty string), 5 (Step 8.8) |
+| Spec item                                                | Task                                                                                                |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1. Button opens a name dialog                            | 4 (component), 5 (wiring + button)                                                                  |
+| 2. Confirming creates a real empty workspace             | 3 (`createWorkspace` + `lastActive` at birth)                                                       |
+| 3. Appears in Recent immediately, no reload              | 5 (Step 4g optimistic splice; asserted in Step 1's test)                                            |
+| 4. Navigates into the workspace, chat UI with empty list | 5 (Step 4g `navigate`); empty state already exists at `ChatInterface.tsx:6477-6480`                 |
+| 5. Starting a chat creates it inside the workspace       | No change needed — existing `handleNewChatSend` → `overseer.newChat()`; verified in Task 5 Step 8.5 |
+| 6. A user-named workspace is never auto-renamed          | 2 (`titleChosenByUser` flag latched by `setTitle`, checked by both auto-namers)                     |
+| Non-goal: Home unchanged                                 | No task touches `routes/index.tsx`; `homePromptFlow.test.tsx` is a regression gate (Task 5 Step 7)  |
+| Non-goal: blank name allowed                             | 3 (server-side trim + fallback), 4 (test: empty string), 5 (Step 8.8)                               |
 
 **Known coverage gaps, stated rather than papered over**
 
