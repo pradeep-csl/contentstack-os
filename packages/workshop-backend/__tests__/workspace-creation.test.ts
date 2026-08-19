@@ -56,4 +56,20 @@ describe("workspace visibility at registration", () => {
       expect(listed.map((g) => g.id)).toEqual(["ws-shown"]);
     });
   });
+
+  // A failed createWorkspace() must leave nothing visible: the server rolls back the registration
+  // it made via deleteGadget(id) (see AuthenticatedApiImpl#cleanupFailedCreate in server.ts). This
+  // covers the record-removal half of that cleanup directly against the DO; exercising the full
+  // failure path (a real openGadget()/setTitle() throw) needs the whole Overseer stack, not just
+  // the user DO.
+  it("deleteGadget removes an explicitly registered workspace, as createWorkspace's cleanup relies on", async () => {
+    await withUser("visibility-cleanup", async (user) => {
+      await user.newGadget("ws-failed-create", "GTM Q3", new Date());
+      expect((await user.listGadgets()).map((g) => g.id)).toEqual(["ws-failed-create"]);
+
+      await user.deleteGadget("ws-failed-create");
+
+      expect(await user.listGadgets()).toEqual([]);
+    });
+  });
 });

@@ -261,37 +261,54 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
     return this.#openGadgetInternal(id, shareKey, configureObservers);
   }
 
-  async newGadget(): Promise<RpcStub<Overseer>> {
-    let id = this.overseers.newUniqueId().toString();
-    await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE);
+  // On a failed create, undo the registration so no orphaned record survives -- worse than merely
+  // stray, one with `lastActive` set is immediately visible in the user's listing forever, since
+  // there's no reaper to catch it later. `cause` is always what propagates: a cleanup failure is
+  // logged, never thrown in its place.
+  async #cleanupFailedCreate(id: string, cause: unknown): Promise<never> {
+    try {
+      await this.user.deleteGadget(id);
+    } catch (cleanupErr) {
+      logger.warn("failed to remove workspace record after failed creation", {
+        event: "workspace.create.cleanup.failed", gadgetId: id, error: cleanupErr,
+      });
+    }
+    throw cause;
+  }
+
+  // Registers a workspace record and opens its Durable Object, rolling the registration back if the
+  // open fails. Shared by newGadget() (provisional; `lastActive` omitted) and createWorkspace()
+  // (explicit; `lastActive` set at birth -- see UserDurableObject.newGadget's doc comment).
+  async #createAndOpen(id: string, source: "blank" | "named", lastActive?: Date)
+      : Promise<RpcStub<Overseer>> {
+    await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE, lastActive);
     recordAnalytics(this.ctx, this.env, {
       event_name: "gadget_created",
       user_id: this.user.id.toString(),
       gadget_id: id,
-      source: "blank",
+      source,
     });
-    let result = await this.openGadget(id);
+    let result;
+    try {
+      result = await this.openGadget(id);
+    } catch (err) {
+      return this.#cleanupFailedCreate(id, err);
+    }
     if (!result) {
-      throw new Error("Open failed despite newly-created workspace?");
+      return this.#cleanupFailedCreate(id, new Error("Open failed despite newly-created workspace?"));
     }
     return result;
+  }
+
+  async newGadget(): Promise<RpcStub<Overseer>> {
+    return this.#createAndOpen(this.overseers.newUniqueId().toString(), "blank");
   }
 
   async createWorkspace(title?: string): Promise<RpcStub<Overseer>> {
     let chosen = (title ?? "").trim();
     let id = this.overseers.newUniqueId().toString();
     // A last-active time at birth: the user named this workspace, so it is real even while empty.
-    await this.user.newGadget(id, DEFAULT_WORKSPACE_TITLE, new Date());
-    recordAnalytics(this.ctx, this.env, {
-      event_name: "gadget_created",
-      user_id: this.user.id.toString(),
-      gadget_id: id,
-      source: "named",
-    });
-    let result = await this.openGadget(id);
-    if (!result) {
-      throw new Error("Open failed despite newly-created workspace?");
-    }
+    let result = await this.#createAndOpen(id, "named", new Date());
     // setTitle is the one writer that keeps the Overseer's own title and the user's record in step,
     // so route the chosen name through it rather than seeding the two copies by hand. It also
     // latches titleChosenByUser, which is exactly right here: the user typed this name, so no
@@ -301,7 +318,12 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
     // for automatic naming, so someone who couldn't be bothered to name it still ends up with
     // something better than "Untitled Workspace".
     if (chosen) {
-      await result.setTitle(chosen);
+      try {
+        await result.setTitle(chosen);
+      } catch (err) {
+        result[Symbol.dispose]();
+        return this.#cleanupFailedCreate(id, err);
+      }
     }
     return result;
   }
