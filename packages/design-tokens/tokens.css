@@ -9,13 +9,13 @@
 @theme {
   /* ===== VENUS SURFACES ===== */
   --color-kumo-base: #ffffff;
-  --color-kumo-elevated: #f7f9fc;
-  --color-kumo-tint: #edf1f7;
+  --color-kumo-elevated: #f4f7fb;
+  --color-kumo-tint: #e9eef6;
   --color-kumo-overlay: #ffffff;
   --color-kumo-recessed: #dde3ee;
   --color-kumo-control: #ffffff;
   --color-kumo-contrast: #222222;
-  --color-kumo-fill: #edf1f7;
+  --color-kumo-fill: #e9eef6;
   --color-kumo-fill-hover: #dde3ee;
   --color-kumo-interact: #c7d0e1;
 
@@ -24,9 +24,10 @@
   --color-kumo-brand-hover: #5d50be;
 
   /* ===== LINES =====
-     Translucent on purpose: `recessed` and `fill-hover` are both #dde3ee, so a solid
-     #dde3ee hairline would be invisible on them. Derived from Venus `font-base` at 12%. */
-  --color-kumo-line: #4751611f;
+     Venus font-base at 20%, not 12%: at 12% the hairline was 1.20:1 on elevated, so panel and card
+     edges did not register. Still translucent, because `recessed` and `fill-hover` share a value
+     and a solid line would vanish on them. */
+  --color-kumo-line: #47516133;
   --color-kumo-ring: #c7d0e1;
 
   /* ===== CHAT ===== */
@@ -86,8 +87,8 @@
   --color-accent-100: #6c5ce7;
   --color-accent-200: #9387ed;
   --color-background-100: #ffffff;
-  --color-background-200: #f7f9fc;
-  --color-background-300: #edf1f7;
+  --color-background-200: #f4f7fb;
+  --color-background-300: #e9eef6;
   --color-foreground-100: #1c2333;
   --color-foreground-200: #212121;
   --color-foreground-300: #3d4658;
