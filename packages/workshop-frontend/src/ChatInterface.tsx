@@ -1464,7 +1464,7 @@ const ToolCallDetails = memo(function ToolCallDetails(
       )}
       {tc.toolName === "executeCode" ? (
         <>
-          <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase tracking-[0.08em]">
+          <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">
             Code
           </span>
           <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
@@ -1472,7 +1472,7 @@ const ToolCallDetails = memo(function ToolCallDetails(
           </pre>
           {tc.output && (
             <>
-              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase tracking-[0.08em]">
+              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">
                 Output
               </span>
               <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
@@ -1560,7 +1560,7 @@ const NestedToolCallRow = memo(function NestedToolCallRow({
         <span className="flex min-w-0 flex-1 items-center gap-2 text-ui-md leading-5">
           <span className="min-w-0 truncate">{label}</span>
           {tc.error && (
-            <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.04em] text-kumo-danger">
+            <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-danger">
               Error
             </span>
           )}
@@ -1679,7 +1679,7 @@ const ToolGroupRow = memo(function ToolGroupRow({
           <span className="flex min-w-0 items-center gap-2 text-ui-md leading-5">
             <span className="min-w-0 truncate">{group.label}</span>
             {group.hasError && (
-              <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.04em] text-kumo-danger">
+              <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-danger">
                 Error
               </span>
             )}
@@ -6499,7 +6499,7 @@ function ChatInterface({
               <div className="flex flex-col gap-4">
                 {bucketedVisibleChats.map(({ bucket, items }) => (
                   <section key={bucket} className="flex flex-col gap-0.5">
-                    <p className="mb-1 px-1 text-ui-2xs font-medium uppercase tracking-[0.08em] text-kumo-subtle">
+                    <p className="mb-1 px-1 text-ui-2xs font-medium uppercase text-kumo-subtle">
                       {CHAT_TIME_BUCKET_LABELS[bucket]}
                     </p>
                     {items.map((chat) => (
@@ -7558,7 +7558,7 @@ function ChatInterface({
                                         >
                                           {toolCall.code && (
                                             <>
-                                              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase tracking-[0.08em]">Code</span>
+                                              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">Code</span>
                                               <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
                                                 {toolCall.code}
                                               </pre>
@@ -7566,7 +7566,7 @@ function ChatInterface({
                                           )}
                                           {toolCall.output && (
                                             <>
-                                              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase tracking-[0.08em]">Output</span>
+                                              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">Output</span>
                                               <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
                                                 {toolCall.output}
                                               </pre>

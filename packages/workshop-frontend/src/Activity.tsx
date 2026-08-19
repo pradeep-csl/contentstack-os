@@ -295,7 +295,7 @@ export default function Activity({
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto">
-              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-ui-2xs font-medium uppercase text-kumo-subtle">
                 <span>Time</span>
                 <span>Event</span>
                 <span>Status</span>
@@ -303,7 +303,7 @@ export default function Activity({
               </div>
               {historyGroups.map(group => (
                 <section key={group.label}>
-                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle backdrop-blur-sm">
+                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-ui-2xs font-medium uppercase text-kumo-subtle backdrop-blur-sm">
                     {group.label}
                   </h3>
                   {group.records.map(record => (

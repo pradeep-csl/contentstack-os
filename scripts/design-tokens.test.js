@@ -186,40 +186,45 @@ test('BANNED_TRACKING flags px letter-spacing and named negative tracking', () =
 // PX-TRACK cleanup swapped a px bracket for the named `tracking-wide` (0.025em) without
 // checking it against the token's own value, undoing more than half the intended spacing.
 //
-// Scoped to the named keywords, not `tracking-[Nem]` brackets: those are a separate,
-// much wider pre-existing convention (dozens of sites, most spelling out the scale's own
-// 0.06em explicitly) that predates this remediation and is out of its scope. The named
-// forms are the failure mode that actually occurred — a spot override that reads as
-// harmless but silently wins.
+// Covers both named keywords and `tracking-[…]` brackets — including ones that merely
+// restate the step's own 0.06em. There is no such thing as a harmless override here: a
+// bracket that agrees with the token is dead weight, and one that disagrees (0.08em, 0.4px,
+// 0.9px, 0.02em, 0.04em have all shown up) silently wins on source order exactly like the
+// named form does. An earlier version of this guard excluded brackets on the theory that the
+// wide pre-existing convention of spelling out 0.06em explicitly was a separate, out-of-scope
+// concern — but a convention of restating a token's own default in 26 places is exactly the
+// ad-hoc override this remediation exists to remove, so that exclusion no longer applies.
 const TWOXS_TOKEN = /\btext-ui-2xs\b/
-const NAMED_TRACKING = /\btracking-(?:tight|tighter|normal|wide|wider|widest)\b/
+const TRACKING_UTILITY = /\btracking-\[[^\]]+\]|\btracking-(?:tight|tighter|normal|wide|wider|widest)\b/
 
-function has2xsNamedTrackingCollision(line) {
-  return TWOXS_TOKEN.test(line) && NAMED_TRACKING.test(line)
+function has2xsTrackingCollision(line) {
+  return TWOXS_TOKEN.test(line) && TRACKING_UTILITY.test(line)
 }
 
 const TWOXS_TRACKING_CASES = [
   ['text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle', true],
   ['text-ui-2xs font-semibold uppercase tracking-wider text-kumo-subtle', true],
   ['text-ui-2xs font-semibold uppercase tracking-normal text-kumo-subtle', true],
+  ['text-ui-2xs font-semibold uppercase tracking-[0.08em] text-kumo-subtle', true],
+  ['text-ui-2xs font-semibold uppercase tracking-[0.06em] text-kumo-subtle', true],
   ['text-ui-xs font-semibold uppercase tracking-wider text-kumo-subtle', false],
+  ['text-ui-xs font-semibold uppercase tracking-[0.08em] text-kumo-subtle', false],
   ['text-ui-2xs font-semibold uppercase text-kumo-subtle', false],
-  ['text-ui-2xs font-semibold uppercase tracking-[0.06em] text-kumo-subtle', false],
 ]
 
-test('the 2xs/tracking classifier flags only text-ui-2xs lines carrying a named tracking utility', () => {
+test('the 2xs/tracking classifier flags text-ui-2xs lines carrying any tracking utility, named or bracketed', () => {
   for (const [line, want] of TWOXS_TRACKING_CASES) {
-    assert.equal(has2xsNamedTrackingCollision(line), want, `${line}: expected ${want}`)
+    assert.equal(has2xsTrackingCollision(line), want, `${line}: expected ${want}`)
   }
 })
 
-test('text-ui-2xs never shares a line with a named tracking-* utility', () => {
+test('text-ui-2xs never shares a line with a tracking-* utility', () => {
   const offenders = []
   for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
     const rel = repoPath(file)
     const lines = readFileSync(file, 'utf8').split('\n')
     lines.forEach((line, i) => {
-      if (has2xsNamedTrackingCollision(line)) offenders.push(`${rel}:${i + 1}`)
+      if (has2xsTrackingCollision(line)) offenders.push(`${rel}:${i + 1}`)
     })
   }
   assert.deepEqual(offenders, [], 'text-ui-2xs already supplies +0.06em — delete the tracking-* override')
@@ -245,4 +250,10 @@ test('the sizes allowlist has no stale entries', () => {
     return !BANNED_SIZE.test(text) && !BANNED_TRACKING.test(text)
   })
   assert.deepEqual(stale, [], 'these are clean — remove them from PENDING_SIZES')
+})
+
+// The sizing ratchet closed at zero. This asserts it stays there: re-growing PENDING_SIZES now
+// requires deleting this test rather than quietly appending a path to the Set above.
+test('PENDING_SIZES stays empty', () => {
+  assert.deepEqual([...PENDING_SIZES], [])
 })

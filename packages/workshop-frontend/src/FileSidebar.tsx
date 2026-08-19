@@ -116,7 +116,7 @@ export default function FileSidebar({
   return (
     <div className="flex h-full w-[244px] flex-col border-r border-kumo-line bg-kumo-base">
       <div className="flex h-9 shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2">
-        <span className="text-ui-2xs font-medium uppercase tracking-[0.08em] text-kumo-subtle">
+        <span className="text-ui-2xs font-medium uppercase text-kumo-subtle">
           Files
         </span>
         <WorkshopIconButton

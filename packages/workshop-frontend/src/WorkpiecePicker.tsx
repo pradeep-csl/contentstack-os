@@ -68,7 +68,7 @@ export default function WorkpiecePicker({
         }`}
       >
         {expanded && (
-          <span className="text-ui-2xs font-medium uppercase tracking-[0.06em]">Outputs</span>
+          <span className="text-ui-2xs font-medium uppercase">Outputs</span>
         )}
         {expanded ? <CaretRight size={14} /> : <CaretLeft size={14} />}
       </button>

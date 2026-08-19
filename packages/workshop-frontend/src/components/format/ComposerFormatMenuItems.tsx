@@ -31,7 +31,7 @@ export default function ComposerFormatMenuItems({
 
   return (
     <>
-      <p className="px-2 pb-1 pt-1.5 text-ui-2xs font-medium uppercase leading-4 tracking-[0.06em] text-kumo-subtle">
+      <p className="px-2 pb-1 pt-1.5 text-ui-2xs font-medium uppercase leading-4 text-kumo-subtle">
         Start with
       </p>
       {formats.map((format) => (

@@ -135,7 +135,7 @@ export default function AdminFormatsPanel({
           }
         />
         <DropdownMenu.Content className={MENU_CONTENT}>
-          <p className="px-2 pb-1.5 pt-1 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+          <p className="px-2 pb-1.5 pt-1 text-ui-2xs font-medium uppercase text-kumo-subtle">
             Offer as a standard format
           </p>
           {available.map((candidate) => (
@@ -167,7 +167,7 @@ export default function AdminFormatsPanel({
 function PreviewStrip({ formats }: { formats: AdminFormat[] }) {
   return (
     <div className="mb-5 rounded-lg border border-dashed border-kumo-line bg-kumo-tint/40 p-4">
-      <p className="mb-2.5 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+      <p className="mb-2.5 text-ui-2xs font-medium uppercase text-kumo-subtle">
         What people will see
       </p>
       {formats.length === 0 ? (
@@ -351,7 +351,7 @@ function FormatRow({
                       the Outputs page, and that shouldn't be discovered there. */}
                   <figure className="hidden shrink-0 flex-col items-center gap-1.5 sm:flex">
                     <FormatPreview output={format.output} width={112} />
-                    <figcaption className="text-ui-2xs uppercase tracking-[0.06em] text-kumo-subtle">
+                    <figcaption className="text-ui-2xs uppercase text-kumo-subtle">
                       On Outputs
                     </figcaption>
                   </figure>
@@ -488,7 +488,7 @@ function OverrideField({
 
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+      <span className="text-ui-2xs font-medium uppercase text-kumo-subtle">
         {label}
         {overridden && (
           <span className="ml-1 normal-case tracking-normal text-kumo-subtle">(overridden)</span>
@@ -524,7 +524,7 @@ function IconPicker({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+      <span className="text-ui-2xs font-medium uppercase text-kumo-subtle">
         Icon
       </span>
       <DropdownMenu>
