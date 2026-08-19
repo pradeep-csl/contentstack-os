@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { Plus } from '@phosphor-icons/react'
 import GadgetList from '../components/GadgetList'
+import { openCreateWorkspace } from '../components/AppShell/createWorkspaceBus'
 import { useDocumentTitle } from '../useDocumentTitle'
 
 // Full workspace listing. The sidebar surfaces Favorites + a handful of Recent workspaces; this is
@@ -20,14 +21,16 @@ function WorkspacesPage() {
             Each workspace is an isolated environment with its own conversations, gatekeepers, and outputs.
           </p>
         </div>
-        {/* "Create" just routes to Home (the new-workspace launcher) for now. */}
-        <Link
-          to="/"
+        {/* Opens the name dialog owned by SidebarWorkspacesProvider, which creates the workspace,
+            shows it in the rail immediately, and navigates into it. */}
+        <button
+          type="button"
+          onClick={() => openCreateWorkspace()}
           className="press inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium tracking-[-0.25px] text-white transition-colors hover:bg-kumo-brand-hover"
         >
           <Plus size={14} weight="bold" />
           Create workspace
-        </Link>
+        </button>
       </header>
       <div className="min-h-0 flex-1">
         <GadgetList showHeader={false} />

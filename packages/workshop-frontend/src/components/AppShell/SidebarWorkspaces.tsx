@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRight,
   CaretDown,
@@ -26,7 +26,9 @@ import {
 import { useAuthenticatedApi } from '../../AuthContext'
 import ShareModal from '../../ShareModal'
 import DeleteConfirmationDialog from '../DeleteConfirmationDialog'
+import CreateWorkspaceDialog from '../CreateWorkspaceDialog'
 import SidebarGadgetRow from './SidebarGadgetRow'
+import { OPEN_CREATE_WORKSPACE_EVENT } from './createWorkspaceBus'
 
 // Cap on items shown in the Recent list before the user clicks through to /workspaces.
 const RECENT_INITIAL_LIMIT = 6
@@ -50,6 +52,10 @@ type WorkspacesContextValue = {
   onRename: (g: GadgetMetadataWithTimestamps, newTitle: string) => void
   onShare: (g: GadgetMetadataWithTimestamps) => void
   onDelete: (g: GadgetMetadataWithTimestamps) => void
+
+  // Opens the create-workspace dialog. Exposed for completeness; the /workspaces route triggers it
+  // through createWorkspaceBus instead, since it renders outside this provider.
+  onCreateWorkspace: () => void
 }
 
 const WorkspacesContext = createContext<WorkspacesContextValue | null>(null)
@@ -68,6 +74,7 @@ function useWorkspacesContext(): WorkspacesContextValue {
 export function SidebarWorkspacesProvider({ children }: { children: ReactNode }) {
   const { authenticatedApi } = useAuthenticatedApi()
   const toasts = useKumoToastManager()
+  const navigate = useNavigate()
 
   const [gadgets, setGadgets] = useState<GadgetMetadataWithTimestamps[]>([])
   const [gadgetsLoading, setGadgetsLoading] = useState(true)
@@ -81,9 +88,20 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
   const [shareOverseer, setShareOverseer] = useState<{ stub: RpcStub<Overseer> } | null>(null)
   const [currentUser, setCurrentUser] = useState<AiChatAuthorInfo | null>(null)
 
+  // Create dialog state.
+  const [createOpen, setCreateOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+
   useEffect(() => {
     authenticatedApi.whoami().then(setCurrentUser).catch(() => {})
   }, [authenticatedApi])
+
+  // The button lives in the /workspaces route, outside this provider — see createWorkspaceBus.
+  useEffect(() => {
+    const open = () => setCreateOpen(true)
+    window.addEventListener(OPEN_CREATE_WORKSPACE_EVENT, open)
+    return () => window.removeEventListener(OPEN_CREATE_WORKSPACE_EVENT, open)
+  }, [])
 
   // Load gadgets. Refresh on mount + after mutation; no live subscription yet.
   useEffect(() => {
@@ -209,6 +227,27 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
     }
   }, [authenticatedApi, deleteTarget, toasts])
 
+  const handleCreateConfirm = useCallback(async (title: string) => {
+    setIsCreating(true)
+    let overseer: RpcStub<Overseer> | null = null
+    try {
+      overseer = authenticatedApi.createWorkspace(title) // pipelining
+      const metadata = await overseer.getMetadata()
+      // There's no live subscription behind `gadgets`, so splice the new workspace in rather than
+      // refetching. `lastActive` must be a real Date: the Favorites/Recent sort dereferences it.
+      const now = new Date()
+      setGadgets((prev) => [{ ...metadata, created: now, lastActive: now }, ...prev])
+      setCreateOpen(false)
+      navigate({ to: '/workspace/$id', params: { id: metadata.id } })
+    } catch (err) {
+      console.error('Failed to create workspace:', err)
+      toasts.add({ title: 'Failed to create workspace', variant: 'error' })
+    } finally {
+      overseer?.[Symbol.dispose]()
+      setIsCreating(false)
+    }
+  }, [authenticatedApi, navigate, toasts])
+
   const value: WorkspacesContextValue = {
     search,
     setSearch,
@@ -220,11 +259,20 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
     onRename,
     onShare,
     onDelete: setDeleteTarget,
+    onCreateWorkspace: () => setCreateOpen(true),
   }
 
   return (
     <WorkspacesContext.Provider value={value}>
       {children}
+
+      {/* Create workspace */}
+      <CreateWorkspaceDialog
+        open={createOpen}
+        isCreating={isCreating}
+        onOpenChange={setCreateOpen}
+        onConfirm={handleCreateConfirm}
+      />
 
       {/* Delete confirm */}
       <DeleteConfirmationDialog
