@@ -366,14 +366,14 @@ export default function CommandPalette({
 
         <div ref={listRef} className="sidebar-scroll max-h-[min(60vh,420px)] overflow-y-auto p-1.5">
           {flat.length === 0 ? (
-            <p className="px-3 py-6 text-center text-[13px] text-kumo-subtle">No results.</p>
+            <p className="px-3 py-6 text-center text-ui-sm text-kumo-subtle">No results.</p>
           ) : (
             groups.map((group, gi) => {
               // Compute the flat index offset for this group so keyboard nav stays in sync.
               const start = groups.slice(0, gi).reduce((n, g) => n + g.items.length, 0)
               return (
                 <div key={group.heading} className="mb-1 last:mb-0">
-                  <p className="px-2.5 pt-1.5 pb-1 text-ui-2xs font-medium uppercase tracking-[0.4px] text-kumo-subtle">
+                  <p className="px-2.5 pt-1.5 pb-1 text-ui-2xs font-medium uppercase text-kumo-subtle">
                     {group.heading}
                   </p>
                   {group.items.map((cmd, j) => {
@@ -386,7 +386,7 @@ export default function CommandPalette({
                         onMouseMove={() => setActiveIndex(i)}
                         onClick={() => go(cmd.run)}
                         className={[
-                          'flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] leading-[18px] transition-colors',
+                          'flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-ui-md transition-colors',
                           i === activeIndex ? 'bg-kumo-fill text-kumo-strong' : 'text-kumo-default',
                         ].join(' ')}
                       >

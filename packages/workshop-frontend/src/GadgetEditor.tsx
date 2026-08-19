@@ -190,7 +190,7 @@ function PaneLabel({
   return (
     <div
       title={title}
-      className="inline-flex w-full min-w-0 max-w-[180px] items-center gap-1.5 overflow-hidden rounded-lg bg-kumo-tint px-2.5 py-1.5 text-[13px] font-medium text-kumo-default"
+      className="inline-flex w-full min-w-0 max-w-[180px] items-center gap-1.5 overflow-hidden rounded-lg bg-kumo-tint px-2.5 py-1.5 text-ui-md font-medium text-kumo-default"
     >
       {LabelIcon
         ? <LabelIcon size={14} weight="bold" className="flex-shrink-0" />
@@ -274,7 +274,7 @@ function PaneWorkpieceTabs({
             title={gadget.title}
             aria-current={active ? 'page' : undefined}
             // The open one gets room for its whole name; the others yield first.
-            className={`inline-flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
+            className={`inline-flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-ui-md font-medium transition-colors duration-150 ${
               active
                 ? 'max-w-[240px] bg-kumo-tint text-kumo-default'
                 : 'max-w-[150px] text-kumo-subtle hover:bg-kumo-tint/50 hover:text-kumo-default'
@@ -309,7 +309,7 @@ function PaneTab({
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-[12.5px] font-medium tracking-[-0.15px] transition-colors duration-150 ${
+      className={`relative flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-ui-sm font-medium transition-colors duration-150 ${
         active ? 'bg-kumo-tint text-kumo-default' : 'text-kumo-subtle hover:text-kumo-default'
       }`}
     >
@@ -401,10 +401,10 @@ function NoGadgetPlaceholder({ height }: { height: string }) {
   return (
     <div className="flex items-center justify-center px-6 text-center" style={{ height }}>
       <div className="max-w-[360px]">
-        <p className="m-0 text-ui-lg leading-[22px] font-semibold text-kumo-default">
+        <p className="m-0 text-ui-lg font-semibold text-kumo-default">
           No gadgets yet
         </p>
-        <p className="mt-1.5 mb-0 text-[13px] leading-[19px] text-kumo-subtle">
+        <p className="mt-1.5 mb-0 text-ui-sm text-kumo-subtle">
           Ask the agent in chat to build something, and it will appear here.
         </p>
       </div>
@@ -1668,7 +1668,7 @@ export default function GadgetEditor() {
                   aria-live="polite"
                   className="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2 transform"
                 >
-                  <div className="rounded-full border border-kumo-line bg-kumo-base/90 px-4 py-1.5 text-[13px] leading-[18px] text-kumo-default shadow-md backdrop-blur-sm">
+                  <div className="rounded-full border border-kumo-line bg-kumo-base/90 px-4 py-1.5 text-ui-sm text-kumo-default shadow-md backdrop-blur-sm">
                     Press <kbd className="rounded border border-kumo-line bg-kumo-elevated px-1.5 py-0.5 text-ui-2xs font-medium">Esc</kbd> to exit full screen
                   </div>
                 </div>

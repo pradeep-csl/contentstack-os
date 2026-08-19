@@ -101,7 +101,7 @@ export default function LoginPage({ rpcStub, onLoginSuccess }: LoginPageProps) {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <SiteLogo size={40} className="mb-3" />
-          <h1 className="text-xl font-semibold text-kumo-default">{siteName}</h1>
+          <h1 className="text-ui-xl font-semibold text-kumo-default">{siteName}</h1>
           <p className="text-ui-md text-kumo-subtle mt-1">Sign in to your account</p>
         </div>
 

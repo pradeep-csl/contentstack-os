@@ -188,28 +188,7 @@ test('text-kumo-inactive is only ever scoped to a disabled state', () => {
 // `text-2xl`/`text-3xl` (per-element judgement), a `leading-*`/`tracking-normal|wide|wider`
 // collision, or a deferred px-tracking site (size 17px+, or a non-standard decimal size this
 // codemod's mapping table doesn't cover, e.g. `text-[11.5px]`/`text-[12.5px]`).
-const PENDING_SIZES = new Set([
-  'packages/workshop-frontend/src/AdminPage.tsx',
-  'packages/workshop-frontend/src/BlueprintLandingPage.tsx',
-  'packages/workshop-frontend/src/BlueprintModal.tsx',
-  'packages/workshop-frontend/src/FileSidebar.tsx',
-  'packages/workshop-frontend/src/GadgetEditor.tsx',
-  'packages/workshop-frontend/src/GadgetUI.tsx',
-  'packages/workshop-frontend/src/LoginPage.tsx',
-  'packages/workshop-frontend/src/ShareModal.tsx',
-  'packages/workshop-frontend/src/WorkpiecePicker.tsx',
-  'packages/workshop-frontend/src/components/AppShell/CommandPalette.tsx',
-  'packages/workshop-frontend/src/components/AppShell/SidebarItem.tsx',
-  'packages/workshop-frontend/src/components/EmptyState.tsx',
-  'packages/workshop-frontend/src/components/SectionEyebrow.tsx',
-  'packages/workshop-frontend/src/components/chat/SlashCommandPicker.tsx',
-  'packages/workshop-frontend/src/components/format/NewFormatRow.tsx',
-  'packages/workshop-frontend/src/routes/blueprints.tsx',
-  'packages/workshop-frontend/src/routes/gatekeepers.tsx',
-  'packages/workshop-frontend/src/routes/index.tsx',
-  'packages/workshop-frontend/src/routes/outputs.tsx',
-  'packages/workshop-frontend/src/routes/workspaces.tsx',
-])
+const PENDING_SIZES = new Set([])
 
 // `[\d.]+`, not `\d+`: a bare `\d+` misses decimal literals like `text-[11.5px]`, which is a real,
 // distinct ad-hoc size in this tree (21 sites) and not one the mapping table below has an answer

@@ -92,7 +92,7 @@ export default function WorkpiecePicker({
                     if (e.key === 'Escape') setEditing(null)
                   }}
                   autoFocus
-                  className="!h-7 min-w-0 flex-1 bg-kumo-tint text-[13px]"
+                  className="!h-7 min-w-0 flex-1 bg-kumo-tint text-ui-md"
                 />
                 <WorkshopIconButton
                   onClick={commitRename}
@@ -116,7 +116,7 @@ export default function WorkpiecePicker({
           return (
             <div
               key={gadget.id}
-              className={`group/workpiece flex items-center rounded-lg text-[13px] leading-[18px] transition-colors ${
+              className={`group/workpiece flex items-center rounded-lg text-ui-md transition-colors ${
                 expanded ? 'h-8 gap-1 pl-2 pr-1' : 'h-9 w-9 justify-center self-center'
               } ${
                 isSelected
@@ -187,7 +187,7 @@ export default function WorkpiecePicker({
           <button
             type="button"
             onClick={onOpenActivity}
-            className={`relative mt-3 flex cursor-pointer items-center rounded-lg text-[13px] leading-[18px] text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default ${
+            className={`relative mt-3 flex cursor-pointer items-center rounded-lg text-ui-md text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default ${
               expanded ? 'h-8 gap-2 px-2 text-left' : 'h-9 w-9 justify-center self-center'
             }`}
           >

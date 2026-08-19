@@ -125,7 +125,7 @@ function ConnectorCard({
 
   const badgeEl = badge ? (
     <span
-      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-3 font-semibold uppercase tracking-[0.4px] ${
+      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-3 font-semibold uppercase ${
         badge.tone === 'new'
           ? 'bg-[rgba(255,72,1,0.10)] text-kumo-brand'
           : 'bg-kumo-tint text-kumo-subtle'
@@ -224,7 +224,7 @@ function ConnectorCard({
           </div>
         )}
         {tagline && (
-          <p className="mt-2 line-clamp-2 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+          <p className="mt-2 line-clamp-2 text-ui-sm font-normal text-kumo-subtle">
             {tagline}
           </p>
         )}
@@ -238,7 +238,7 @@ function ConnectorCard({
 function SectionEyebrow({ label, count }: { label: string; count?: number }) {
   return (
     <div className="mb-3.5 flex items-center gap-3 px-1">
-      <h2 className="m-0 text-ui-2xs leading-4 font-semibold uppercase tracking-[0.9px] text-kumo-subtle">
+      <h2 className="m-0 text-ui-2xs leading-4 font-semibold uppercase text-kumo-subtle">
         {label}
       </h2>
       <div className="h-px flex-1 bg-kumo-line" />
@@ -427,7 +427,7 @@ function ConnectorsHeroDiagram({
         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-kumo-base text-kumo-brand">
           <Hexagon size={17} weight="bold" />
         </div>
-        <span className="relative -top-px min-w-0 truncate text-base leading-5 font-semibold tracking-tight text-kumo-default">
+        <span className="relative -top-px min-w-0 truncate text-ui-lg leading-5 font-semibold text-kumo-default">
           {siteName}
         </span>
       </div>
@@ -742,10 +742,10 @@ function ConnectorsPage() {
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-8 sm:py-14">
         <header className="mb-8 grid gap-8 lg:grid-cols-[minmax(0,540px)_444px] lg:items-center lg:justify-between">
           <div>
-            <h1 className="m-0 text-3xl font-semibold leading-tight tracking-tight text-kumo-default sm:text-ui-3xl">
+            <h1 className="m-0 text-ui-3xl font-semibold text-kumo-default">
               Gatekeepers
             </h1>
-            <p className="mt-2 text-ui-md leading-[20px] font-normal text-kumo-subtle">
+            <p className="mt-2 text-ui-md font-normal text-kumo-subtle">
               Add the apps and accounts your workspaces can use. Connect once, then wire
               them into anything you build.
             </p>
@@ -772,7 +772,7 @@ function ConnectorsPage() {
 
         {loadError && (
           <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-6 text-center">
-            <p className="m-0 text-[13px] leading-[18px] font-medium text-kumo-danger">
+            <p className="m-0 text-ui-sm font-medium text-kumo-danger">
               Something went wrong loading your gatekeepers.
             </p>
             <p className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -782,7 +782,7 @@ function ConnectorsPage() {
         )}
 
         {initialLoading && (
-          <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-8 text-center text-[13px] leading-[18px] font-normal text-kumo-subtle">
+          <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-8 text-center text-ui-sm font-normal text-kumo-subtle">
             Loading gatekeepers...
           </div>
         )}

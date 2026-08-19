@@ -322,7 +322,7 @@ function FileRow({
   return (
     <div
       className={[
-        'group relative mb-[2px] flex h-7 items-center gap-2 rounded-md px-2 text-[13px] leading-[18px] transition-[background-color,box-shadow,color,opacity] duration-150 ease-out',
+        'group relative mb-[2px] flex h-7 items-center gap-2 rounded-md px-2 text-ui-md transition-[background-color,box-shadow,color,opacity] duration-150 ease-out',
         isRenaming
           ? 'bg-kumo-base ring-1 ring-kumo-ring/40'
           : isActive
@@ -366,12 +366,12 @@ function FileRow({
           autoCapitalize="off"
           autoCorrect="off"
           aria-label={`Rename ${filename}`}
-          className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] text-kumo-default outline-none placeholder:text-kumo-placeholder"
+          className="min-w-0 flex-1 bg-transparent text-ui-md text-kumo-default outline-none placeholder:text-kumo-placeholder"
         />
       ) : (
         <button
           type="button"
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 self-stretch bg-transparent p-0 text-left text-[13px] leading-[18px] text-inherit outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring focus-visible:ring-offset-1 focus-visible:ring-offset-kumo-base"
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 self-stretch bg-transparent p-0 text-left text-ui-md text-inherit outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring focus-visible:ring-offset-1 focus-visible:ring-offset-kumo-base"
           aria-current={isActive ? 'page' : undefined}
           onClick={(event) => {
             event.stopPropagation()

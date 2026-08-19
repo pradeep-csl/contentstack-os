@@ -283,10 +283,10 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
           <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-4 py-5 sm:px-6">
             <div className="flex min-w-0 items-start gap-3">
               <div className="min-w-0">
-              <Dialog.Title className="text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-default">
                 {formMode === 'create' ? 'Create blueprint' : formMode === 'edit' ? 'Edit blueprint' : 'Blueprints'}
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+              <Dialog.Description className="mt-1 text-ui-sm font-normal text-kumo-subtle">
                 {formMode === 'create'
                   ? 'Describe what people get when they start from this blueprint.'
                   : formMode === 'edit'
@@ -340,7 +340,7 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                     <div className="rounded-xl border border-kumo-line bg-kumo-base p-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="m-0 text-[13px] leading-[18px] font-medium text-kumo-default">
+                          <p className="m-0 text-ui-md font-medium text-kumo-default">
                             Screenshot
                           </p>
                           <p className="m-0 mt-0.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -393,16 +393,16 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                   </div>
 
                   {bindingsLoading ? (
-                    <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-[13px] text-kumo-subtle">
+                    <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-ui-sm text-kumo-subtle">
                       Loading connections...
                     </div>
                   ) : bindingsError ? (
-                    <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-3 text-[13px] text-kumo-subtle">
+                    <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-3 text-ui-sm text-kumo-subtle">
                       {bindingsError}
                     </div>
                   ) : bindings.length > 0 ? (
                     <section>
-                      <h3 className="m-0 mb-1 text-[13px] leading-[18px] font-medium text-kumo-default">
+                      <h3 className="m-0 mb-1 text-ui-md font-medium text-kumo-default">
                         Connections
                       </h3>
                       <p className="m-0 mb-3 text-ui-xs leading-4 font-normal text-kumo-subtle">
@@ -470,10 +470,10 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                 className="flex w-full items-center justify-between rounded-xl border border-kumo-line bg-kumo-base px-4 py-3 text-left transition-colors hover:bg-kumo-elevated"
               >
                 <span>
-                  <span className="block text-[13px] leading-[18px] font-medium text-kumo-default">
+                  <span className="block text-ui-md font-medium text-kumo-default">
                     Create blueprint
                   </span>
-                  <span className="mt-0.5 block text-[13px] leading-[18px] font-normal text-kumo-subtle">
+                  <span className="mt-0.5 block text-ui-xs font-normal text-kumo-subtle">
                     Publish this gadget as a reusable template.
                   </span>
                 </span>
@@ -481,17 +481,17 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
               </button>
 
             <section>
-              <h3 className="mb-2 text-[13px] leading-[18px] font-medium text-kumo-default">
+              <h3 className="mb-2 text-ui-md font-medium text-kumo-default">
                 Existing blueprints
               </h3>
 
               {loading ? (
-                <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-[13px] text-kumo-subtle">
+                <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-ui-sm text-kumo-subtle">
                   Loading blueprints...
                 </div>
               ) : blueprints.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-kumo-line bg-kumo-base px-4 py-6 text-center">
-                  <p className="text-[13px] leading-[18px] font-normal text-kumo-subtle">
+                  <p className="text-ui-sm font-normal text-kumo-subtle">
                     No blueprints yet.
                   </p>
                 </div>
@@ -648,11 +648,11 @@ function BlueprintRow({
 
       <div className="mt-1.5 min-h-[18px]">
         {bp.description ? (
-          <p className="m-0 text-[13px] leading-[18px] font-normal text-kumo-subtle whitespace-pre-wrap">
+          <p className="m-0 text-ui-sm font-normal text-kumo-subtle whitespace-pre-wrap">
             {bp.description}
           </p>
         ) : (
-          <p className="m-0 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+          <p className="m-0 text-ui-sm font-normal text-kumo-subtle">
             No description
           </p>
         )}

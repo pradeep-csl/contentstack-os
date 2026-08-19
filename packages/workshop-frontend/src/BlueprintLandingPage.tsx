@@ -784,7 +784,7 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
               navigate({ to: '/explore' })
             }
           }}
-          className="mb-8 inline-flex cursor-pointer items-center gap-2 px-1 py-1 text-[13px] leading-[18px] font-medium text-kumo-subtle transition-[color,transform] duration-150 ease-out hover:text-kumo-default active:scale-[0.98]"
+          className="mb-8 inline-flex cursor-pointer items-center gap-2 px-1 py-1 text-ui-sm font-medium text-kumo-subtle transition-[color,transform] duration-150 ease-out hover:text-kumo-default active:scale-[0.98]"
         >
           <ArrowLeft size={14} weight="bold" />
           Back
@@ -798,15 +798,15 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
                 Featured
               </span>
             )}
-            <h1 className="m-0 text-3xl font-semibold leading-tight tracking-tight text-kumo-default">
+            <h1 className="m-0 text-ui-3xl font-semibold text-kumo-default">
               {meta.title}
             </h1>
             {meta.description && (
-              <p className="mt-3 max-w-[640px] text-ui-lg leading-[22px] font-normal text-kumo-subtle">
+              <p className="mt-3 max-w-[640px] text-ui-lg font-normal text-kumo-subtle">
                 {meta.description}
               </p>
             )}
-            <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+            <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-ui-sm font-normal text-kumo-subtle">
               <span>By {meta.author.name}</span>
               <span className="text-kumo-subtle">•</span>
               <span>v{meta.version}</span>
@@ -958,7 +958,7 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
                   {bindingEntries.length}
                 </span>
               </div>
-              <div className="mb-3 px-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+              <div className="mb-3 px-1 text-ui-sm font-normal text-kumo-subtle">
                 {readyCount === bindingEntries.length
                   ? 'Everything is ready. You can change any connection before creating the Gadget.'
                   : `${readyCount} of ${bindingEntries.length} ready. Suggestions are used automatically when they match one of your connected accounts.`}
@@ -982,14 +982,14 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
               <p className="m-0 text-ui-lg leading-5 font-medium text-kumo-default">
                 No connections required
               </p>
-              <p className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+              <p className="mt-1 text-ui-sm font-normal text-kumo-subtle">
                 This blueprint can create a Gadget without configuring external resources.
               </p>
             </section>
           )}
 
           {error && (
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-kumo-danger/30 bg-kumo-danger-tint px-4 py-3 text-[13px] leading-[18px] text-kumo-danger">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-kumo-danger/30 bg-kumo-danger-tint px-4 py-3 text-ui-sm text-kumo-danger">
               <span>{error}</span>
               <button onClick={() => setError(null)} className="cursor-pointer text-kumo-danger hover:text-kumo-default">&times;</button>
             </div>
@@ -1010,10 +1010,10 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
             <>
               <div className="shrink-0 flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
                 <div className="min-w-0">
-                  <Dialog.Title className="text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+                  <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-default">
                     Configure {activeBinding.title || activeBindingName}
                   </Dialog.Title>
-                  <Dialog.Description className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+                  <Dialog.Description className="mt-1 text-ui-sm font-normal text-kumo-subtle">
                     {activeBinding.type === 'gatekeeper' && activeBinding.description
                       ? activeBinding.description
                       : 'Choose the resource or model this new Gadget should use.'}
@@ -1181,11 +1181,11 @@ function BlueprintStatePage({
           {loading && (
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-kumo-brand border-t-transparent" />
           )}
-          <h1 className="m-0 text-[20px] leading-7 font-semibold tracking-[-0.35px] text-kumo-default">
+          <h1 className="m-0 text-ui-2xl leading-7 font-semibold text-kumo-default">
             {title}
           </h1>
           {message && (
-            <p className="mt-2 text-[13px] leading-[18px] font-normal text-kumo-subtle">
+            <p className="mt-2 text-ui-md text-kumo-subtle">
               {message}
             </p>
           )}
@@ -1193,7 +1193,7 @@ function BlueprintStatePage({
             <button
               type="button"
               onClick={onAction}
-              className="mt-5 inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-kumo-line bg-kumo-base px-4 text-[13px] leading-[18px] font-medium text-kumo-default transition-[background-color,border-color,transform] duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint active:scale-[0.98]"
+              className="mt-5 inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-kumo-line bg-kumo-base px-4 text-ui-sm font-medium text-kumo-default transition-[background-color,border-color,transform] duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint active:scale-[0.98]"
             >
               {actionLabel}
             </button>
@@ -1219,7 +1219,7 @@ function BindingIconTile({
     icon = vendor?.description.logo?.url ? (
       <img src={vendor.description.logo.url} alt="" className="h-5 w-5 object-contain" />
     ) : (
-      <span className="text-[13px] font-semibold text-kumo-subtle">{fallback}</span>
+      <span className="text-ui-sm font-semibold text-kumo-subtle">{fallback}</span>
     )
   } else if (binding.type === 'aiModel') {
     icon = <Robot size={16} className="text-kumo-subtle" />

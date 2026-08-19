@@ -29,7 +29,7 @@ export function EmptyState({
         <p className="m-0 text-ui-md leading-5 font-medium text-kumo-default">
           {title}
         </p>
-        <p className="mx-auto mt-1 max-w-sm text-[13px] leading-[18px] font-normal text-kumo-subtle">
+        <p className="mx-auto mt-1 max-w-sm text-ui-sm font-normal text-kumo-subtle">
           {description}
         </p>
       </div>

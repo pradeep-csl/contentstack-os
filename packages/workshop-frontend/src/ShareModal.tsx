@@ -239,7 +239,7 @@ function RecipientVerification({
   let body: ReactNode
   if (failed) {
     body = (
-      <p className="px-1 text-ui-xs leading-[16px] text-kumo-subtle">
+      <p className="px-1 text-ui-xs text-kumo-subtle">
         Couldn’t check which connections recipients will be asked to verify.
       </p>
     )
@@ -249,7 +249,7 @@ function RecipientVerification({
   } else {
     body = (
       <div className="rounded-2xl border border-kumo-line/80 bg-kumo-base px-3 py-2.5">
-        <p className="text-ui-xs leading-[16px] text-kumo-subtle">
+        <p className="text-ui-xs text-kumo-subtle">
           {role ? (
             <>People with <span className="font-medium text-kumo-default">{roleLabel(role)}</span> access must</>
           ) : 'Recipients must'} prove their own account can reach:
@@ -754,10 +754,10 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
       >
         <div className="flex shrink-0 items-start justify-between gap-4 overflow-hidden px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
           <div className="min-w-0">
-            <Dialog.Title className="truncate text-ui-xl leading-6 font-medium tracking-[-0.4px] text-kumo-default">
+            <Dialog.Title className="truncate text-ui-xl leading-6 font-medium text-kumo-default">
               Share “{metadata.title}”
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
+            <Dialog.Description className="mt-1 text-ui-sm text-kumo-subtle">
               Invite people or share a link.
             </Dialog.Description>
           </div>
@@ -846,7 +846,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
               </div>
               <div className="min-w-[160px] flex-1">
                 <div className="flex items-baseline gap-1.5">
-                  <p className="text-[13px] leading-[18px] font-medium text-kumo-default">
+                  <p className="text-ui-sm font-medium text-kumo-default">
                     Added {invitedName}
                   </p>
                   <span className="text-ui-2xs leading-4 text-kumo-subtle">
@@ -877,7 +877,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                     </div>
                     <div className="min-w-[160px] flex-1">
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-[13px] leading-[18px] font-medium text-kumo-default">
+                        <p className="text-ui-sm font-medium text-kumo-default">
                           {newShareLinkCopied ? 'Link copied' : 'Link ready'}
                         </p>
                         <span className="text-ui-2xs leading-4 text-kumo-subtle">
@@ -932,7 +932,7 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                 type="button"
                 onClick={() => setShowLinkComposer(true)}
                 disabled={sharingProhibited}
-                className="themed-compact-shadow flex h-12 w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-kumo-line/80 bg-kumo-base px-3 text-[13px] font-medium text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-elevated/60 hover:text-kumo-default active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                className="themed-compact-shadow flex h-12 w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-kumo-line/80 bg-kumo-base px-3 text-ui-sm font-medium text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-elevated/60 hover:text-kumo-default active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Link size={14} /> Create a share link
               </button>
@@ -961,10 +961,10 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                     <div className="flex items-center gap-3">
                       <PersonAvatar api={authenticatedApi} userId={profile.id} name={profile.name} size={32} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] leading-[17px] font-medium text-kumo-default">
+                        <p className="truncate text-ui-md font-medium text-kumo-default">
                           {profile.name}{profile.id === currentUser?.id ? ' (you)' : ''}
                         </p>
-                        <p className="truncate text-ui-xs leading-[15px] text-kumo-subtle">
+                        <p className="truncate text-ui-xs text-kumo-subtle">
                           {row.kind === 'owner' ? profile.id : describeAccess(row.info)}
                         </p>
                       </div>
@@ -1045,13 +1045,13 @@ export default function ShareModal({ open, onClose, overseer, metadata, currentU
                               }}
                               placeholder="Name this link…"
                               aria-label="Share link name"
-                              className="block w-full border-0 bg-transparent p-0 text-[13px] leading-[17px] font-medium text-kumo-default outline-none shadow-[inset_0_-1px_0_0_var(--color-kumo-line)] transition-shadow placeholder:font-normal placeholder:text-kumo-placeholder focus:shadow-[inset_0_-1px_0_0_var(--color-kumo-fill)]"
+                              className="block w-full border-0 bg-transparent p-0 text-ui-md font-medium text-kumo-default outline-none shadow-[inset_0_-1px_0_0_var(--color-kumo-line)] transition-shadow placeholder:font-normal placeholder:text-kumo-placeholder focus:shadow-[inset_0_-1px_0_0_var(--color-kumo-fill)]"
                               disabled={savingShareLinkNote}
                             />
                           ) : (
-                            <p className="truncate text-[13px] leading-[17px] font-medium text-kumo-default">{sk.note || 'Untitled link'}</p>
+                            <p className="truncate text-ui-md font-medium text-kumo-default">{sk.note || 'Untitled link'}</p>
                           )}
-                          <p className="truncate text-ui-xs leading-[15px] text-kumo-subtle">Created by {sk.createdBy.name} · {formatRelativeTime(sk.created)}</p>
+                          <p className="truncate text-ui-xs text-kumo-subtle">Created by {sk.createdBy.name} · {formatRelativeTime(sk.created)}</p>
                         </div>
                         {isRenaming ? (
                           <InlineConfirm
