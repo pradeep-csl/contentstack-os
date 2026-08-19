@@ -797,7 +797,17 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     if (sessionChanged) return { status: "no-session" };
     if (missing > 0) return { status: "incomplete", missing };
 
-    await this.#propagate();
+    // The publication is already durably committed above. A summary-refresh failure here (e.g. the
+    // public registry's KV write) must not turn a successful publish into a reported failure — CI
+    // would see a failed publish for content that is actually live. Log and move on; the next `plan`
+    // sees the up-to-date commit and the summary catches up on the next successful propagation.
+    await this.#propagate().catch((error) => {
+      logger.warn("failed to refresh collection summary after a CI publication", {
+        event: "context.collection.ingest.propagate.failed",
+        collectionId: this.getMetadata().id,
+        error,
+      });
+    });
 
     logger.info("applied a CI publication to a context collection", {
       event: "context.collection.ingest.applied",
