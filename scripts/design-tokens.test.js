@@ -236,7 +236,10 @@ const PENDING_SIZES = new Set([
   'packages/workshop-frontend/src/routes/workspaces.tsx',
 ])
 
-const BANNED_SIZE = /\btext-\[\d+px\]|\btext-(?:xs|sm|base|lg|xl|2xl|3xl)\b/
+// `[\d.]+`, not `\d+`: a bare `\d+` misses decimal literals like `text-[11.5px]`, which is a real,
+// distinct ad-hoc size in this tree (21 sites) and not one the mapping table below has an answer
+// for — it must still be caught so it lands in PENDING_SIZES rather than passing silently.
+const BANNED_SIZE = /\btext-\[[\d.]+px\]|\btext-(?:xs|sm|base|lg|xl|2xl|3xl)\b/
 const BANNED_TRACKING = /\btracking-\[-?[\d.]+px\]/
 
 // Table-driven proof that the regex targets the old scale and leaves the new one alone —
@@ -244,6 +247,7 @@ const BANNED_TRACKING = /\btracking-\[-?[\d.]+px\]/
 // would send the migration in circles.
 const BANNED_SIZE_CASES = [
   ['text-[13px]', true],
+  ['text-[11.5px]', true],
   ['text-sm', true],
   ['text-ui-xs', false],
   ['text-ui-sm', false],
