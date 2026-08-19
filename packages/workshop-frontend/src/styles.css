@@ -22,7 +22,16 @@
     "Roboto", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
-  /* ===== TEXT SIZES (restore Tailwind defaults, overriding Kumo's 12/13/14/16px) ===== */
+  /* ===== TYPE SCALE =====
+     One scale for our own code. Thirteen ad-hoc pixel sizes (9/10/11/12/13/14/15/17/18/20/28/30/34)
+     previously ran alongside Tailwind's named scale, so raising nav text was a 163-literal search
+     rather than a token edit.
+
+     Deliberately a separate `ui` namespace: Tailwind's --text-xs/-sm/-base/-lg are load-bearing
+     twice over. The block below restores Tailwind's defaults over Kumo's, AND Kumo's own compiled
+     components resolve against them via the @source scan — so text-sm means 14/20 to 133 of our
+     call sites and to every Kumo component. Re-pointing it would silently shrink both.
+     DO NOT "tidy away" the --text-* block. It exists for Kumo. */
   --text-xs: 0.75rem;
   --text-xs--line-height: 1rem;
   --text-sm: 0.875rem;
@@ -31,6 +40,30 @@
   --text-base--line-height: 1.5rem;
   --text-lg: 1.125rem;
   --text-lg--line-height: 1.75rem;
+
+  /* Ours. Negative tracking only above 18px — below that the faces we ship already tighten
+     optically, and the old blanket tracking-[-0.25px] on 13px text double-counted it. */
+  --text-ui-2xs: 0.6875rem;            /* 11px — uppercase eyebrows and badges only */
+  --text-ui-2xs--line-height: 1rem;
+  --text-ui-2xs--letter-spacing: 0.06em;
+  --text-ui-2xs--font-weight: 600;
+  --text-ui-xs: 0.75rem;               /* 12px — captions, metadata, timestamps */
+  --text-ui-xs--line-height: 1rem;
+  --text-ui-sm: 0.8125rem;             /* 13px — dense UI: chips, table cells */
+  --text-ui-sm--line-height: 1.125rem;
+  --text-ui-md: 0.875rem;              /* 14px — default body and nav */
+  --text-ui-md--line-height: 1.25rem;
+  --text-ui-lg: 0.9375rem;             /* 15px — prose, chat messages */
+  --text-ui-lg--line-height: 1.375rem;
+  --text-ui-xl: 1.125rem;              /* 18px — card and section titles */
+  --text-ui-xl--line-height: 1.625rem;
+  --text-ui-xl--letter-spacing: -0.01em;
+  --text-ui-2xl: 1.375rem;             /* 22px — subsection headings */
+  --text-ui-2xl--line-height: 1.75rem;
+  --text-ui-2xl--letter-spacing: -0.015em;
+  --text-ui-3xl: 1.75rem;              /* 28px — page headings */
+  --text-ui-3xl--line-height: 2.125rem;
+  --text-ui-3xl--letter-spacing: -0.02em;
 }
 
 body {
