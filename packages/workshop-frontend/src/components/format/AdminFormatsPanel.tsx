@@ -146,7 +146,7 @@ export default function AdminFormatsPanel({
             >
               <FormatGlyph output={candidate.declared} size="lg" className="shrink-0 text-kumo-subtle" />
               <span className="min-w-0">
-                <span className="block truncate text-[13px] text-kumo-default">
+                <span className="block truncate text-ui-sm text-kumo-default">
                   {candidate.title || 'Untitled blueprint'}
                 </span>
                 <span className="block truncate text-ui-2xs text-kumo-subtle">
@@ -171,7 +171,7 @@ function PreviewStrip({ formats }: { formats: AdminFormat[] }) {
         What people will see
       </p>
       {formats.length === 0 ? (
-        <p className="text-[13px] italic text-kumo-subtle">
+        <p className="text-ui-sm italic text-kumo-subtle">
           Nothing yet. People will only see “New workspace”.
         </p>
       ) : (
@@ -179,7 +179,7 @@ function PreviewStrip({ formats }: { formats: AdminFormat[] }) {
           {formats.map((format) => (
             <span
               key={format.blueprintId}
-              className="flex items-center gap-2 rounded-full border border-kumo-line bg-kumo-base px-3.5 py-2 text-[13px] leading-[18px] text-kumo-default"
+              className="flex items-center gap-2 rounded-full border border-kumo-line bg-kumo-base px-3.5 py-2 text-ui-sm text-kumo-default"
             >
               <FormatGlyph output={format.output} size="md" className="text-kumo-subtle" />
               New {format.output!.noun}
@@ -198,7 +198,7 @@ function EmptyState() {
   return (
     <div className="mb-5 rounded-lg border border-kumo-line bg-kumo-base px-4 py-5 text-center">
       <p className="text-ui-md font-medium text-kumo-default">No standard formats yet</p>
-      <p className="mx-auto mt-1 max-w-md text-[13px] leading-[18px] text-kumo-subtle">
+      <p className="mx-auto mt-1 max-w-md text-ui-sm text-kumo-subtle">
         Promote a blueprint to offer it by name wherever people start something, and to have the
         agent prefer it over building the same thing from scratch.
       </p>
@@ -299,7 +299,7 @@ function FormatRow({
       {open && (
         <div className="flex flex-col gap-4 border-t border-kumo-line px-3 py-4">
           {format.missing ? (
-            <p className="text-[13px] text-kumo-subtle">
+            <p className="text-ui-sm text-kumo-subtle">
               The blueprint behind this format was deleted, so nobody is offered it. Remove the
               entry.
             </p>
@@ -438,7 +438,7 @@ function Fieldset({
 }) {
   return (
     <div>
-      <p className="text-[13px] font-medium text-kumo-default">{title}</p>
+      <p className="text-ui-sm font-medium text-kumo-default">{title}</p>
       <p className="mb-2 mt-0.5 text-ui-xs leading-4 text-kumo-subtle">{detail}</p>
       {children}
     </div>

@@ -505,13 +505,13 @@ export default function ResourcePicker({
                     * truncate, so both carry their full text as a tooltip. */}
                   <span
                     title={resource.title}
-                    className="max-w-[70%] flex-none truncate text-[13px] leading-[18px] text-kumo-default"
+                    className="max-w-[70%] flex-none truncate text-ui-md text-kumo-default"
                   >
                     {resource.title}
                   </span>
                   <span
                     title={resource.urlPattern}
-                    className="min-w-0 flex-1 truncate text-right font-mono text-[11.5px] leading-4 text-kumo-subtle"
+                    className="min-w-0 flex-1 truncate text-right font-mono text-ui-xs text-kumo-subtle"
                   >
                     {resource.urlPattern.replace(/^https?:\/\//, '')}
                   </span>
@@ -543,7 +543,7 @@ export default function ResourcePicker({
               <div key={`${vendor.id}-${resource.urlPattern}`} className={i > 0 ? 'border-t border-kumo-line' : ''}>
                 <div className="flex items-baseline gap-2 px-3.5 pb-1 pt-2.5">
                   <span className={`flex-shrink-0 ${PICKER_CAPTION}`}>{resource.title}</span>
-                  <span className="min-w-0 flex-1 truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
+                  <span className="min-w-0 flex-1 truncate text-ui-xs text-kumo-subtle">
                     {resource.description}
                   </span>
                 </div>
@@ -584,11 +584,11 @@ export default function ResourcePicker({
                         className="h-6 w-6 rounded-md"
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] leading-[18px] text-kumo-default">
+                        <span className="block truncate text-ui-md text-kumo-default">
                           {account.description.uniqueName || account.description.displayName}
                         </span>
                         {hostname && hostname !== '*' && (
-                          <span className="block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
+                          <span className="block truncate text-ui-xs text-kumo-subtle">
                             {hostname}
                           </span>
                         )}
@@ -598,12 +598,12 @@ export default function ResourcePicker({
                       ) : isExpired ? (
                         <span className="flex flex-shrink-0 items-center gap-1">
                           <Warning size={12} className="text-kumo-warning" />
-                          <span className="text-[11.5px] leading-4 text-kumo-warning">Expired — click to re-authenticate</span>
+                          <span className="text-ui-xs text-kumo-warning">Expired — click to re-authenticate</span>
                         </span>
                       ) : needsAccess ? (
                         <span className="flex flex-shrink-0 items-center gap-1">
                           <Warning size={12} className="text-kumo-warning" />
-                          <span className="text-[11.5px] leading-4 text-kumo-warning">Grant access</span>
+                          <span className="text-ui-xs text-kumo-warning">Grant access</span>
                         </span>
                       ) : isActive && !searchHasPlaceholders ? (
                         <TabHint />
@@ -643,7 +643,7 @@ export default function ResourcePicker({
                         <Plus size={11} />
                       )}
                     </span>
-                    <span className="flex-1 text-[13px] leading-[18px] text-kumo-subtle">
+                    <span className="flex-1 text-ui-md text-kumo-subtle">
                       {connectingVendor === vendor.id ? 'Opening…' : 'Connect new account'}
                     </span>
                     {isActive && <TabHint />}

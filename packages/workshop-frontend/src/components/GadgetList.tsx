@@ -357,7 +357,7 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search workspaces…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-ui-sm text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -508,7 +508,7 @@ function HomeFeaturedBlueprintCard({
             <Hexagon size={13} className="text-white/75" weight="bold" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="m-0 truncate text-[13px] leading-[18px] font-semibold text-kumo-strong">
+            <p className="m-0 truncate text-ui-md font-semibold text-kumo-strong">
               {blueprint.metadata.title}
             </p>
             <p className={`mt-0.5 line-clamp-2 min-h-8 text-ui-xs leading-4 ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-subtle italic'}`}>
@@ -571,7 +571,7 @@ function FeaturedBlueprintsGallery() {
   return (
     <div className="py-4 pr-4 sm:pr-6">
       <div className="mb-5">
-        <h3 className="text-[13px] leading-[18px] font-medium text-kumo-default">
+        <h3 className="text-ui-md font-medium text-kumo-default">
           Start from a featured blueprint.
         </h3>
       </div>

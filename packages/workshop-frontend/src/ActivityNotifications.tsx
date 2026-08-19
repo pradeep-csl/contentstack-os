@@ -68,7 +68,7 @@ export default function ActivityNotifications({
         </div>
 
         {pending.length === 0 ? (
-          <p className="m-0 px-3.5 pb-3 pt-1 text-[13px] leading-[18px] text-kumo-subtle">
+          <p className="m-0 px-3.5 pb-3 pt-1 text-ui-sm text-kumo-subtle">
             Nothing is waiting on you.
           </p>
         ) : (
@@ -86,15 +86,15 @@ export default function ActivityNotifications({
                       onClick={() => openFullView('review')}
                       className="min-w-[7rem] flex-1 cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring"
                     >
-                      <span className="block truncate text-[13px] font-medium leading-[18px] text-kumo-default">
+                      <span className="block truncate text-ui-sm font-medium text-kumo-default">
                         {action.description.title}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
+                      <span className="mt-0.5 block truncate text-ui-xs text-kumo-subtle">
                         {action.resourceTitle}
                         <span className="px-1">·</span>
                         {formatRelativeTime(action.createdAt)}
                       </span>
-                      <span className="mt-1.5 block line-clamp-2 text-[12.5px] leading-[18px] tracking-[-0.2px] text-kumo-subtle">
+                      <span className="mt-1.5 block line-clamp-2 text-ui-sm text-kumo-subtle">
                         {action.description.description}
                       </span>
                     </button>
@@ -121,7 +121,7 @@ export default function ActivityNotifications({
           <button
             type="button"
             onClick={() => openFullView(pending.length > 0 ? 'review' : 'history')}
-            className="flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px] leading-[18px] text-kumo-default transition-colors hover:bg-kumo-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kumo-ring"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-left text-ui-sm text-kumo-default transition-colors hover:bg-kumo-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kumo-ring"
           >
             <span>
               {pending.length > PREVIEW_LIMIT

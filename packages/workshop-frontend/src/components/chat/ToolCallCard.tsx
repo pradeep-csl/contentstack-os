@@ -78,7 +78,7 @@ export default function ToolCallCard({ tool }: { tool: ToolCall }) {
         <div className="px-3 pb-3 pt-1 border-t border-kumo-line space-y-2">
           {tool.input && (
             <div>
-              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase tracking-wider">Input</span>
+              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">Input</span>
               <pre className="text-ui-xs font-mono text-kumo-subtle whitespace-pre-wrap leading-relaxed mt-1 bg-kumo-tint rounded-md px-2 py-1.5">
                 {JSON.stringify(tool.input, null, 2)}
               </pre>
@@ -86,7 +86,7 @@ export default function ToolCallCard({ tool }: { tool: ToolCall }) {
           )}
           {tool.output && (
             <div>
-              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase tracking-wider">Output</span>
+              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">Output</span>
               <p className="text-ui-xs text-kumo-subtle mt-1">{tool.output}</p>
             </div>
           )}

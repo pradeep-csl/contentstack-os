@@ -30,7 +30,7 @@ type BlueprintItem = {
 // Chrome shared by the page's secondary actions. `w-full` + `justify-center` are what let a pair of
 // these sit in a 2-column grid and come out the same width whatever their labels say.
 const ACTION_BUTTON =
-  'press inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-kumo-line bg-kumo-base px-3.5 text-[13px] font-medium text-kumo-default transition-colors hover:bg-kumo-tint disabled:cursor-default disabled:opacity-50'
+  'press inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-kumo-line bg-kumo-base px-3.5 text-ui-sm font-medium text-kumo-default transition-colors hover:bg-kumo-tint disabled:cursor-default disabled:opacity-50'
 
 function formatRelativeTime(date: Date): string {
   const diff = Date.now() - date.getTime()
@@ -260,7 +260,7 @@ export default function BlueprintList() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search blueprints…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-ui-sm text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
           {/* Grid, not flex: 1fr columns give the two buttons a matching width, where flex would
@@ -308,7 +308,7 @@ export default function BlueprintList() {
               </div>
               <div>
                 <p className="text-ui-md font-medium text-kumo-default">No blueprints yet</p>
-                <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
+                <p className="mt-1 text-ui-sm text-kumo-subtle">
                   Publish a workspace as a blueprint, or add one from Explore.
                 </p>
               </div>

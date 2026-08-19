@@ -38,7 +38,7 @@ export default function TopBarNotice() {
       aria-hidden="false"
       className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none px-40"
     >
-      <div className="max-w-full truncate text-[13px] leading-[18px] font-normal text-kumo-subtle">
+      <div className="max-w-full truncate text-ui-sm font-normal text-kumo-subtle">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={INLINE_MARKDOWN_COMPONENTS}>
           {notice}
         </ReactMarkdown>

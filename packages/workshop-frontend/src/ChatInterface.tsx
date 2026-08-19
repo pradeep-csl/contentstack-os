@@ -1498,7 +1498,7 @@ const ObservationDetails = memo(function ObservationDetails(
   const metadata = log.resourceTitle;
 
   return (
-    <div className="px-1 py-1.5 text-[13px] leading-[19px]">
+    <div className="px-1 py-1.5 text-ui-sm">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center">
           <WorkIcon Icon={MagnifyingGlass} />
@@ -1629,7 +1629,7 @@ const ThinkingTraceRow = memo(function ThinkingTraceRow({
 }) {
   return (
     <div className="min-w-0 py-1 text-kumo-subtle">
-      <div className={`min-w-0 text-[13px] leading-[19px] ${styles.markdownContent}`}>
+      <div className={`min-w-0 text-ui-sm ${styles.markdownContent}`}>
         <MarkdownMessage message={reasoning} />
       </div>
     </div>
@@ -3051,7 +3051,7 @@ export const ChatInput = ({
       >
         {isAttachmentDragActive && (
           <div className={`themed-inset-outline pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-2xl border-2 border-dashed p-4 backdrop-blur-[1px] transition-[opacity,transform] duration-150 ease-out ${canAttachMore ? "border-kumo-brand/55 bg-kumo-brand/10" : "border-kumo-warning/60 bg-kumo-warning/10"}`}>
-            <div className={`themed-floating-shadow flex items-center gap-2 rounded-full border bg-kumo-base/90 px-3 py-2 text-[13px] font-medium leading-4 text-kumo-default ${canAttachMore ? "border-kumo-brand/25" : "border-kumo-warning/30"}`}>
+            <div className={`themed-floating-shadow flex items-center gap-2 rounded-full border bg-kumo-base/90 px-3 py-2 text-ui-sm font-medium leading-4 text-kumo-default ${canAttachMore ? "border-kumo-brand/25" : "border-kumo-warning/30"}`}>
               <span className={`grid h-7 w-7 place-items-center rounded-full ${canAttachMore ? "bg-kumo-brand/12 text-kumo-brand" : "bg-kumo-warning/15 text-kumo-warning"}`}>
                 <FileIcon size={16} weight="duotone" />
               </span>
@@ -3316,7 +3316,7 @@ export const ChatInput = ({
             <button
               type="button"
               onClick={handleAttachOpen}
-              className="inline-flex h-8 flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[13px] leading-none text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-subtle focus-visible:bg-kumo-tint focus-visible:text-kumo-subtle focus-visible:outline-none active:scale-[0.97]"
+              className="inline-flex h-8 flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-ui-sm leading-none text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-subtle focus-visible:bg-kumo-tint focus-visible:text-kumo-subtle focus-visible:outline-none active:scale-[0.97]"
             >
               <Plug size={15} className="flex-shrink-0" />
               <span className={`leading-none ${styles.attachLabelText}`}>{attachLabel ?? "Add resource"}</span>
@@ -3330,7 +3330,7 @@ export const ChatInput = ({
                   render={
                     <button
                       type="button"
-                      className="group inline-flex h-8 min-w-0 max-w-[180px] cursor-pointer items-center gap-1.5 rounded-lg px-2 text-[13px] leading-5 text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-default focus-visible:bg-kumo-tint focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.97] data-[popup-open]:bg-kumo-tint data-[popup-open]:text-kumo-default"
+                      className="group inline-flex h-8 min-w-0 max-w-[180px] cursor-pointer items-center gap-1.5 rounded-lg px-2 text-ui-sm leading-5 text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-default focus-visible:bg-kumo-tint focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.97] data-[popup-open]:bg-kumo-tint data-[popup-open]:text-kumo-default"
                       aria-label="Select model"
                     >
                       <span className="min-w-0 truncate">{selectedModelLabel}</span>
@@ -3353,7 +3353,7 @@ export const ChatInput = ({
                       >
                         <span className="min-w-0 flex-1 truncate">{model.name}</span>
                         {gatewayLabel(model.gateway) && (
-                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.3px] text-kumo-subtle">
+                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-wide text-kumo-subtle">
                             {gatewayLabel(model.gateway)}
                           </span>
                         )}
@@ -3618,14 +3618,14 @@ function DiscardPendingChangesPopover({
         className="themed-floating-shadow !z-[1100] !w-[min(300px,calc(100vw-24px))] !min-w-0 overflow-hidden rounded-xl border border-kumo-line bg-kumo-base !p-0 !outline-none [&>:first-child]:hidden"
       >
         <div className="px-3.5 pb-2.5 pt-3">
-          <Popover.Title className="text-[13px] font-medium leading-[18px] text-kumo-default">
+          <Popover.Title className="text-ui-sm font-medium text-kumo-default">
             Discard all pending changes?
           </Popover.Title>
-          <p className="mt-0.5 text-[11.5px] leading-4 tracking-[-0.15px] text-kumo-subtle">
+          <p className="mt-0.5 text-ui-xs text-kumo-subtle">
             Return to the last accepted version. Any gadgets created by these changes will be
             permanently deleted. Pending changes can&apos;t be restored.
           </p>
-          <p className="mt-2 border-t border-kumo-line pt-2 text-ui-2xs leading-[15px] text-kumo-subtle">
+          <p className="mt-2 border-t border-kumo-line pt-2 text-ui-2xs text-kumo-subtle">
             Use the <ArrowUUpLeft size={12} className="mx-0.5 inline-block align-[-2px]" aria-hidden="true" /><span className="sr-only">undo arrow</span> under any agent response to discard from that turn onward.
           </p>
         </div>
@@ -6098,13 +6098,13 @@ function ChatInterface({
                 )}
               </div>
               {msg.reason && (
-                <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
+                <p className="mt-1 text-ui-sm text-kumo-subtle">
                   {msg.reason}
                 </p>
               )}
             </div>
             {isPending && (
-              <div className="ml-3 flex flex-shrink-0 items-center gap-2 self-center text-[13px] leading-4">
+              <div className="ml-3 flex flex-shrink-0 items-center gap-2 self-center text-ui-sm leading-4">
                 <button
                   type="button"
                   onClick={() => handleDenyConnection(msg.requestId)}
@@ -6170,7 +6170,7 @@ function ChatInterface({
                   </span>
                 </div>
                 {log.description.description && (
-                  <div className={`mt-1 text-[13px] leading-[18px] text-kumo-subtle ${styles.markdownContent}`}>
+                  <div className={`mt-1 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}>
                     <MarkdownMessage message={log.description.description} />
                   </div>
                 )}
@@ -6240,7 +6240,7 @@ function ChatInterface({
             </span>
           </button>
           {open && (
-            <div className="themed-surface-inset ml-8 mt-1 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3 text-[13px] leading-[19px] text-kumo-subtle">
+            <div className="themed-surface-inset ml-8 mt-1 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3 text-ui-sm text-kumo-subtle">
               <MarkdownMessage message={log.description.description} />
             </div>
           )}
@@ -6352,7 +6352,7 @@ function ChatInterface({
                   </span>
                   {resourceMeta}
                 </div>
-                <div className={`chat-panel mt-1 max-h-[200px] overflow-y-auto pr-1 text-[13px] leading-[18px] text-kumo-subtle ${styles.markdownContent}`}>
+                <div className={`chat-panel mt-1 max-h-[200px] overflow-y-auto pr-1 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}>
                   <MarkdownMessage message={log.description.description} />
                 </div>
               </div>
@@ -6411,7 +6411,7 @@ function ChatInterface({
           </button>
         )}
         {showDescription && (
-          <div className="themed-surface-inset ml-8 mt-1 space-y-1.5 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3 text-[13px] leading-[19px] text-kumo-subtle">
+          <div className="themed-surface-inset ml-8 mt-1 space-y-1.5 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3 text-ui-sm text-kumo-subtle">
             <div className={`chat-panel max-h-[200px] overflow-y-auto pr-1 ${styles.markdownContent}`}>
               <MarkdownMessage message={log.description.description} />
             </div>
@@ -6435,7 +6435,7 @@ function ChatInterface({
                 className="group flex h-8 -ml-1.5 cursor-pointer items-center gap-1.5 rounded-md px-1.5 text-left transition-colors duration-150 ease-out hover:bg-kumo-tint/60 focus-visible:bg-kumo-tint/60 focus-visible:outline-none data-[popup-open]:bg-kumo-tint/60"
                 aria-label="Filter conversations"
               >
-                <span className="text-[13px] leading-[18px] font-medium text-kumo-default">
+                <span className="text-ui-md font-medium text-kumo-default">
                   {CHAT_LIST_SCOPE_LABELS[chatListScope]}
                 </span>
                 <CaretDown
@@ -6484,7 +6484,7 @@ function ChatInterface({
               // Only reachable when a non-"all" scope filters everything out;
               // the all-empty case is handled by the outer chatList.length check.
               <div className="py-8 text-center">
-                <p className="text-[13px] leading-[18px] text-kumo-subtle">
+                <p className="text-ui-sm text-kumo-subtle">
                   No conversations started by {chatListScope === "agents" ? "agents" : "people"} yet
                 </p>
                 <button
@@ -6540,10 +6540,10 @@ function ChatInterface({
                             autoCapitalize="off"
                             autoCorrect="off"
                             aria-label={`Rename ${chat.title}`}
-                            className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] font-medium text-kumo-default outline-none placeholder:text-kumo-placeholder"
+                            className="min-w-0 flex-1 bg-transparent text-ui-md font-medium text-kumo-default outline-none placeholder:text-kumo-placeholder"
                           />
                         ) : (
-                          <span className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">
+                          <span className="truncate text-ui-md font-medium text-kumo-default">
                             {chat.title}
                           </span>
                         )}
@@ -6694,7 +6694,7 @@ function ChatInterface({
               <button
                 type="button"
                 onClick={() => setSidebarActiveTab("chat")}
-                className={`relative flex h-full cursor-pointer items-center text-[13px] leading-[18px] transition-colors ${
+                className={`relative flex h-full cursor-pointer items-center text-ui-md transition-colors ${
                   sidebarActiveTab === "chat"
                     ? "font-medium text-kumo-default after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:rounded-full after:bg-kumo-contrast/70"
                     : "font-normal text-kumo-subtle hover:text-kumo-default"
@@ -6705,7 +6705,7 @@ function ChatInterface({
               <button
                 type="button"
                 onClick={() => setSidebarActiveTab("connections")}
-                className={`relative flex h-full cursor-pointer items-center text-[13px] leading-[18px] transition-colors ${
+                className={`relative flex h-full cursor-pointer items-center text-ui-md transition-colors ${
                   sidebarActiveTab === "connections"
                     ? "font-medium text-kumo-default after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:rounded-full after:bg-kumo-contrast/70"
                     : "font-normal text-kumo-subtle hover:text-kumo-default"
@@ -6749,7 +6749,7 @@ function ChatInterface({
                           if (e.key === "Escape") handleCancelTitleEdit();
                         }}
                         autoFocus
-                        className="!h-8 min-w-0 flex-1 bg-kumo-tint text-[13px] font-medium"
+                        className="!h-8 min-w-0 flex-1 bg-kumo-tint text-ui-md font-medium"
                       />
                       <WorkshopIconButton
                         onClick={handleSaveChatTitle}
@@ -6769,7 +6769,7 @@ function ChatInterface({
                     </div>
                   ) : (
                     <>
-                      <span className="min-w-0 flex-1 truncate text-[13px] leading-[18px] font-medium text-kumo-default">
+                      <span className="min-w-0 flex-1 truncate text-ui-md font-medium text-kumo-default">
                         {currentChatMetadata?.title || "Chat"}
                       </span>
                       <WorkshopIconButton
@@ -6825,7 +6825,7 @@ function ChatInterface({
                           <div key={entry.key} className={`${entryTopClass} mb-4 max-w-[860px]`}>
                             <div className="flex items-center gap-3" role="separator">
                               <span className="h-px flex-1 bg-kumo-line/60" aria-hidden="true" />
-                              <span className="flex-shrink-0 text-ui-2xs leading-4 font-medium tracking-[0.6px] text-kumo-subtle uppercase">
+                              <span className="flex-shrink-0 text-ui-2xs leading-4 font-medium text-kumo-subtle uppercase">
                                 Kept in full from here
                               </span>
                               <span className="h-px flex-1 bg-kumo-line/60" aria-hidden="true" />
@@ -6842,14 +6842,14 @@ function ChatInterface({
                             {kept !== undefined && (
                               // Says what the agent traded away and what it still has, since the
                               // marker sits at the request rather than at the cut it describes.
-                              <p className="mb-3 text-ui-xs leading-[17px] text-kumo-subtle">
+                              <p className="mb-3 text-ui-xs text-kumo-subtle">
                                 The agent reads this in place of everything earlier in the chat.{" "}
                                 {kept === 0
                                   ? "Nothing after it was kept."
                                   : `The ${kept === 1 ? "message" : `${kept} messages`} after the cut ${kept === 1 ? "was" : "were"} kept in full.`}
                               </p>
                             )}
-                            <div className={`min-w-0 text-[13px] leading-[19px] ${styles.markdownContent}`}>
+                            <div className={`min-w-0 text-ui-sm ${styles.markdownContent}`}>
                               <MarkdownMessage message={entry.boundary.summary} />
                             </div>
                           </div>
@@ -6892,7 +6892,7 @@ function ChatInterface({
                                 type="button"
                                 onClick={() => toggleCompactionSummary(entry.boundary.to)}
                                 aria-expanded={expanded}
-                                className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-ui-2xs leading-4 font-medium tracking-[0.6px] text-kumo-subtle uppercase transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
+                                className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-ui-2xs leading-4 font-medium text-kumo-subtle uppercase transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                               >
                                 <Brain size={13} aria-hidden="true" />
                                 Context compacted
@@ -7334,7 +7334,7 @@ function ChatInterface({
                                       <button
                                         type="button"
                                         onClick={() => setUsageModalOpen(true)}
-                                        className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-[13px] leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98]"
+                                        className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-ui-sm leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98]"
                                       >
                                         <Lightning size={12} weight="bold" />
                                         Continue
@@ -7347,7 +7347,7 @@ function ChatInterface({
                                         type="button"
                                         onClick={() => handleRetry()}
                                         disabled={selectedModel === null}
-                                        className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-[13px] leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-ui-sm leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                                       >
                                         <ArrowsClockwise size={12} weight="bold" />
                                         Retry
@@ -7372,7 +7372,7 @@ function ChatInterface({
                               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
                                 <Code size={16} />
                               </span>
-                              <span className="min-w-0 truncate font-mono text-[13px]">
+                              <span className="min-w-0 truncate font-mono text-ui-sm">
                                 self.{msg.methodName}()
                               </span>
                             </div>
@@ -7424,7 +7424,7 @@ function ChatInterface({
                                 {title}
                               </span>
                             </Tooltip>
-                            <div className="flex flex-wrap items-center gap-2 text-[13px] leading-4">
+                            <div className="flex flex-wrap items-center gap-2 text-ui-sm leading-4">
                               <Tooltip content="Throw away these draft edits." asChild>
                                 <button
                                   type="button"

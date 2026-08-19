@@ -12,7 +12,7 @@ export const PICKER_ROW_ACTIVE = 'bg-kumo-fill hover:bg-kumo-fill'
 
 // Loading, empty and error states, aligned to read as the list's first row.
 export const PICKER_EMPTY =
-  'm-0 px-3.5 py-3 text-[13px] leading-[18px] text-kumo-subtle'
+  'm-0 px-3.5 py-3 text-ui-sm text-kumo-subtle'
 
 // Names the key that acts on the selected row. Visual only: the row itself carries the semantics.
 export function TabHint() {

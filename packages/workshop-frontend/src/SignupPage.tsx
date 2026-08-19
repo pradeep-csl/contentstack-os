@@ -125,7 +125,7 @@ export default function SignupPage({ rpcStub }: SignupPageProps) {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <SiteLogo size={40} className="mb-3" />
-          <h1 className="text-xl font-semibold text-kumo-default">
+          <h1 className="text-ui-xl font-semibold text-kumo-default">
             {siteName}
           </h1>
           <p className="text-ui-md text-kumo-subtle mt-1">Create your account</p>
