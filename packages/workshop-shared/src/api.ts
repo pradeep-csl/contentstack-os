@@ -1180,6 +1180,11 @@ export const SUGGESTED_MODELS: Record<
   ollama: {}
 };
 
+// The title a workspace is given when whoever created it didn't name it. Auto-naming may replace a
+// title equal to this one (and the pre-rename "Untitled Gadget" still found in old records); any
+// other title was chosen by a person and is left alone.
+export const DEFAULT_WORKSPACE_TITLE = "Untitled Workspace";
+
 // Metadata about a workspace (one Overseer DO and everything in it). Includes everything needed
 // to render the workspace list on the front page.
 //
