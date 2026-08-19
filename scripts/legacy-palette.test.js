@@ -34,6 +34,11 @@ const LEGACY = [
   '#fbbf24', '#93c5fd', '#fca5a5', '#e8e6f0', '#bdb7ae', '#b3d4ff',
   // Cloudflare-orange focus glow, non-hex forms.
   'rgb(255 106 0', 'rgb(255, 106, 0',
+  // Cloudflare brand orange (#ff4801), decimal spellings. The rgb() pair above is a *different*
+  // orange (#ff6a00) — the decimal form of the actual brand orange was never covered here, so it
+  // passed green throughout (ruling R28). legacyHits lowercases the file before matching, so
+  // these entries must be lowercase too, or they silently never match.
+  'rgba(255, 72, 1', 'rgba(255,72,1', 'rgb(255, 72, 1', 'rgb(255,72,1', '255 72 1',
   // Cloudflare-era typefaces. Named in --font-sans/--font-mono but never licensed, shipped or
   // loaded, so the product silently rendered in the system fallback.
   'ft kunst grotesk', 'apercu mono pro',

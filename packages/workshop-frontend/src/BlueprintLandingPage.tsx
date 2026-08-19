@@ -793,7 +793,7 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
         <header className="mb-10 grid gap-7 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="min-w-0">
             {isFeatured && (
-              <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,72,1,0.10)] px-2 py-1 text-ui-2xs leading-4 font-semibold text-kumo-brand">
+              <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] px-2 py-1 text-ui-2xs leading-4 font-semibold text-kumo-brand">
                 <Star size={12} weight="fill" />
                 Featured
               </span>
@@ -1305,7 +1305,7 @@ function BlueprintBindingSummaryCard({
               ? 'bg-kumo-success-tint text-kumo-success'
               : suggestion
                 ? 'bg-kumo-tint text-kumo-subtle'
-                : 'bg-[rgba(255,72,1,0.10)] text-kumo-brand'
+                : 'bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] text-kumo-brand'
           }`}>
             {status}
           </span>

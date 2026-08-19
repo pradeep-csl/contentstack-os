@@ -127,7 +127,7 @@ function ConnectorCard({
     <span
       className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-3 font-semibold uppercase ${
         badge.tone === 'new'
-          ? 'bg-[rgba(255,72,1,0.10)] text-kumo-brand'
+          ? 'bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] text-kumo-brand'
           : 'bg-kumo-tint text-kumo-subtle'
       }`}
     >
