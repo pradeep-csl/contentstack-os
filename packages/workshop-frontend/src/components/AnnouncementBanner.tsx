@@ -66,7 +66,7 @@ export default function AnnouncementBanner() {
       className="px-4 py-2.5 flex items-start gap-3 border-b border-kumo-line"
       style={COLOR_STYLES[color] ?? COLOR_STYLES.info}
     >
-      <div className="flex-1 text-sm leading-snug text-center [&_a]:font-medium">
+      <div className="flex-1 text-ui-md leading-snug text-center [&_a]:font-medium">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={INLINE_MARKDOWN_COMPONENTS}>
           {text}
         </ReactMarkdown>

@@ -283,10 +283,10 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
           <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-4 py-5 sm:px-6">
             <div className="flex min-w-0 items-start gap-3">
               <div className="min-w-0">
-              <Dialog.Title className="text-[17px] leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <Dialog.Title className="text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
                 {formMode === 'create' ? 'Create blueprint' : formMode === 'edit' ? 'Edit blueprint' : 'Blueprints'}
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+              <Dialog.Description className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
                 {formMode === 'create'
                   ? 'Describe what people get when they start from this blueprint.'
                   : formMode === 'edit'
@@ -340,10 +340,10 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                     <div className="rounded-xl border border-kumo-line bg-kumo-base p-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="m-0 text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                          <p className="m-0 text-[13px] leading-[18px] font-medium text-kumo-default">
                             Screenshot
                           </p>
-                          <p className="m-0 mt-0.5 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                          <p className="m-0 mt-0.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
                             Optional image shown on Explore and the blueprint detail page.
                             {formMode === 'edit' && !newScreenshotUrl && editingBlueprint?.screenshotUrl && !clearScreenshot ? ' The current screenshot will stay unless you upload a new one.' : ''}
                           </p>
@@ -385,7 +385,7 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                         </div>
                       )}
                       {clearScreenshot && !newScreenshotUrl && (
-                        <div className="mt-3 rounded-lg border border-dashed border-kumo-line bg-kumo-tint px-3 py-2 text-[12px] leading-4 text-kumo-default">
+                        <div className="mt-3 rounded-lg border border-dashed border-kumo-line bg-kumo-tint px-3 py-2 text-ui-xs leading-4 text-kumo-default">
                           Screenshot will be removed when you save.
                         </div>
                       )}
@@ -402,10 +402,10 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                     </div>
                   ) : bindings.length > 0 ? (
                     <section>
-                      <h3 className="m-0 mb-1 text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                      <h3 className="m-0 mb-1 text-[13px] leading-[18px] font-medium text-kumo-default">
                         Connections
                       </h3>
-                      <p className="m-0 mb-3 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                      <p className="m-0 mb-3 text-ui-xs leading-4 font-normal text-kumo-subtle">
                         Name each connection and add guidance for people using this blueprint.
                       </p>
                       <div className="space-y-2">
@@ -423,7 +423,7 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
 
                 <div className="border-t border-kumo-line px-4 py-4 sm:px-6">
                   {createError && (
-                    <div className="mb-3 flex items-start gap-2 rounded-lg border border-l-2 border-l-kumo-brand border-y-kumo-line border-r-kumo-line bg-kumo-base px-3 py-2 text-[12px] leading-[18px] font-normal tracking-[-0.2px] text-kumo-default">
+                    <div className="mb-3 flex items-start gap-2 rounded-lg border border-l-2 border-l-kumo-brand border-y-kumo-line border-r-kumo-line bg-kumo-base px-3 py-2 text-ui-xs leading-[18px] font-normal text-kumo-default">
                       <Warning size={14} weight="fill" className="mt-0.5 shrink-0 text-kumo-brand" />
                       <span>{createError}</span>
                     </div>
@@ -470,10 +470,10 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                 className="flex w-full items-center justify-between rounded-xl border border-kumo-line bg-kumo-base px-4 py-3 text-left transition-colors hover:bg-kumo-elevated"
               >
                 <span>
-                  <span className="block text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                  <span className="block text-[13px] leading-[18px] font-medium text-kumo-default">
                     Create blueprint
                   </span>
-                  <span className="mt-0.5 block text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+                  <span className="mt-0.5 block text-[13px] leading-[18px] font-normal text-kumo-subtle">
                     Publish this gadget as a reusable template.
                   </span>
                 </span>
@@ -481,7 +481,7 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
               </button>
 
             <section>
-              <h3 className="mb-2 text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+              <h3 className="mb-2 text-[13px] leading-[18px] font-medium text-kumo-default">
                 Existing blueprints
               </h3>
 
@@ -491,7 +491,7 @@ export default function BlueprintModal({ open, onClose, overseer, gadget, metada
                 </div>
               ) : blueprints.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-kumo-line bg-kumo-base px-4 py-6 text-center">
-                  <p className="text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+                  <p className="text-[13px] leading-[18px] font-normal text-kumo-subtle">
                     No blueprints yet.
                   </p>
                 </div>
@@ -591,10 +591,10 @@ function BlueprintRow({
       >
         <div className="flex w-full flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="m-0 truncate text-[14px] leading-5 font-semibold tracking-[-0.3px] text-kumo-danger">
+            <p className="m-0 truncate text-ui-md leading-5 font-semibold text-kumo-danger">
               Delete "{bp.title}"?
             </p>
-            <p className="m-0 mt-0.5 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <p className="m-0 mt-0.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
               People who started a gadget from this blueprint won't be affected, but the link will stop working.
             </p>
           </div>
@@ -602,7 +602,7 @@ function BlueprintRow({
             type="button"
             onClick={onConfirmDelete}
             disabled={isDeleting}
-            className="inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md bg-kumo-danger px-2.5 text-[12px] leading-4 font-medium tracking-[-0.2px] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md bg-kumo-danger px-2.5 text-ui-xs leading-4 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
@@ -610,7 +610,7 @@ function BlueprintRow({
             type="button"
             onClick={onCancelDelete}
             disabled={isDeleting}
-            className="inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md bg-transparent px-2.5 text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-7 shrink-0 cursor-pointer items-center rounded-md bg-transparent px-2.5 text-ui-xs leading-4 font-medium text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
@@ -624,12 +624,12 @@ function BlueprintRow({
       className={`group/row relative px-4 py-4 ${ROW_MIN_H} ${isFirst ? '' : 'border-t border-kumo-line'}`}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-3">
-        <p className="m-0 min-w-0 flex-1 truncate text-[15px] leading-5 font-semibold tracking-[-0.3px] text-kumo-default">
+        <p className="m-0 min-w-0 flex-1 truncate text-ui-lg leading-5 font-semibold text-kumo-default">
           {bp.title}
         </p>
 
         <span
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] leading-4 font-semibold tracking-[-0.1px] ${
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-ui-2xs leading-4 font-semibold ${
             bp.dirty
               ? 'border-kumo-brand/25 bg-kumo-brand/10 text-kumo-brand'
               : 'border-kumo-line bg-kumo-tint text-kumo-subtle'
@@ -648,11 +648,11 @@ function BlueprintRow({
 
       <div className="mt-1.5 min-h-[18px]">
         {bp.description ? (
-          <p className="m-0 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle whitespace-pre-wrap">
+          <p className="m-0 text-[13px] leading-[18px] font-normal text-kumo-subtle whitespace-pre-wrap">
             {bp.description}
           </p>
         ) : (
-          <p className="m-0 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+          <p className="m-0 text-[13px] leading-[18px] font-normal text-kumo-subtle">
             No description
           </p>
         )}
@@ -719,7 +719,7 @@ function GhostButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-transparent px-2 text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default"
+      className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-transparent px-2 text-ui-xs leading-4 font-medium text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default"
     >
       {icon}
       {children}

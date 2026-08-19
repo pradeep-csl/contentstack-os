@@ -61,7 +61,7 @@ export function PersonAvatar({
   return (
     <div
       ref={elementRef}
-      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full text-[10px] font-semibold ring-1 ring-inset ${
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full text-ui-2xs font-semibold ring-1 ring-inset ${
         useColor
           ? 'text-kumo-inverse ring-kumo-line/50'
           : 'bg-gradient-to-br from-kumo-tint to-kumo-elevated text-kumo-strong ring-kumo-line/60'

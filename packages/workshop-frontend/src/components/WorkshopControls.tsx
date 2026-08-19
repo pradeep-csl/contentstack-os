@@ -2,7 +2,7 @@ import { Button, Input, InputArea } from '@cloudflare/kumo'
 import type { ComponentProps, ReactNode } from 'react'
 
 const buttonBaseClassName =
-  'inline-flex cursor-pointer items-center justify-center rounded-lg text-[13px] leading-[18px] font-medium tracking-[-0.25px] transition-[background-color,color,opacity,transform] duration-150 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100'
+  'inline-flex cursor-pointer items-center justify-center rounded-lg text-[13px] leading-[18px] font-medium transition-[background-color,color,opacity,transform] duration-150 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100'
 
 const buttonToneClassNames = {
   primary:
@@ -78,7 +78,7 @@ export function WorkshopInput({ className = '', ...props }: WorkshopInputProps) 
   return (
     <Input
       {...props}
-      className={`!h-9 rounded-lg border border-kumo-line bg-kumo-base px-3 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
+      className={`!h-9 rounded-lg border border-kumo-line bg-kumo-base px-3 text-[13px] leading-[18px] font-normal text-kumo-default placeholder:text-kumo-placeholder shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
     />
   )
 }
@@ -89,7 +89,7 @@ export function WorkshopInputArea({ className = '', ...props }: WorkshopInputAre
   return (
     <InputArea
       {...props}
-      className={`rounded-lg border border-kumo-line bg-kumo-base px-3 py-2 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
+      className={`rounded-lg border border-kumo-line bg-kumo-base px-3 py-2 text-[13px] leading-[18px] font-normal text-kumo-default placeholder:text-kumo-placeholder shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
     />
   )
 }

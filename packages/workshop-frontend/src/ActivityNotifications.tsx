@@ -61,14 +61,14 @@ export default function ActivityNotifications({
         className="themed-floating-shadow !z-[1100] !w-[min(340px,calc(100vw-24px))] !min-w-0 overflow-hidden rounded-lg border border-kumo-line !outline-none bg-kumo-base !p-0 [&>:first-child]:hidden"
       >
         <div className="flex items-center justify-between gap-2 px-3.5 pb-1 pt-2.5">
-          <Popover.Title className="text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+          <Popover.Title className="text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
             Needs review
           </Popover.Title>
           <CountBadge count={pending.length} />
         </div>
 
         {pending.length === 0 ? (
-          <p className="m-0 px-3.5 pb-3 pt-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+          <p className="m-0 px-3.5 pb-3 pt-1 text-[13px] leading-[18px] text-kumo-subtle">
             Nothing is waiting on you.
           </p>
         ) : (
@@ -86,7 +86,7 @@ export default function ActivityNotifications({
                       onClick={() => openFullView('review')}
                       className="min-w-[7rem] flex-1 cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring"
                     >
-                      <span className="block truncate text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+                      <span className="block truncate text-[13px] font-medium leading-[18px] text-kumo-default">
                         {action.description.title}
                       </span>
                       <span className="mt-0.5 block truncate text-[11.5px] leading-4 tracking-[-0.1px] text-kumo-subtle">
@@ -121,7 +121,7 @@ export default function ActivityNotifications({
           <button
             type="button"
             onClick={() => openFullView(pending.length > 0 ? 'review' : 'history')}
-            className="flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default transition-colors hover:bg-kumo-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kumo-ring"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px] leading-[18px] text-kumo-default transition-colors hover:bg-kumo-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kumo-ring"
           >
             <span>
               {pending.length > PREVIEW_LIMIT

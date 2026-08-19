@@ -80,7 +80,7 @@ export default function BlueprintsPage() {
       <header className="flex items-end justify-between gap-4 px-3 pb-4 pt-10">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">Explore</h1>
-          <p className="mt-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+          <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
             Discover featured blueprints to use as starting points. Open one to create a workspace
             from it, or save it to reuse later.
           </p>
@@ -90,7 +90,7 @@ export default function BlueprintsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-3 pb-3">
-        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
+        <span className="text-ui-xs font-medium uppercase tracking-[0.08em] text-kumo-subtle">
           Featured
         </span>
         <div className="relative sm:w-64">
@@ -103,7 +103,7 @@ export default function BlueprintsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search blueprints…"
-            className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+            className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
           />
         </div>
       </div>
@@ -192,11 +192,11 @@ function FeaturedBlueprintCard({
           <BlueprintIcon size={15} weight="regular" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+          <p className="truncate text-[13px] font-medium leading-[18px] text-kumo-default">
             {blueprint.metadata.title}
           </p>
           <p
-            className={`mt-0.5 line-clamp-1 text-[12px] leading-4 tracking-[-0.2px] ${
+            className={`mt-0.5 line-clamp-1 text-ui-xs leading-4 ${
               blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-subtle"
             }`}
           >
@@ -238,11 +238,11 @@ function FeaturedBlueprintRow({
         <BlueprintIcon size={16} weight="regular" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium tracking-[-0.25px] text-kumo-default">
+        <p className="truncate text-ui-md font-medium text-kumo-default">
           {blueprint.metadata.title}
         </p>
         <p
-          className={`mt-0.5 line-clamp-1 text-[12px] leading-4 tracking-[-0.2px] ${
+          className={`mt-0.5 line-clamp-1 text-ui-xs leading-4 ${
             blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-subtle"
           }`}
         >
@@ -302,7 +302,7 @@ function EmptySection({ title, message }: { title: string; message: string }) {
         <BookOpen size={18} />
       </div>
       <div>
-        <p className="text-sm font-medium text-kumo-default">{title}</p>
+        <p className="text-ui-md font-medium text-kumo-default">{title}</p>
         <p className="mx-auto mt-1 max-w-sm text-[13px] leading-[18px] text-kumo-subtle">
           {message}
         </p>

@@ -81,7 +81,7 @@ function AppRow({
       }}
     >
       {/* Neutral monogram */}
-      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-kumo-fill text-[12px] font-medium text-kumo-subtle">
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-kumo-fill text-ui-xs font-medium text-kumo-subtle">
         {initials(gadget.title)}
       </div>
 
@@ -99,24 +99,24 @@ function AppRow({
                 if (e.key === 'Enter') commitRename()
                 if (e.key === 'Escape') setIsRenaming(false)
               }}
-              className="text-sm font-medium text-kumo-strong bg-transparent border-b border-kumo-brand outline-none w-full min-w-0"
+              className="text-ui-md font-medium text-kumo-strong bg-transparent border-b border-kumo-brand outline-none w-full min-w-0"
               onClick={(e) => e.preventDefault()}
             />
           ) : (
-            <h3 className="text-sm font-medium text-kumo-strong truncate">
+            <h3 className="text-ui-md font-medium text-kumo-strong truncate">
               {gadget.title || 'Untitled Workspace'}
             </h3>
           )}
         </div>
         {gadget.owner && (
-          <p className="text-xs text-kumo-subtle truncate mt-0.5">
+          <p className="text-ui-xs text-kumo-subtle truncate mt-0.5">
             Shared by {gadget.owner.name}
           </p>
         )}
       </div>
 
       {/* Time */}
-      <span className="hidden lg:flex items-center gap-1 text-xs text-kumo-subtle flex-shrink-0">
+      <span className="hidden lg:flex items-center gap-1 text-ui-xs text-kumo-subtle flex-shrink-0">
         <Clock size={10} />
         {formatRelativeTime(gadget.lastActive)}
       </span>
@@ -333,11 +333,11 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
       {/* Header */}
       {showHeader && (
         <div className="px-6 sm:px-10 lg:px-10 pt-10 lg:pt-10 mb-4">
-          <h2 className="text-lg font-semibold text-kumo-default">
+          <h2 className="text-ui-xl font-semibold text-kumo-default">
             Your workspaces
           </h2>
           {!loading && gadgets.length === 0 && !loadError && (
-            <p className="mt-1 text-sm text-kumo-subtle">
+            <p className="mt-1 text-ui-md text-kumo-subtle">
               You haven&apos;t created any workspaces yet
             </p>
           )}
@@ -357,7 +357,7 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search workspaces…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -374,13 +374,13 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
             ))}
           </>
         ) : loadError ? (
-          <div className="text-center py-12 text-sm">
+          <div className="text-center py-12 text-ui-md">
             <p className="text-kumo-danger">Something went wrong loading your workspaces.</p>
             <button onClick={loadGadgets} className="text-kumo-brand mt-1 underline">Try again</button>
           </div>
         ) : filtered.length === 0 ? (
           search ? (
-            <div className="text-center py-12 text-kumo-subtle text-sm">
+            <div className="text-center py-12 text-kumo-subtle text-ui-md">
               No workspaces found
             </div>
           ) : (
@@ -423,10 +423,10 @@ export default function GadgetList({ showHeader = true }: { showHeader?: boolean
         onOpenChange={(open) => { if (!open) setInfoTarget(null) }}
       >
         <Dialog className="p-8" size="sm">
-          <Dialog.Title className="text-lg font-semibold">
+          <Dialog.Title className="text-ui-xl font-semibold">
             {infoTarget?.title || 'Untitled Workspace'}
           </Dialog.Title>
-          <div className="mt-4 flex flex-col gap-3 text-sm">
+          <div className="mt-4 flex flex-col gap-3 text-ui-md">
             <div className="flex justify-between">
               <span className="text-kumo-subtle">Author</span>
               <span className="text-kumo-default">{infoTarget?.owner ? infoTarget.owner.name : 'You'}</span>
@@ -508,10 +508,10 @@ function HomeFeaturedBlueprintCard({
             <Hexagon size={13} className="text-white/75" weight="bold" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="m-0 truncate text-[13px] leading-[18px] font-semibold tracking-[-0.25px] text-kumo-strong">
+            <p className="m-0 truncate text-[13px] leading-[18px] font-semibold text-kumo-strong">
               {blueprint.metadata.title}
             </p>
-            <p className={`mt-0.5 line-clamp-2 min-h-8 text-[12px] leading-4 tracking-[-0.2px] ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-subtle italic'}`}>
+            <p className={`mt-0.5 line-clamp-2 min-h-8 text-ui-xs leading-4 ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-subtle italic'}`}>
               {blueprint.metadata.description || 'No description'}
             </p>
             {badges.length > 0 && (
@@ -571,7 +571,7 @@ function FeaturedBlueprintsGallery() {
   return (
     <div className="py-4 pr-4 sm:pr-6">
       <div className="mb-5">
-        <h3 className="text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+        <h3 className="text-[13px] leading-[18px] font-medium text-kumo-default">
           Start from a featured blueprint.
         </h3>
       </div>
@@ -589,7 +589,7 @@ function FeaturedBlueprintsGallery() {
         <div className="mt-4 text-center">
           <Link
             to="/explore"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-kumo-brand hover:text-kumo-brand-hover transition-colors"
+            className="inline-flex items-center gap-1.5 text-ui-xs font-medium text-kumo-brand hover:text-kumo-brand-hover transition-colors"
           >
             Browse all blueprints
             <ArrowRight size={12} weight="bold" />

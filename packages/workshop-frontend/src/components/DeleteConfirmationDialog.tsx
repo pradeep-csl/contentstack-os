@@ -39,10 +39,10 @@ export default function DeleteConfirmationDialog({
       >
         <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
           <div className="min-w-0">
-            <Dialog.Title className="text-[15px] leading-5 font-medium tracking-[-0.3px] text-kumo-strong">
+            <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-strong">
               {title}
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <Dialog.Description className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
               {description}
             </Dialog.Description>
           </div>

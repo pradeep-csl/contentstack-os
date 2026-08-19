@@ -76,12 +76,12 @@ export default function ConnectionChips() {
               {LogoComponent ? (
                 <LogoComponent size={12} />
               ) : (
-                <span className="text-[9px] font-bold text-kumo-strong">
+                <span className="text-ui-2xs font-bold text-kumo-strong">
                   {account.name[0]}
                 </span>
               )}
             </div>
-            <span className="text-sm text-kumo-default">
+            <span className="text-ui-md text-kumo-default">
               {account.name}
             </span>
           </button>
@@ -89,7 +89,7 @@ export default function ConnectionChips() {
       })}
       <Link
         to="/gatekeepers"
-        className="flex items-center gap-1 pl-2 pr-2.5 py-1 rounded-full border border-kumo-line text-sm text-kumo-subtle hover:text-kumo-brand hover:border-kumo-brand transition-colors"
+        className="flex items-center gap-1 pl-2 pr-2.5 py-1 rounded-full border border-kumo-line text-ui-md text-kumo-subtle hover:text-kumo-brand hover:border-kumo-brand transition-colors"
       >
         <Plus size={14} />
       </Link>

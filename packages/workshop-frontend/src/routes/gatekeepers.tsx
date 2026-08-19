@@ -65,7 +65,7 @@ function VendorIconTile({
       {logoUrl ? (
         <img src={logoUrl} alt="" className="object-contain" style={{ width: size, height: size }} />
       ) : (
-        <span className="text-[15px] font-semibold text-kumo-strong">
+        <span className="text-ui-lg font-semibold text-kumo-strong">
           {fallback[0]?.toUpperCase() ?? '?'}
         </span>
       )}
@@ -125,7 +125,7 @@ function ConnectorCard({
 
   const badgeEl = badge ? (
     <span
-      className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] leading-3 font-semibold uppercase tracking-[0.4px] ${
+      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-3 font-semibold uppercase tracking-[0.4px] ${
         badge.tone === 'new'
           ? 'bg-[rgba(255,72,1,0.10)] text-kumo-brand'
           : 'bg-kumo-tint text-kumo-subtle'
@@ -144,7 +144,7 @@ function ConnectorCard({
           if (!reconnectBusy) onReconnect()
         }}
         disabled={reconnectBusy}
-        className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-kumo-line bg-kumo-base px-3 text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-default transition-[background-color,border-color,opacity,transform] duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
+        className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-kumo-line bg-kumo-base px-3 text-ui-xs leading-4 font-medium text-kumo-default transition-[background-color,border-color,opacity,transform] duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
       >
         <ArrowsClockwise size={12} weight="bold" />
         {reconnectBusy ? 'Opening...' : 'Reconnect'}
@@ -180,13 +180,13 @@ function ConnectorCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium tracking-[-0.25px] text-kumo-default">
+            <span className="truncate text-ui-md font-medium text-kumo-default">
               {name}
             </span>
             {badgeEl}
           </div>
           {(metaLine || tagline) && (
-            <div className="mt-0.5 truncate text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <div className="mt-0.5 truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
               {metaLine ?? tagline}
             </div>
           )}
@@ -213,18 +213,18 @@ function ConnectorCard({
 
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="truncate text-[15px] leading-5 font-medium tracking-[-0.25px] text-kumo-default">
+          <span className="truncate text-ui-lg leading-5 font-medium text-kumo-default">
             {name}
           </span>
           {badgeEl}
         </div>
         {metaLine && (
-          <div className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+          <div className="mt-0.5 flex items-center gap-1.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
             {metaLine}
           </div>
         )}
         {tagline && (
-          <p className="mt-2 line-clamp-2 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+          <p className="mt-2 line-clamp-2 text-[13px] leading-[18px] font-normal text-kumo-subtle">
             {tagline}
           </p>
         )}
@@ -238,12 +238,12 @@ function ConnectorCard({
 function SectionEyebrow({ label, count }: { label: string; count?: number }) {
   return (
     <div className="mb-3.5 flex items-center gap-3 px-1">
-      <h2 className="m-0 text-[11px] leading-4 font-semibold uppercase tracking-[0.9px] text-kumo-subtle">
+      <h2 className="m-0 text-ui-2xs leading-4 font-semibold uppercase tracking-[0.9px] text-kumo-subtle">
         {label}
       </h2>
       <div className="h-px flex-1 bg-kumo-line" />
       {typeof count === 'number' && (
-        <span className="text-[11px] leading-4 font-semibold tracking-[-0.1px] text-kumo-subtle">
+        <span className="text-ui-2xs leading-4 font-semibold text-kumo-subtle">
           {count}
         </span>
       )}
@@ -411,10 +411,10 @@ function ConnectorsHeroDiagram({
               <ShieldCheck size={16} weight="duotone" />
             </div>
             <div className="min-w-0">
-              <p className="m-0 text-[12px] leading-4 font-semibold tracking-[-0.2px] text-kumo-default">
+              <p className="m-0 text-ui-xs leading-4 font-semibold text-kumo-default">
                 Gatekeeper
               </p>
-              <p className="mt-1 text-[11px] leading-4 font-normal tracking-[-0.1px] text-kumo-subtle">
+              <p className="mt-1 text-ui-2xs leading-4 font-normal text-kumo-subtle">
                 Keeps each workspace limited to the resources you connect and ensures every user has the required permissions before accessing them.
               </p>
             </div>
@@ -742,10 +742,10 @@ function ConnectorsPage() {
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-8 sm:py-14">
         <header className="mb-8 grid gap-8 lg:grid-cols-[minmax(0,540px)_444px] lg:items-center lg:justify-between">
           <div>
-            <h1 className="m-0 text-3xl font-semibold leading-tight tracking-tight text-kumo-default sm:text-[34px]">
+            <h1 className="m-0 text-3xl font-semibold leading-tight tracking-tight text-kumo-default sm:text-ui-3xl">
               Gatekeepers
             </h1>
-            <p className="mt-2 text-[14px] leading-[20px] font-normal tracking-[-0.25px] text-kumo-subtle">
+            <p className="mt-2 text-ui-md leading-[20px] font-normal text-kumo-subtle">
               Add the apps and accounts your workspaces can use. Connect once, then wire
               them into anything you build.
             </p>
@@ -764,7 +764,7 @@ function ConnectorsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search gatekeepers…"
-              className="h-10 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[14px] leading-5 tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-10 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-ui-md leading-5 text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
           <ViewToggle view={view} onChange={setView} />
@@ -772,17 +772,17 @@ function ConnectorsPage() {
 
         {loadError && (
           <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-6 text-center">
-            <p className="m-0 text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-danger">
+            <p className="m-0 text-[13px] leading-[18px] font-medium text-kumo-danger">
               Something went wrong loading your gatekeepers.
             </p>
-            <p className="mt-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <p className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
               Check your connection and try refreshing the page.
             </p>
           </div>
         )}
 
         {initialLoading && (
-          <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-8 text-center text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+          <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-8 text-center text-[13px] leading-[18px] font-normal text-kumo-subtle">
             Loading gatekeepers...
           </div>
         )}

@@ -88,7 +88,7 @@ export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalPr
   return (
     <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <Dialog className="p-6 sm:w-[560px]" size="base">
-        <Dialog.Title className="text-lg font-semibold mb-2 flex items-center gap-2">
+        <Dialog.Title className="text-ui-xl font-semibold mb-2 flex items-center gap-2">
           <CloudWarning size={22} weight="bold" className="text-kumo-warning" />
           You've reached your free usage limit
         </Dialog.Title>
@@ -98,7 +98,7 @@ export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalPr
         ) : (
           <div className="space-y-4">
             {!connected ? (
-              <p className="text-sm text-kumo-subtle">
+              <p className="text-ui-md text-kumo-subtle">
                 You've used all {usage.dailyLimit} of your free {usage.dailyLimit === 1 ? 'request' : 'requests'} for
                 today. Connect your Cloudflare account to keep building now — usage beyond the free
                 tier is billed to your own Cloudflare AI Gateway credits
@@ -110,12 +110,12 @@ export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalPr
                 ) : '.'}
               </p>
             ) : needsSelection ? (
-              <p className="text-sm text-kumo-subtle">
+              <p className="text-ui-md text-kumo-subtle">
                 Your Cloudflare connection has access to multiple accounts. Choose which one's AI
                 Gateway credits should be billed for usage beyond the free tier.
               </p>
             ) : (
-              <p className="text-sm text-kumo-subtle">
+              <p className="text-ui-md text-kumo-subtle">
                 Your Cloudflare account is connected
                 {usage.balance !== null && (
                   <> with a balance of <strong>${usage.balance.toFixed(2)}</strong></>
@@ -134,9 +134,9 @@ export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalPr
             {needsSelection && (
               <div className="flex flex-col gap-2">
                 {accounts === null ? (
-                  <p className="text-sm text-kumo-subtle">Loading accounts…</p>
+                  <p className="text-ui-md text-kumo-subtle">Loading accounts…</p>
                 ) : accounts.length === 0 ? (
-                  <p className="text-sm text-kumo-subtle">No accounts available on this connection.</p>
+                  <p className="text-ui-md text-kumo-subtle">No accounts available on this connection.</p>
                 ) : (
                   accounts.map((a) => (
                     <Button
@@ -154,7 +154,7 @@ export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalPr
               </div>
             )}
 
-            <p className="text-sm text-kumo-subtle">
+            <p className="text-ui-md text-kumo-subtle">
               Learn more about{' '}
               <a
                 href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/"

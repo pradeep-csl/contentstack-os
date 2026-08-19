@@ -404,7 +404,7 @@ export default function CodeDiffEditor({
   if (!filename || (!originalYText && !modifiedYText)) {
     return (
       <div
-        className="flex items-center justify-center bg-kumo-base text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle"
+        className="flex items-center justify-center bg-kumo-base text-[13px] leading-[18px] text-kumo-subtle"
         style={{ height }}
       >
         {!filename ? 'Select a file to view changes' : 'Loading diff...'}
@@ -443,11 +443,11 @@ export default function CodeDiffEditor({
             </button>
           </div>
           <div
-            className="pointer-events-none flex h-7 items-center gap-2 rounded-lg border border-kumo-line bg-kumo-base px-2 font-mono text-[11px] leading-4 tracking-[-0.2px] shadow-sm"
+            className="pointer-events-none flex h-7 items-center gap-2 rounded-lg border border-kumo-line bg-kumo-base px-2 font-mono text-ui-2xs leading-4 shadow-sm"
             style={{ fontFamily: monoFont }}
           >
             {model.status !== 'Modified' && (
-              <span className="text-[10px] font-medium text-kumo-subtle">{model.status}</span>
+              <span className="text-ui-2xs font-medium text-kumo-subtle">{model.status}</span>
             )}
             <span className="text-kumo-danger">-{model.deletions}</span>
             <span className="text-kumo-success">+{model.additions}</span>

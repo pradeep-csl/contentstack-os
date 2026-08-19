@@ -26,10 +26,10 @@ export function EmptyState({
         <EmptyIcon size={18} />
       </div>
       <div className="relative">
-        <p className="m-0 text-[14px] leading-5 font-medium tracking-[-0.3px] text-kumo-default">
+        <p className="m-0 text-ui-md leading-5 font-medium text-kumo-default">
           {title}
         </p>
-        <p className="mx-auto mt-1 max-w-sm text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+        <p className="mx-auto mt-1 max-w-sm text-[13px] leading-[18px] font-normal text-kumo-subtle">
           {description}
         </p>
       </div>

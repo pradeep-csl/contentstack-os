@@ -71,7 +71,7 @@ function StripLink({
     >
       {children}
       {!collapsed && (
-        <span className="text-[12px] leading-4 font-medium tracking-[-0.2px]">{label}</span>
+        <span className="text-ui-xs leading-4 font-medium">{label}</span>
       )}
     </Link>
   )

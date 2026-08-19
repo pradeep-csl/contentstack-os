@@ -43,12 +43,12 @@ function ContextRow({ item }: { item: ContextItem }) {
         <Icon size={16} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium tracking-[-0.25px] text-kumo-default">{item.name}</p>
-        <p className="mt-0.5 truncate text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+        <p className="truncate text-ui-md font-medium text-kumo-default">{item.name}</p>
+        <p className="mt-0.5 truncate text-ui-xs leading-4 text-kumo-subtle">
           {label} · {item.detail}
         </p>
       </div>
-      <span className="hidden shrink-0 text-xs tracking-[-0.1px] text-kumo-subtle lg:block">
+      <span className="hidden shrink-0 text-ui-xs text-kumo-subtle lg:block">
         {item.updated}
       </span>
     </div>
@@ -62,7 +62,7 @@ function ContextPage() {
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 sm:px-10">
       <header className="px-3 pb-4 pt-10">
         <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">Context &amp; Skills</h1>
-        <p className="mt-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+        <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
           Curated collections of knowledge your agents read, plus reusable skills they can apply.
         </p>
       </header>

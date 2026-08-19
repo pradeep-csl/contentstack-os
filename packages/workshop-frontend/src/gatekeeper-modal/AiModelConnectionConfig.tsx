@@ -24,7 +24,7 @@ export function AiModelConnectionConfig({
       >
         <Select
           aria-label="Select an AI model"
-          className="w-full text-sm [&_button]:!h-9"
+          className="w-full text-ui-md [&_button]:!h-9"
           container={selectContainer}
           placeholder="Select an AI model"
           value={selectedModelId}

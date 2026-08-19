@@ -15,7 +15,7 @@ export function TabButton({ active, onClick, children, badgeCount = 0, className
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex ${heightClassName} cursor-pointer items-center gap-1.5 text-[13px] leading-[18px] tracking-[-0.25px] transition-colors ${
+      className={`relative flex ${heightClassName} cursor-pointer items-center gap-1.5 text-[13px] leading-[18px] transition-colors ${
         active
           ? 'font-medium text-kumo-default'
           : 'font-normal text-kumo-subtle hover:text-kumo-default'
@@ -24,7 +24,7 @@ export function TabButton({ active, onClick, children, badgeCount = 0, className
       {children}
       {badgeCount > 0 && (
         <span
-          className="inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-kumo-contrast px-1 text-[10px] leading-none font-semibold text-kumo-inverse"
+          className="inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-kumo-contrast px-1 text-ui-2xs leading-none font-semibold text-kumo-inverse"
           style={{ fontVariantNumeric: 'tabular-nums' }}
           aria-label={`${badgeCount} pending`}
         >

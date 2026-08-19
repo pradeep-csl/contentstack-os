@@ -23,7 +23,7 @@ export const Route = createFileRoute('/providers')({ component: ProvidersPage })
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const PRIMARY_BTN =
-  'press inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium tracking-[-0.25px] text-white transition-colors hover:bg-kumo-brand-hover'
+  'press inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-kumo-brand-hover'
 
 // ─── model row ─────────────────────────────────────────────────────────────────
 
@@ -55,29 +55,29 @@ function ModelRow({
       className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150 ease-out hover:bg-kumo-tint"
     >
       {/* Neutral monogram — matches the sidebar/workspaces treatment */}
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-kumo-fill text-[12px] font-medium text-kumo-subtle">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-kumo-fill text-ui-xs font-medium text-kumo-subtle">
         {model.name[0]?.toUpperCase()}
       </div>
 
       {/* Info */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium tracking-[-0.25px] text-kumo-default">
+          <span className="truncate text-ui-md font-medium text-kumo-default">
             {model.name}
           </span>
           {gatewayLabel(model.gateway) && (
-            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
+            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
               {gatewayLabel(model.gateway)}
             </span>
           )}
           {isQuick && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[rgba(255,72,1,0.10)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.4px] text-kumo-brand">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[rgba(255,72,1,0.10)] px-1.5 py-0.5 text-ui-2xs font-semibold uppercase tracking-[0.4px] text-kumo-brand">
               <Lightning size={9} weight="fill" />
               quick
             </span>
           )}
         </div>
-        <span className="mt-0.5 block truncate font-mono text-[12px] tracking-[-0.1px] text-kumo-subtle">
+        <span className="mt-0.5 block truncate font-mono text-ui-xs text-kumo-subtle">
           {model.id}
         </span>
       </div>
@@ -117,7 +117,7 @@ function ModelRow({
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-kumo-line bg-kumo-tint px-4 py-3 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default">
+    <div className="flex items-start gap-3 rounded-xl border border-kumo-line bg-kumo-tint px-4 py-3 text-[13px] leading-[18px] text-kumo-default">
       {children}
     </div>
   )
@@ -195,7 +195,7 @@ function ProvidersPage() {
       <header className="flex items-end justify-between gap-4 px-3 pb-3 pt-10">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">AI providers</h1>
-          <p className="mt-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+          <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
             Configure the AI models available to your workspaces.
           </p>
         </div>
@@ -215,7 +215,7 @@ function ProvidersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search providers…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -263,7 +263,7 @@ function ProvidersPage() {
             ))}
           </div>
         ) : loadError ? (
-          <div className="py-12 text-center text-sm">
+          <div className="py-12 text-center text-ui-md">
             <p className="text-kumo-danger">Something went wrong loading your providers.</p>
             <button type="button" onClick={fetchAll} className="mt-1 cursor-pointer text-kumo-brand underline">
               Try again
@@ -275,7 +275,7 @@ function ProvidersPage() {
               <Lightning size={18} />
             </div>
             <div>
-              <p className="text-sm font-medium text-kumo-default">No AI providers yet</p>
+              <p className="text-ui-md font-medium text-kumo-default">No AI providers yet</p>
               <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
                 Add a provider to start building workspaces with AI.
               </p>
@@ -286,7 +286,7 @@ function ProvidersPage() {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-sm text-kumo-subtle">No providers found</div>
+          <div className="py-12 text-center text-ui-md text-kumo-subtle">No providers found</div>
         ) : (
           filtered.map((model) => (
             <div

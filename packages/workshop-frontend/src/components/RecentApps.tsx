@@ -48,11 +48,11 @@ function AppRow({ gadget }: { gadget: GadgetMetadataWithTimestamps }) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-kumo-strong truncate">
+        <h3 className="text-ui-md font-medium text-kumo-strong truncate">
           {gadget.title || 'Untitled Workspace'}
         </h3>
         {gadget.owner && (
-          <p className="text-xs text-kumo-subtle truncate mt-0.5">
+          <p className="text-ui-xs text-kumo-subtle truncate mt-0.5">
             Shared by {gadget.owner.name}
           </p>
         )}
@@ -61,7 +61,7 @@ function AppRow({ gadget }: { gadget: GadgetMetadataWithTimestamps }) {
       {/* Status + time */}
       <div className="flex items-center gap-3 flex-shrink-0">
 
-        <span className="hidden md:flex items-center gap-1 text-xs text-kumo-subtle">
+        <span className="hidden md:flex items-center gap-1 text-ui-xs text-kumo-subtle">
           <Clock size={10} />
           {formatRelativeTime(gadget.lastActive)}
         </span>
@@ -94,7 +94,7 @@ export default function RecentApps() {
     return (
       <section className="w-full max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-kumo-default">Recent workspaces</h2>
+          <h2 className="text-ui-md font-medium text-kumo-default">Recent workspaces</h2>
         </div>
         <div className="flex flex-col gap-2">
           {[1, 2].map((i) => (
@@ -108,7 +108,7 @@ export default function RecentApps() {
   if (loadError) {
     return (
       <section className="w-full max-w-2xl mx-auto">
-        <div className="text-center py-8 text-sm text-kumo-danger">
+        <div className="text-center py-8 text-ui-md text-kumo-danger">
           Unable to load your workspaces. Check your connection and try refreshing.
         </div>
       </section>
@@ -118,7 +118,7 @@ export default function RecentApps() {
   if (gadgets.length === 0) {
     return (
       <section className="w-full max-w-2xl mx-auto">
-        <div className="text-center py-8 text-kumo-subtle text-sm">
+        <div className="text-center py-8 text-kumo-subtle text-ui-md">
           No workspaces yet. Create your first one above!
         </div>
       </section>
@@ -128,12 +128,12 @@ export default function RecentApps() {
   return (
     <section className="w-full max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-kumo-default">
+        <h2 className="text-ui-md font-medium text-kumo-default">
           Recent workspaces
         </h2>
         <Link
           to="/"
-          className="flex items-center gap-1 text-xs text-kumo-subtle hover:text-kumo-brand transition-colors"
+          className="flex items-center gap-1 text-ui-xs text-kumo-subtle hover:text-kumo-brand transition-colors"
         >
           View all
           <ArrowRight size={12} />

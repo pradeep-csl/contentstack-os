@@ -17,7 +17,7 @@ function WorkspacesPage() {
       <header className="flex items-end justify-between gap-4 px-3 pb-3 pt-10">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">Workspaces</h1>
-          <p className="mt-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+          <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
             Each workspace is an isolated environment with its own conversations, gatekeepers, and outputs.
           </p>
         </div>
@@ -26,7 +26,7 @@ function WorkspacesPage() {
         <button
           type="button"
           onClick={() => openCreateWorkspace()}
-          className="press inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium tracking-[-0.25px] text-white transition-colors hover:bg-kumo-brand-hover"
+          className="press inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-kumo-brand px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-kumo-brand-hover"
         >
           <Plus size={14} weight="bold" />
           Create workspace

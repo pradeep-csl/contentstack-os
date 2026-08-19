@@ -78,7 +78,7 @@ export default function WorkspaceOpenErrorPage({ kind, onRetry, onGoToWorkspaces
         </h1>
         <p
           id={descriptionId}
-          className="mt-2 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle"
+          className="mt-2 text-[13px] leading-[18px] text-kumo-subtle"
         >
           {message}
         </p>

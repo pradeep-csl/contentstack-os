@@ -150,12 +150,12 @@ export function HomePageContent({ prompt }: HomeSearch) {
       <div className="flex w-full max-w-2xl flex-col items-stretch gap-8">
         {/* Hero */}
         <header className="text-center">
-          <h1 className="text-[28px] font-semibold tracking-tight leading-tight text-kumo-strong sm:text-[30px]">
+          <h1 className="text-ui-3xl font-semibold tracking-tight leading-tight text-kumo-strong sm:text-ui-3xl">
             What are we working on?
           </h1>
           {/* 15px, not 14: against a 30px headline the smaller step read as a caption under a
               display line rather than its pair. */}
-          <p className="mx-auto mt-3 max-w-xl text-[15px] leading-6 tracking-[-0.25px] text-kumo-subtle">
+          <p className="mx-auto mt-3 max-w-xl text-ui-lg leading-6 text-kumo-subtle">
             Describe what you need. It becomes a workspace you can keep, share, and come back to.
           </p>
         </header>

@@ -43,7 +43,7 @@ export default function ResourceConfiguratorHost({
 
 function Placeholder({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-kumo-line bg-kumo-elevated px-3 py-3 text-[12px] leading-4 text-kumo-subtle">
+    <section className="rounded-xl border border-kumo-line bg-kumo-elevated px-3 py-3 text-ui-xs leading-4 text-kumo-subtle">
       {children}
     </section>
   )

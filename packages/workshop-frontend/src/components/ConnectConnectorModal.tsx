@@ -153,7 +153,7 @@ export default function ConnectConnectorModal({
     : `Connect ${vendorDescription.displayName}`
 
   const headerSubline = isManage ? (
-    <div className="mt-0.5 flex items-center gap-1.5 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+    <div className="mt-0.5 flex items-center gap-1.5 text-[13px] leading-[18px] font-normal text-kumo-subtle">
       <span
         className={`h-1.5 w-1.5 shrink-0 rounded-full ${
           credentialsValid ? 'bg-kumo-success' : 'bg-kumo-danger'
@@ -170,7 +170,7 @@ export default function ConnectConnectorModal({
     </div>
   ) : (
     vendorDescription.tagline && (
-      <Dialog.Description className="mt-0.5 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+      <Dialog.Description className="mt-0.5 text-[13px] leading-[18px] font-normal text-kumo-subtle">
         {vendorDescription.tagline}
       </Dialog.Description>
     )
@@ -216,13 +216,13 @@ export default function ConnectConnectorModal({
               {logoUrl ? (
                 <img src={logoUrl} alt="" className="h-5 w-5 object-contain" />
               ) : (
-                <span className="text-sm font-semibold text-kumo-strong">
+                <span className="text-ui-md font-semibold text-kumo-strong">
                   {vendorDescription.displayName[0]}
                 </span>
               )}
             </div>
             <div className="min-w-0">
-              <Dialog.Title className="text-[17px] leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <Dialog.Title className="text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
                 {headerTitle}
               </Dialog.Title>
               {headerSubline}
@@ -239,14 +239,14 @@ export default function ConnectConnectorModal({
 
         <div className="new-gatekeeper-scroll-balanced min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {vendorDescription.description && (
-            <p className="text-[13px] leading-[19px] font-normal tracking-[-0.25px] text-kumo-default">
+            <p className="text-[13px] leading-[19px] font-normal text-kumo-default">
               {vendorDescription.description}
             </p>
           )}
 
           {supportedResources.length > 0 && (
             <div className="mt-5">
-              <h3 className="mb-2 text-[12px] leading-4 font-semibold uppercase tracking-[0.6px] text-kumo-subtle">
+              <h3 className="mb-2 text-ui-xs leading-4 font-semibold uppercase tracking-[0.6px] text-kumo-subtle">
                 {granular
                   ? isManage
                     ? 'Resources'
@@ -271,10 +271,10 @@ export default function ConnectConnectorModal({
                     >
                       {resourceIcon(resource)}
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                        <p className="text-[13px] leading-[18px] font-medium text-kumo-default">
                           {resource.title}
                         </p>
-                        <p className="mt-0.5 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                        <p className="mt-0.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
                           {resource.description}
                         </p>
                       </div>
@@ -315,7 +315,7 @@ export default function ConnectConnectorModal({
                   className="mt-0.5 shrink-0 text-kumo-brand"
                   weight="duotone"
                 />
-                <div className="text-[12px] leading-[17px] font-normal tracking-[-0.2px] text-kumo-default">
+                <div className="text-ui-xs leading-[17px] font-normal text-kumo-default">
                   <span className="font-medium">
                     Gatekeeper sits between {vendorDescription.displayName} and your Gadgets.
                   </span>{' '}
@@ -330,7 +330,7 @@ export default function ConnectConnectorModal({
           )}
 
           {isManage && (
-            <div className="mt-5 rounded-lg border border-kumo-line bg-kumo-elevated px-4 py-3 text-[12px] leading-[17px] font-normal tracking-[-0.2px] text-kumo-subtle">
+            <div className="mt-5 rounded-lg border border-kumo-line bg-kumo-elevated px-4 py-3 text-ui-xs leading-[17px] font-normal text-kumo-subtle">
               This account can be used by Gadgets you connect it to. Shared users must have the
               required permissions before they can access those connected resources.
             </div>
@@ -339,15 +339,15 @@ export default function ConnectConnectorModal({
 
         <div className="shrink-0 flex items-center justify-between gap-3 border-t border-kumo-line bg-kumo-base px-5 py-3">
           {isManage && confirmingDisconnect ? (
-            <p className="m-0 min-w-0 flex-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-default">
+            <p className="m-0 min-w-0 flex-1 text-ui-xs leading-4 font-normal text-kumo-default">
               Disconnect {vendorDescription.displayName}? Gadgets using this will lose access.
             </p>
           ) : isManage && hasPending ? (
-            <p className="m-0 min-w-0 flex-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <p className="m-0 min-w-0 flex-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
               {pendingPatterns.length} resource{pendingPatterns.length === 1 ? '' : 's'} to add
             </p>
           ) : !isManage && granular && noneSelected ? (
-            <p className="m-0 min-w-0 flex-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <p className="m-0 min-w-0 flex-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
               Select at least one resource to continue.
             </p>
           ) : (

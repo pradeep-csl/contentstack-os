@@ -418,7 +418,7 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
         icon={<Star size={12} weight="regular" className="text-kumo-subtle" />}
       >
         {favorites.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+          <p className="px-2.5 py-1.5 text-ui-xs leading-4 text-kumo-subtle">
             Favorite a workspace to keep it here.
           </p>
         ) : (
@@ -450,7 +450,7 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
             ))}
           </div>
         ) : recent.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+          <p className="px-2.5 py-1.5 text-ui-xs leading-4 text-kumo-subtle">
             {search ? 'No matches.' : 'No workspaces yet.'}
           </p>
         ) : (
@@ -469,7 +469,7 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
             </div>
             <Link
               to="/workspaces"
-              className="mt-0.5 flex h-7 items-center gap-1 rounded-md px-2.5 text-[12px] font-medium tracking-[-0.2px] text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default"
+              className="mt-0.5 flex h-7 items-center gap-1 rounded-md px-2.5 text-ui-xs font-medium text-kumo-subtle transition-colors hover:bg-kumo-tint hover:text-kumo-default"
             >
               {recentHidden > 0 ? `Show all (${recent.length})` : 'Show all'}
               <ArrowRight size={11} weight="bold" />
@@ -502,7 +502,7 @@ function SidebarSection({
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-6 cursor-pointer items-center gap-1 px-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle transition-colors hover:text-kumo-default"
+        className="flex h-6 cursor-pointer items-center gap-1 px-1.5 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle transition-colors hover:text-kumo-default"
       >
         <CaretDown
           size={10}

@@ -252,7 +252,7 @@ export default function AddModelModal({ visible, onCancel, onSuccess, authentica
   return (
     <Dialog.Root open={visible} onOpenChange={(open) => { if (!open) onCancel() }}>
       <Dialog className="p-6" size="lg">
-        <Dialog.Title className="text-lg font-semibold mb-4">
+        <Dialog.Title className="text-ui-xl font-semibold mb-4">
           Add AI Model
         </Dialog.Title>
 
@@ -268,14 +268,14 @@ export default function AddModelModal({ visible, onCancel, onSuccess, authentica
             onValueChange={(v) => handleModelSelect(v as string)}
           >
             <Combobox.TriggerInput
-              className="w-full max-w-none [&_input]:text-sm"
+              className="w-full max-w-none [&_input]:text-ui-md"
               placeholder={gatewayMode ? 'Choose a provider...' : 'Choose an AI model...'}
             />
             <Combobox.Content>
               <Combobox.List>
                 {(group: { provider: string; items: string[] }) => (
                   <Combobox.Group key={group.provider} items={group.items}>
-                    <Combobox.GroupLabel className="px-3 py-1.5 text-xs font-medium text-kumo-subtle select-none">
+                    <Combobox.GroupLabel className="px-3 py-1.5 text-ui-xs font-medium text-kumo-subtle select-none">
                       {PROVIDER_LABELS[group.provider as AiModelProvider] || group.provider}
                     </Combobox.GroupLabel>
                     <Combobox.Collection>

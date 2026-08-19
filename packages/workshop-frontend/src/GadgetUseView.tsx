@@ -69,12 +69,12 @@ export default function GadgetUseView({
 
           <span className="text-kumo-subtle flex-shrink-0">/</span>
 
-          <span className="text-[14px] leading-5 font-medium tracking-[-0.25px] text-kumo-default truncate">
+          <span className="text-ui-md leading-5 font-medium text-kumo-default truncate">
             {metadata.title}
           </span>
 
           {metadata.owner && (
-            <span className="text-xs text-kumo-subtle flex-shrink-0">
+            <span className="text-ui-xs text-kumo-subtle flex-shrink-0">
               by {metadata.owner.name}
             </span>
           )}
@@ -89,7 +89,7 @@ export default function GadgetUseView({
                 type="button"
                 onClick={() => onSelectGadget(g.id)}
                 aria-current={g.id === selectedGadgetId ? 'true' : undefined}
-                className={`flex-shrink-0 cursor-pointer rounded-full px-3 py-1 text-[12px] leading-4 tracking-[-0.2px] transition-colors duration-150 ease-out ${
+                className={`flex-shrink-0 cursor-pointer rounded-full px-3 py-1 text-ui-xs leading-4 transition-colors duration-150 ease-out ${
                   g.id === selectedGadgetId
                     ? 'bg-kumo-contrast font-medium text-kumo-inverse'
                     : 'bg-kumo-tint text-kumo-subtle hover:text-kumo-default'
@@ -130,7 +130,7 @@ export default function GadgetUseView({
           />
         ) : (
           <div className="flex h-full items-center justify-center px-6 text-center">
-            <p className="text-sm text-kumo-subtle">This workspace has no gadgets yet.</p>
+            <p className="text-ui-md text-kumo-subtle">This workspace has no gadgets yet.</p>
           </div>
         )}
       </div>

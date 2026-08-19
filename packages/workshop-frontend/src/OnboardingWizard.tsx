@@ -376,7 +376,7 @@ export default function OnboardingWizard({
             Let&apos;s set you up
           </h1>
           <p
-            className={`mt-2 text-sm text-kumo-subtle transition-all duration-500 delay-200 ${
+            className={`mt-2 text-ui-md text-kumo-subtle transition-all duration-500 delay-200 ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}
           >
@@ -408,10 +408,10 @@ export default function OnboardingWizard({
           >
             {/* ── Step 0: Profile ───────────────────────────────────────────── */}
             <div className="w-full flex-shrink-0 p-8 min-h-[420px]">
-              <h2 className="text-lg font-medium text-kumo-default mb-1">
+              <h2 className="text-ui-xl font-medium text-kumo-default mb-1">
                 Create your profile
               </h2>
-              <p className="text-sm text-kumo-subtle mb-12">
+              <p className="text-ui-md text-kumo-subtle mb-12">
                 This is how you&apos;ll appear in conversations
               </p>
 
@@ -469,7 +469,7 @@ export default function OnboardingWizard({
                       e.target.value = ''
                     }}
                   />
-                  <p className="text-xs text-kumo-subtle mt-1.5">
+                  <p className="text-ui-xs text-kumo-subtle mt-1.5">
                     {avatarPreview ? 'Change' : 'Add photo'}
                   </p>
                 </div>
@@ -478,7 +478,7 @@ export default function OnboardingWizard({
                 <div className="flex-1 min-w-0 pt-1">
                   <label
                     htmlFor="onboarding-display-name"
-                    className="block text-xs font-medium text-kumo-subtle mb-1.5"
+                    className="block text-ui-xs font-medium text-kumo-subtle mb-1.5"
                   >
                     Display name
                   </label>
@@ -488,7 +488,7 @@ export default function OnboardingWizard({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="How should we call you?"
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-kumo-line bg-kumo-base text-kumo-default placeholder:text-kumo-placeholder focus:outline-none focus:border-kumo-brand transition-colors"
+                    className="w-full px-3 py-2.5 text-ui-md rounded-lg border border-kumo-line bg-kumo-base text-kumo-default placeholder:text-kumo-placeholder focus:outline-none focus:border-kumo-brand transition-colors"
                   />
                 </div>
               </div>
@@ -497,10 +497,10 @@ export default function OnboardingWizard({
             {/* ── Step 1: Model selection ───────────────────────────────────── */}
             <div className="w-full flex-shrink-0 p-8 min-h-[420px]">
               <div>
-                <h2 className="text-lg font-medium text-kumo-default mb-1">
+                <h2 className="text-ui-xl font-medium text-kumo-default mb-1">
                   Choose your model
                 </h2>
-                <p className="text-sm text-kumo-subtle mb-6">
+                <p className="text-ui-md text-kumo-subtle mb-6">
                   Pick the AI model you&apos;d like to use by default
                 </p>
 
@@ -517,7 +517,7 @@ export default function OnboardingWizard({
                       value={modelSearch}
                       onChange={(e) => setModelSearch(e.target.value)}
                       placeholder="Search models…"
-                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+                      className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
                     />
                   </div>
                 )}
@@ -544,7 +544,7 @@ export default function OnboardingWizard({
                         >
                           <div
                             className={`
-                              w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold
+                              w-8 h-8 rounded-lg flex items-center justify-center text-ui-xs font-bold
                               transition-colors duration-150
                               ${selectedModelId === model.id
                                 ? 'bg-kumo-brand text-kumo-inverse'
@@ -555,15 +555,15 @@ export default function OnboardingWizard({
                             {model.name[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-kumo-default truncate">
+                            <p className="text-ui-md font-medium text-kumo-default truncate">
                               {model.name}
                               {gatewayLabel(model.gateway) && (
-                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
+                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs font-semibold uppercase tracking-[0.4px] text-kumo-subtle">
                                   {gatewayLabel(model.gateway)}
                                 </span>
                               )}
                             </p>
-                            <p className="text-xs text-kumo-subtle truncate">
+                            <p className="text-ui-xs text-kumo-subtle truncate">
                               {model.id}
                             </p>
                           </div>
@@ -579,10 +579,10 @@ export default function OnboardingWizard({
 
                       {visibleModels.length === 0 && (
                         <div className="text-center py-8">
-                          <p className="text-sm text-kumo-subtle mb-1">
+                          <p className="text-ui-md text-kumo-subtle mb-1">
                             {models.length === 0 ? 'No models configured yet' : 'No models match your search'}
                           </p>
-                          <p className="text-xs text-kumo-subtle">
+                          <p className="text-ui-xs text-kumo-subtle">
                             {models.length === 0 ? 'Add a model to get started' : 'Try a different name'}
                           </p>
                         </div>
@@ -591,7 +591,7 @@ export default function OnboardingWizard({
 
                     <button
                       onClick={() => setAddModelOpen(true)}
-                      className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-kumo-subtle border border-dashed border-kumo-line rounded-xl hover:border-kumo-fill hover:text-kumo-default hover:bg-kumo-tint transition-colors"
+                      className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-ui-md font-medium text-kumo-subtle border border-dashed border-kumo-line rounded-xl hover:border-kumo-fill hover:text-kumo-default hover:bg-kumo-tint transition-colors"
                     >
                       <Plus size={14} weight="bold" />
                       Add new model...
@@ -604,10 +604,10 @@ export default function OnboardingWizard({
             {/* ── Step 2: Connections ───────────────────────────────────────── */}
             <div className={`w-full flex-shrink-0 p-8 min-h-[420px] ${showConnectionsStep ? '' : 'hidden'}`}>
               <div>
-                <h2 className="text-lg font-medium text-kumo-default mb-1">
+                <h2 className="text-ui-xl font-medium text-kumo-default mb-1">
                   Connect your services
                 </h2>
-                <p className="text-sm text-kumo-subtle mb-6">
+                <p className="text-ui-md text-kumo-subtle mb-6">
                   Link your accounts so your gadgets can access them. You can always add more later.
                 </p>
 
@@ -617,7 +617,7 @@ export default function OnboardingWizard({
                   </div>
                 ) : vendors.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-sm text-kumo-subtle">
+                    <p className="text-ui-md text-kumo-subtle">
                       No services available
                     </p>
                   </div>
@@ -650,16 +650,16 @@ export default function OnboardingWizard({
                             {Logo ? (
                               <Logo size={16} />
                             ) : (
-                              <span className="text-xs font-bold text-kumo-strong">
+                              <span className="text-ui-xs font-bold text-kumo-strong">
                                 {vendor.description.displayName[0]}
                               </span>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-kumo-default truncate">
+                            <p className="text-ui-md font-medium text-kumo-default truncate">
                               {vendor.description.displayName}
                             </p>
-                            <p className="text-xs text-kumo-subtle truncate">
+                            <p className="text-ui-xs text-kumo-subtle truncate">
                               {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not connected'}
                             </p>
                           </div>
@@ -679,7 +679,7 @@ export default function OnboardingWizard({
                   </div>
                 )}
 
-                <p className="text-xs text-kumo-subtle mt-4 text-center">
+                <p className="text-ui-xs text-kumo-subtle mt-4 text-center">
                   Optional &middot; you can manage connections any time
                 </p>
               </div>
@@ -697,7 +697,7 @@ export default function OnboardingWizard({
             {step > 0 ? (
               <button
                 onClick={goBack}
-                className="text-sm text-kumo-subtle hover:text-kumo-default transition-colors"
+                className="text-ui-md text-kumo-subtle hover:text-kumo-default transition-colors"
               >
                 Back
               </button>
@@ -710,7 +710,7 @@ export default function OnboardingWizard({
               {step < totalSteps - 1 ? (
                 <button
                   onClick={goNext}
-                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 text-kumo-inverse bg-kumo-brand hover:bg-kumo-brand-hover"
+                  className="flex items-center gap-2 px-5 py-2.5 text-ui-md font-medium rounded-lg transition-all duration-150 text-kumo-inverse bg-kumo-brand hover:bg-kumo-brand-hover"
                 >
                   Next
                   <ArrowRight size={14} weight="bold" />
@@ -720,7 +720,7 @@ export default function OnboardingWizard({
                   onClick={handleFinish}
                   disabled={finishing}
                   className={`
-                    flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg
+                    flex items-center gap-2 px-5 py-2.5 text-ui-md font-medium rounded-lg
                     transition-all duration-150
                     disabled:cursor-not-allowed disabled:bg-kumo-tint disabled:text-kumo-inactive
                     ${!finishing ? 'text-kumo-inverse bg-kumo-brand hover:bg-kumo-brand-hover' : ''}
@@ -822,10 +822,10 @@ function ShowcaseStep({ active, siteName }: { active: boolean; siteName: string 
   return (
     <div>
       <div className="text-center mb-6">
-        <h2 className="text-lg font-medium text-kumo-default mb-1">
+        <h2 className="text-ui-xl font-medium text-kumo-default mb-1">
           You&apos;re all set
         </h2>
-        <p className="text-sm text-kumo-subtle">
+        <p className="text-ui-md text-kumo-subtle">
           Here&apos;s a taste of what you can do with {siteName}
         </p>
       </div>
@@ -855,10 +855,10 @@ function ShowcaseStep({ active, siteName }: { active: boolean; siteName: string 
                 <Icon size={18} className={feature.iconColor} weight="fill" />
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-sm font-medium text-kumo-default">
+                <p className="text-ui-md font-medium text-kumo-default">
                   {feature.title}
                 </p>
-                <p className="text-xs text-kumo-subtle mt-0.5 leading-relaxed">
+                <p className="text-ui-xs text-kumo-subtle mt-0.5 leading-relaxed">
                   {feature.description}
                 </p>
               </div>

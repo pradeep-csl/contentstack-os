@@ -50,11 +50,11 @@ export default function GatekeeperAppPage({ appId }: { appId: string }) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-sm text-kumo-subtle">{error}</div>
+      <div className="mx-auto max-w-md px-4 py-16 text-center text-ui-md text-kumo-subtle">{error}</div>
     )
   }
   if (!state) {
-    return <div className="px-4 py-16 text-center text-sm text-kumo-subtle">Loading…</div>
+    return <div className="px-4 py-16 text-center text-ui-md text-kumo-subtle">Loading…</div>
   }
 
   // Fill the viewport below the header so the embedded app can manage its own internal layout.

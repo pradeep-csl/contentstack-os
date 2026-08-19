@@ -357,9 +357,9 @@ export default function CommandPalette({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search workspaces and actions…"
-            className="h-12 w-full bg-transparent text-[14px] leading-5 tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder focus:outline-none"
+            className="h-12 w-full bg-transparent text-ui-md leading-5 text-kumo-default placeholder:text-kumo-placeholder focus:outline-none"
           />
-          <kbd className="shrink-0 rounded border border-kumo-line px-1.5 py-0.5 font-sans text-[10px] leading-none text-kumo-subtle">
+          <kbd className="shrink-0 rounded border border-kumo-line px-1.5 py-0.5 font-sans text-ui-2xs leading-none text-kumo-subtle">
             ESC
           </kbd>
         </div>
@@ -373,7 +373,7 @@ export default function CommandPalette({
               const start = groups.slice(0, gi).reduce((n, g) => n + g.items.length, 0)
               return (
                 <div key={group.heading} className="mb-1 last:mb-0">
-                  <p className="px-2.5 pt-1.5 pb-1 text-[11px] font-medium uppercase tracking-[0.4px] text-kumo-subtle">
+                  <p className="px-2.5 pt-1.5 pb-1 text-ui-2xs font-medium uppercase tracking-[0.4px] text-kumo-subtle">
                     {group.heading}
                   </p>
                   {group.items.map((cmd, j) => {
@@ -386,7 +386,7 @@ export default function CommandPalette({
                         onMouseMove={() => setActiveIndex(i)}
                         onClick={() => go(cmd.run)}
                         className={[
-                          'flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] leading-[18px] tracking-[-0.25px] transition-colors',
+                          'flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] leading-[18px] transition-colors',
                           i === activeIndex ? 'bg-kumo-fill text-kumo-strong' : 'text-kumo-default',
                         ].join(' ')}
                       >
@@ -395,7 +395,7 @@ export default function CommandPalette({
                         </span>
                         <span className="min-w-0 flex-1 truncate">{highlight(cmd.label, cmd.indices)}</span>
                         {cmd.hint && (
-                          <span className="shrink-0 text-[11px] text-kumo-subtle">{cmd.hint}</span>
+                          <span className="shrink-0 text-ui-2xs text-kumo-subtle">{cmd.hint}</span>
                         )}
                       </button>
                     )
@@ -407,7 +407,7 @@ export default function CommandPalette({
         </div>
 
         {/* Footer hint strip — standard command-palette keyboard legend. */}
-        <div className="flex items-center gap-3 border-t border-kumo-line px-3.5 py-2 text-[11px] text-kumo-subtle">
+        <div className="flex items-center gap-3 border-t border-kumo-line px-3.5 py-2 text-ui-2xs text-kumo-subtle">
           <span className="flex items-center gap-1">
             <kbd className="rounded border border-kumo-line px-1 py-0.5 font-sans leading-none">↑</kbd>
             <kbd className="rounded border border-kumo-line px-1 py-0.5 font-sans leading-none">↓</kbd>

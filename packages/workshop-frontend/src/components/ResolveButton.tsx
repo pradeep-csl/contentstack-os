@@ -22,7 +22,7 @@ export function ResolveButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex cursor-pointer items-center rounded-md text-[12px] font-medium tracking-[-0.15px] transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${toneClassName}`}
+      className={`flex cursor-pointer items-center rounded-md text-ui-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${toneClassName}`}
     >
       {tone === 'approve' ? 'Approve' : 'Deny'}
     </button>
@@ -41,7 +41,7 @@ export function AlwaysApproveButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex h-6 cursor-pointer items-center rounded-md px-2 text-[12px] font-medium tracking-[-0.15px] text-kumo-subtle transition-colors enabled:hover:bg-kumo-tint enabled:hover:text-kumo-default disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex h-6 cursor-pointer items-center rounded-md px-2 text-ui-xs font-medium text-kumo-subtle transition-colors enabled:hover:bg-kumo-tint enabled:hover:text-kumo-default disabled:cursor-not-allowed disabled:opacity-40"
     >
       Always approve
     </button>

@@ -29,12 +29,12 @@ export default function DataTab() {
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-kumo-fill bg-kumo-elevated">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-sm text-kumo-default">channels</span>
+          <span className="font-mono text-ui-md text-kumo-default">channels</span>
           <Badge variant="secondary">{sampleDataRows.length} rows</Badge>
         </div>
         <div className="flex items-center gap-2">
           {selectedIds.size > 0 && (
-            <span className="text-xs text-kumo-subtle">
+            <span className="text-ui-xs text-kumo-subtle">
               {selectedIds.size} selected
             </span>
           )}
@@ -69,15 +69,15 @@ export default function DataTab() {
                   aria-label={`Select ${row.channel}`}
                 />
                 <Table.Cell>
-                  <span className="font-mono text-sm text-kumo-default">{row.channel}</span>
+                  <span className="font-mono text-ui-md text-kumo-default">{row.channel}</span>
                 </Table.Cell>
                 <Table.Cell>
-                  <span className="text-sm text-kumo-subtle tabular-nums">
+                  <span className="text-ui-md text-kumo-subtle tabular-nums">
                     {row.messages.toLocaleString()}
                   </span>
                 </Table.Cell>
                 <Table.Cell>
-                  <span className="text-xs text-kumo-subtle">{row.lastActive}</span>
+                  <span className="text-ui-xs text-kumo-subtle">{row.lastActive}</span>
                 </Table.Cell>
                 <Table.Cell>
                   {row.unread ? (
@@ -94,10 +94,10 @@ export default function DataTab() {
 
       {/* Footer */}
       <div className="px-4 py-2 border-t border-kumo-fill bg-kumo-elevated flex items-center justify-between">
-        <span className="font-mono text-xs text-kumo-subtle">
+        <span className="font-mono text-ui-xs text-kumo-subtle">
           {sampleDataRows.length} rows in channels
         </span>
-        <span className="font-mono text-xs text-kumo-subtle">
+        <span className="font-mono text-ui-xs text-kumo-subtle">
           {sampleDataRows.reduce((sum, r) => sum + r.messages, 0).toLocaleString()} total messages
         </span>
       </div>

@@ -60,8 +60,8 @@ export function AccountChooser({
   return (
     <section className="overflow-hidden rounded-xl border border-kumo-line bg-kumo-base">
       <div className="border-b border-kumo-line px-3 py-2.5">
-        <p className="text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-default">Account</p>
-        <p className="mt-0.5 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+        <p className="text-ui-xs leading-4 font-medium text-kumo-default">Account</p>
+        <p className="mt-0.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
           {isEmailMailbox
             ? 'Enable the Email receiver account, then choose the mailbox name below.'
             : `Pick which ${vendorName} identity this ${resourceTitle ?? 'connection'} should use.`}
@@ -101,8 +101,8 @@ export function AccountChooser({
                   <AccountAvatar avatarUrl={account.description.avatar?.url} logoUrl={account.vendorDescription.logo?.url} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">{name}</p>
-                  <p className={`truncate text-[12px] leading-4 font-normal tracking-[-0.2px] ${needsAccess ? 'text-kumo-brand' : 'text-kumo-subtle'}`}>
+                  <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">{name}</p>
+                  <p className={`truncate text-ui-xs leading-4 font-normal ${needsAccess ? 'text-kumo-brand' : 'text-kumo-subtle'}`}>
                     {expired
                       ? 'Expired credentials'
                       : needsAccess
@@ -116,7 +116,7 @@ export function AccountChooser({
                   type="button"
                   onClick={() => onReconnect(account.id)}
                   disabled={reconnecting}
-                  className="shrink-0 cursor-pointer rounded-md border border-kumo-line px-2 py-1 text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-default transition-colors hover:bg-kumo-elevated disabled:cursor-not-allowed disabled:opacity-60"
+                  className="shrink-0 cursor-pointer rounded-md border border-kumo-line px-2 py-1 text-ui-xs leading-4 font-medium text-kumo-default transition-colors hover:bg-kumo-elevated disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {reconnecting ? 'Opening...' : 'Reconnect'}
                 </button>
@@ -125,7 +125,7 @@ export function AccountChooser({
                   type="button"
                   onClick={() => onGrantAccess?.(account.id)}
                   disabled={granting}
-                  className="shrink-0 cursor-pointer rounded-md border border-kumo-line px-2 py-1 text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-default transition-colors hover:bg-kumo-elevated disabled:cursor-not-allowed disabled:opacity-60"
+                  className="shrink-0 cursor-pointer rounded-md border border-kumo-line px-2 py-1 text-ui-xs leading-4 font-medium text-kumo-default transition-colors hover:bg-kumo-elevated disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {granting ? 'Opening...' : 'Grant access'}
                 </button>
@@ -140,7 +140,7 @@ export function AccountChooser({
             type="button"
             onClick={onConnect}
             disabled={connecting}
-            className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-subtle transition-colors hover:bg-kumo-elevated hover:text-kumo-default disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-ui-xs leading-4 font-medium text-kumo-subtle transition-colors hover:bg-kumo-elevated hover:text-kumo-default disabled:cursor-not-allowed disabled:opacity-60"
           >
             {connecting ? (
               <span className="h-3.5 w-3.5 rounded-full border-2 border-kumo-brand border-t-transparent animate-spin" />

@@ -505,7 +505,7 @@ export default function ResourcePicker({
                     * truncate, so both carry their full text as a tooltip. */}
                   <span
                     title={resource.title}
-                    className="max-w-[70%] flex-none truncate text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default"
+                    className="max-w-[70%] flex-none truncate text-[13px] leading-[18px] text-kumo-default"
                   >
                     {resource.title}
                   </span>
@@ -584,7 +584,7 @@ export default function ResourcePicker({
                         className="h-6 w-6 rounded-md"
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default">
+                        <span className="block truncate text-[13px] leading-[18px] text-kumo-default">
                           {account.description.uniqueName || account.description.displayName}
                         </span>
                         {hostname && hostname !== '*' && (
@@ -643,7 +643,7 @@ export default function ResourcePicker({
                         <Plus size={11} />
                       )}
                     </span>
-                    <span className="flex-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+                    <span className="flex-1 text-[13px] leading-[18px] text-kumo-subtle">
                       {connectingVendor === vendor.id ? 'Opening…' : 'Connect new account'}
                     </span>
                     {isActive && <TabHint />}

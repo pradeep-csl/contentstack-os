@@ -255,7 +255,7 @@ export function useSlashCommandPicker({
                 choice.description,
                 [choice.providerLabel, choice.resourceLabel].filter(Boolean).join(" · "),
               ].join("\n")}
-              className={`${PICKER_ROW} w-full text-left text-[13px] leading-[18px] tracking-[-0.25px] disabled:cursor-wait disabled:opacity-60 ${optionIndex === index ? `${PICKER_ROW_ACTIVE} text-kumo-strong` : "text-kumo-default"}`}
+              className={`${PICKER_ROW} w-full text-left text-[13px] leading-[18px] disabled:cursor-wait disabled:opacity-60 ${optionIndex === index ? `${PICKER_ROW_ACTIVE} text-kumo-strong` : "text-kumo-default"}`}
               onMouseMove={() => setIndex(optionIndex)}
               onClick={() => select(choice)}
             >

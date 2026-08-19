@@ -175,3 +175,114 @@ test('text-kumo-inactive is only ever scoped to a disabled state', () => {
   }
   assert.deepEqual(offenders, [], 'use text-kumo-subtle for content, or scope it with disabled:')
 })
+
+// Sizing must come from the text-ui-* scale. Bans ad-hoc pixel literals, Tailwind's bare names
+// (which belong to Kumo's compiled components now — see the --text-* note in styles.css), and
+// px letter-spacing, which the scale supplies in em where it is wanted at all.
+// Everything left here still carries a 7b item: `text-[13px]`/`text-[20px]`/`text-base`/`text-xl`/
+// `text-2xl`/`text-3xl` (per-element judgement), a `leading-*`/`tracking-tight|tighter|normal|wide`
+// collision, or a deferred px-tracking site (size 17px+, or a non-standard decimal size this
+// codemod's mapping table doesn't cover, e.g. `text-[11.5px]`/`text-[12.5px]`).
+const PENDING_SIZES = new Set([
+  'packages/workshop-frontend/src/Activity.tsx',
+  'packages/workshop-frontend/src/ActivityNotifications.tsx',
+  'packages/workshop-frontend/src/AdminPage.tsx',
+  'packages/workshop-frontend/src/BlueprintLandingPage.tsx',
+  'packages/workshop-frontend/src/BlueprintModal.tsx',
+  'packages/workshop-frontend/src/BlueprintsPage.tsx',
+  'packages/workshop-frontend/src/ChatInterface.tsx',
+  'packages/workshop-frontend/src/CodeDiffEditor.tsx',
+  'packages/workshop-frontend/src/Connections.tsx',
+  'packages/workshop-frontend/src/FileSidebar.tsx',
+  'packages/workshop-frontend/src/FrontendErrorBoundary.tsx',
+  'packages/workshop-frontend/src/GadgetCodeInterface.tsx',
+  'packages/workshop-frontend/src/GadgetEditor.tsx',
+  'packages/workshop-frontend/src/GadgetUI.tsx',
+  'packages/workshop-frontend/src/GatekeeperModal.tsx',
+  'packages/workshop-frontend/src/LoginPage.tsx',
+  'packages/workshop-frontend/src/OnboardingWizard.tsx',
+  'packages/workshop-frontend/src/ResourcePicker.tsx',
+  'packages/workshop-frontend/src/SettingsPage.tsx',
+  'packages/workshop-frontend/src/ShareModal.tsx',
+  'packages/workshop-frontend/src/SignupPage.tsx',
+  'packages/workshop-frontend/src/TopBarNotice.tsx',
+  'packages/workshop-frontend/src/VendorCard.tsx',
+  'packages/workshop-frontend/src/WorkpiecePicker.tsx',
+  'packages/workshop-frontend/src/components/AppShell/CommandPalette.tsx',
+  'packages/workshop-frontend/src/components/AppShell/HomeTaskSuggestions.tsx',
+  'packages/workshop-frontend/src/components/AppShell/SidebarGadgetRow.tsx',
+  'packages/workshop-frontend/src/components/AppShell/SidebarItem.tsx',
+  'packages/workshop-frontend/src/components/BlueprintBindingCard.tsx',
+  'packages/workshop-frontend/src/components/BlueprintList.tsx',
+  'packages/workshop-frontend/src/components/ComingSoonPreview.tsx',
+  'packages/workshop-frontend/src/components/ConnectConnectorModal.tsx',
+  'packages/workshop-frontend/src/components/EmptyState.tsx',
+  'packages/workshop-frontend/src/components/GadgetList.tsx',
+  'packages/workshop-frontend/src/components/Header.tsx',
+  'packages/workshop-frontend/src/components/SectionEyebrow.tsx',
+  'packages/workshop-frontend/src/components/TabButton.tsx',
+  'packages/workshop-frontend/src/components/WorkshopControls.tsx',
+  'packages/workshop-frontend/src/components/WorkspaceOpenErrorPage.tsx',
+  'packages/workshop-frontend/src/components/chat/SlashCommandPicker.tsx',
+  'packages/workshop-frontend/src/components/format/AdminFormatsPanel.tsx',
+  'packages/workshop-frontend/src/components/format/NewFormatRow.tsx',
+  'packages/workshop-frontend/src/components/pickerRows.tsx',
+  'packages/workshop-frontend/src/gatekeeper-modal/AccountChooser.tsx',
+  'packages/workshop-frontend/src/routes/blueprints.tsx',
+  'packages/workshop-frontend/src/routes/context.tsx',
+  'packages/workshop-frontend/src/routes/gatekeepers.tsx',
+  'packages/workshop-frontend/src/routes/outputs.tsx',
+  'packages/workshop-frontend/src/routes/providers.tsx',
+  'packages/workshop-frontend/src/routes/workspaces.tsx',
+])
+
+const BANNED_SIZE = /\btext-\[\d+px\]|\btext-(?:xs|sm|base|lg|xl|2xl|3xl)\b/
+const BANNED_TRACKING = /\btracking-\[-?[\d.]+px\]/
+
+// Table-driven proof that the regex targets the old scale and leaves the new one alone —
+// verified before the codemod runs, since a guard that flags the state being migrated toward
+// would send the migration in circles.
+const BANNED_SIZE_CASES = [
+  ['text-[13px]', true],
+  ['text-sm', true],
+  ['text-ui-xs', false],
+  ['text-ui-sm', false],
+  ['text-ui-md', false],
+  ['text-ui-lg', false],
+  ['text-ui-xl', false],
+  ['text-ui-2xl', false],
+  ['text-ui-3xl', false],
+]
+
+test('BANNED_SIZE flags the old scale and leaves text-ui-* alone', () => {
+  for (const [token, wantBanned] of BANNED_SIZE_CASES) {
+    assert.equal(BANNED_SIZE.test(token), wantBanned, `${token}: expected banned=${wantBanned}`)
+  }
+})
+
+test('BANNED_TRACKING flags px letter-spacing', () => {
+  assert.ok(BANNED_TRACKING.test('tracking-[-0.25px]'))
+  assert.ok(!BANNED_TRACKING.test('tracking-tight'))
+})
+
+test('sizing comes from the text-ui-* scale outside the pending allowlist', () => {
+  const offenders = []
+  for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
+    const rel = repoPath(file)
+    if (PENDING_SIZES.has(rel)) continue
+    const text = readFileSync(file, 'utf8')
+    const hits = []
+    if (BANNED_SIZE.test(text)) hits.push('ad-hoc or Tailwind size')
+    if (BANNED_TRACKING.test(text)) hits.push('px letter-spacing')
+    if (hits.length) offenders.push(`${rel}: ${hits.join(', ')}`)
+  }
+  assert.deepEqual(offenders, [], 'migrate to text-ui-*, or add to PENDING_SIZES')
+})
+
+test('the sizes allowlist has no stale entries', () => {
+  const stale = [...PENDING_SIZES].filter((rel) => {
+    const text = readFileSync(join(ROOT, rel), 'utf8')
+    return !BANNED_SIZE.test(text) && !BANNED_TRACKING.test(text)
+  })
+  assert.deepEqual(stale, [], 'these are clean — remove them from PENDING_SIZES')
+})

@@ -83,7 +83,7 @@ export default function SignupPage({ rpcStub }: SignupPageProps) {
           role="alert"
           className="min-h-screen flex flex-col items-center justify-center gap-4 bg-kumo-base px-4"
         >
-          <p className="text-sm text-kumo-danger text-center">
+          <p className="text-ui-md text-kumo-danger text-center">
             Couldn&apos;t load deployment settings.
           </p>
           <Button variant="secondary" onClick={() => window.location.reload()}>Reload</Button>
@@ -93,7 +93,7 @@ export default function SignupPage({ rpcStub }: SignupPageProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-kumo-base px-4">
         <Loader size="lg" />
-        <p className="text-sm text-kumo-subtle text-center">
+        <p className="text-ui-md text-kumo-subtle text-center">
           {connectionLost ? "Can't reach the server. Retrying…" : "Loading…"}
         </p>
       </div>
@@ -128,7 +128,7 @@ export default function SignupPage({ rpcStub }: SignupPageProps) {
           <h1 className="text-xl font-semibold text-kumo-default">
             {siteName}
           </h1>
-          <p className="text-sm text-kumo-subtle mt-1">Create your account</p>
+          <p className="text-ui-md text-kumo-subtle mt-1">Create your account</p>
         </div>
 
         {!signupsEnabled && (
@@ -199,7 +199,7 @@ export default function SignupPage({ rpcStub }: SignupPageProps) {
             {passwordAuthEnabled && (
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-px flex-1 bg-kumo-line" />
-                <span className="text-xs text-kumo-subtle">or</span>
+                <span className="text-ui-xs text-kumo-subtle">or</span>
                 <div className="h-px flex-1 bg-kumo-line" />
               </div>
             )}
@@ -208,7 +208,7 @@ export default function SignupPage({ rpcStub }: SignupPageProps) {
         )}
 
         {passwordAuthEnabled && (
-          <p className="text-center text-sm text-kumo-subtle mt-6">
+          <p className="text-center text-ui-md text-kumo-subtle mt-6">
             Already have an account?{" "}
             <Link to="/" className="text-kumo-brand hover:underline font-medium">
               Sign in

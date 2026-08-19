@@ -196,10 +196,10 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
         <section>
           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h2 className="m-0 text-[17px] leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <h2 className="m-0 text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
                 Connections
               </h2>
-              <p className="mt-1 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+              <p className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
                 External resources this gadget can use.
               </p>
             </div>
@@ -213,7 +213,7 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
           </div>
 
           {loading ? (
-            <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+            <div className="rounded-xl border border-kumo-line bg-kumo-base px-4 py-6 text-center text-[13px] leading-[18px] font-normal text-kumo-subtle">
               Loading connections...
             </div>
           ) : bindings.length === 0 ? (
@@ -240,10 +240,10 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                     {isDeleting ? (
                       <div className="flex flex-wrap items-center gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-danger">
+                          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-danger">
                             Delete {gk.resourceTitle}?
                           </p>
-                          <p className="truncate text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                          <p className="truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
                             The binding <span className="font-mono">{gk.name}</span> will be removed from this gadget.
                           </p>
                         </div>
@@ -296,17 +296,17 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                           {...(gk.vendorId ? vendorBranding.get(gk.vendorId) : undefined)}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="flex items-center gap-2 truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                          <p className="flex items-center gap-2 truncate text-[13px] leading-[18px] font-medium text-kumo-default">
                             <span className="min-w-0 truncate">{gk.resourceTitle}</span>
                             {isPending && (
                               <Tooltip content="Added in this chat; kept when you accept the chat's changes" asChild>
-                                <span className="flex-shrink-0 rounded-full bg-kumo-fill px-1.5 py-0.5 text-[10px] leading-none font-medium text-kumo-subtle">
+                                <span className="flex-shrink-0 rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs leading-none font-medium text-kumo-subtle">
                                   Draft
                                 </span>
                               </Tooltip>
                             )}
                           </p>
-                          <p className="mt-0.5 truncate text-[11px] leading-4 tracking-[-0.1px] text-kumo-subtle">
+                          <p className="mt-0.5 truncate text-ui-2xs leading-4 text-kumo-subtle">
                             Referenced in code as: <span className="font-mono text-kumo-subtle">{gk.name}</span>
                           </p>
                         </div>
@@ -351,10 +351,10 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
         {!loading && hooks.length > 0 && (
           <section className="mt-8">
             <div className="mb-3">
-              <h2 className="m-0 text-[17px] leading-6 font-medium tracking-[-0.35px] text-kumo-default">
+              <h2 className="m-0 text-ui-xl leading-6 font-medium tracking-[-0.35px] text-kumo-default">
                 Hooks
               </h2>
-              <p className="mt-1 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-subtle">
+              <p className="mt-1 text-[13px] leading-[18px] font-normal text-kumo-subtle">
                 Callbacks that let connected resources wake up this gadget when events happen.
               </p>
             </div>
@@ -372,10 +372,10 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                     {isDeleting ? (
                       <div className="flex flex-wrap items-center gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-danger">
+                          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-danger">
                             Delete hook "{hook.description.title}"?
                           </p>
-                          <p className="truncate text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                          <p className="truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
                             This permanently removes the hook. Future events will stop being delivered.
                           </p>
                         </div>
@@ -400,16 +400,16 @@ export default function Connections({ overseer, gadget, chatId, authenticatedApi
                           {...(vendorId ? vendorBranding.get(vendorId) : undefined)}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                          <p className="truncate text-[13px] leading-[18px] font-medium text-kumo-default">
                             {hook.description.title}
                           </p>
                           {hook.description.description && (
-                            <p className="mt-0.5 truncate text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+                            <p className="mt-0.5 truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
                               {hook.description.description}
                             </p>
                           )}
                           {hook.resourceTitle && (
-                            <p className="mt-0.5 truncate text-[11px] leading-4 tracking-[-0.1px] text-kumo-subtle">
+                            <p className="mt-0.5 truncate text-ui-2xs leading-4 text-kumo-subtle">
                               {hook.resourceTitle}
                             </p>
                           )}
@@ -547,10 +547,10 @@ function BlueprintAnnotationModal({
         <Dialog className="!z-[1000] !w-[min(480px,calc(100vw-32px))] overflow-hidden bg-kumo-base p-0" size="lg">
           <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-4 py-4 sm:px-5">
             <div className="min-w-0">
-              <Dialog.Title className="text-[15px] leading-5 font-medium tracking-[-0.3px] text-kumo-default">
+              <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-default">
                 Blueprint settings
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+              <Dialog.Description className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
                 How this connection appears in blueprints.
               </Dialog.Description>
             </div>
@@ -582,7 +582,7 @@ function BlueprintAnnotationModal({
 
           <div className="border-t border-kumo-line px-4 py-3 sm:px-5">
             {saveError && (
-              <div className="mb-3 flex items-start gap-2 rounded-lg border border-l-2 border-l-kumo-brand border-y-kumo-line border-r-kumo-line bg-kumo-base px-3 py-2 text-[12px] leading-[18px] font-normal tracking-[-0.2px] text-kumo-default">
+              <div className="mb-3 flex items-start gap-2 rounded-lg border border-l-2 border-l-kumo-brand border-y-kumo-line border-r-kumo-line bg-kumo-base px-3 py-2 text-ui-xs leading-[18px] font-normal text-kumo-default">
                 <Warning size={14} weight="fill" className="mt-0.5 shrink-0 text-kumo-brand" />
                 <span>{saveError}</span>
               </div>

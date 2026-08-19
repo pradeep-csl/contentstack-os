@@ -216,7 +216,7 @@ export function GadgetPresence({
               {overflow > 0 && (
                 <span data-flip-id="__overflow" className="inline-flex cursor-pointer">
                   <span
-                    className="presence-pop-in grid h-[26px] w-[26px] place-items-center rounded-full bg-kumo-tint text-[10px] font-semibold text-kumo-strong ring-2 ring-kumo-base"
+                    className="presence-pop-in grid h-[26px] w-[26px] place-items-center rounded-full bg-kumo-tint text-ui-2xs font-semibold text-kumo-strong ring-2 ring-kumo-base"
                   >
                     +{overflow}
                   </span>
@@ -232,7 +232,7 @@ export function GadgetPresence({
         sideOffset={6}
         className="!z-[1100] !w-[260px] !min-w-0 flex max-h-[min(60vh,420px)] flex-col overflow-hidden rounded-2xl bg-kumo-base p-1 shadow-lg shadow-kumo-tip-shadow"
       >
-        <Popover.Title className="shrink-0 px-2.5 pt-1.5 pb-1 text-[11px] leading-4 font-medium tracking-[-0.2px] text-kumo-subtle">
+        <Popover.Title className="shrink-0 px-2.5 pt-1.5 pb-1 text-ui-2xs leading-4 font-medium text-kumo-subtle">
           {label}
         </Popover.Title>
         <div className="presence-scroll min-h-0 flex-1 overflow-y-auto">
@@ -248,10 +248,10 @@ export function GadgetPresence({
                 size={28}
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] leading-4 font-medium text-kumo-default">
+                <span className="block truncate text-ui-xs leading-4 font-medium text-kumo-default">
                   {p.user.name}
                 </span>
-                <span className="mt-0.5 block text-[11px] leading-4 font-normal text-kumo-subtle">
+                <span className="mt-0.5 block text-ui-2xs leading-4 font-normal text-kumo-subtle">
                   {ROLE_LABELS[p.role]}
                 </span>
               </span>

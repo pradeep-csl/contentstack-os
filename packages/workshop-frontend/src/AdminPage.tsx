@@ -361,7 +361,7 @@ export default function AdminPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16 text-center">
         <ShieldWarning size={32} className="mx-auto text-kumo-subtle mb-3" />
-        <p className="text-sm text-kumo-default">You don't have access to this page.</p>
+        <p className="text-ui-md text-kumo-default">You don't have access to this page.</p>
       </div>
     )
   }
@@ -377,8 +377,8 @@ export default function AdminPage() {
   if (loadError || !admin) {
     return (
       <div className="mx-auto w-full max-w-[1040px] px-4 sm:px-8 py-16 text-center">
-        <p className="text-sm text-kumo-danger">Something went wrong loading admin settings.</p>
-        <button onClick={() => window.location.reload()} className="text-kumo-brand mt-2 text-sm underline">
+        <p className="text-ui-md text-kumo-danger">Something went wrong loading admin settings.</p>
+        <button onClick={() => window.location.reload()} className="text-kumo-brand mt-2 text-ui-md underline">
           Try again
         </button>
       </div>
@@ -389,7 +389,7 @@ export default function AdminPage() {
     <div className="mx-auto w-full max-w-[1040px] px-4 sm:px-8 py-8 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-kumo-default">Admin</h1>
-        <p className="text-sm text-kumo-subtle mt-1">
+        <p className="text-ui-md text-kumo-subtle mt-1">
           Deployment-wide settings. Changes apply to all users on their next connection.
         </p>
       </div>
@@ -423,8 +423,8 @@ export default function AdminPage() {
               <UserPlus size={18} className="text-kumo-subtle" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-kumo-strong">Allow new sign-ups</h2>
-              <p className="text-sm text-kumo-subtle mt-0.5">
+              <h2 className="text-ui-xl font-semibold text-kumo-strong">Allow new sign-ups</h2>
+              <p className="text-ui-md text-kumo-subtle mt-0.5">
                 When off, existing users can still log in but no new accounts can be created.
               </p>
             </div>
@@ -440,8 +440,8 @@ export default function AdminPage() {
       {/* Site name */}
       {activeTab === 'general' && (
         <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-kumo-strong mb-1">Site name</h2>
-          <p className="text-sm text-kumo-subtle mb-5">
+          <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Site name</h2>
+          <p className="text-ui-md text-kumo-subtle mb-5">
             Shown next to the logo in the top bar. Leave empty to use the default
             (&ldquo;{DEFAULT_SITE_NAME}&rdquo;). Applies on each user&rsquo;s next connection.
           </p>
@@ -480,8 +480,8 @@ export default function AdminPage() {
       {/* Site logo */}
       {activeTab === 'general' && (
         <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-kumo-strong mb-1">Logo</h2>
-          <p className="text-sm text-kumo-subtle mb-5">
+          <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Logo</h2>
+          <p className="text-ui-md text-kumo-subtle mb-5">
             Shown in the app chrome, sign-in screens, and browser tab. Images are scaled without
             cropping and converted to a static PNG. Square images work best. Applies on each
             user&rsquo;s next connection.
@@ -527,8 +527,8 @@ export default function AdminPage() {
       {/* Theme / accent color */}
       {activeTab === 'general' && (
         <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-kumo-strong mb-1">Theme</h2>
-          <p className="text-sm text-kumo-subtle mb-5">
+          <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Theme</h2>
+          <p className="text-ui-md text-kumo-subtle mb-5">
             Accent color used for buttons, links, and highlights. Changes preview live here; click
             Save to apply for everyone (on their next connection). Backgrounds keep the default
             warm theme.
@@ -543,7 +543,7 @@ export default function AdminPage() {
                   key={preset.label}
                   type="button"
                   onClick={() => setAccentDraft(preset.value)}
-                  className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border text-ui-xs font-medium transition-colors ${
                     selected
                       ? 'border-kumo-default text-kumo-default bg-kumo-tint'
                       : 'border-kumo-line text-kumo-subtle hover:bg-kumo-tint'
@@ -560,7 +560,7 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-kumo-default cursor-pointer">
+            <label className="flex items-center gap-2 text-ui-md text-kumo-default cursor-pointer">
               <input
                 type="color"
                 value={accentDraft || DEFAULT_ACCENT_COLOR}
@@ -569,7 +569,7 @@ export default function AdminPage() {
               />
               Custom
             </label>
-            <span className="text-xs font-mono text-kumo-subtle">
+            <span className="text-ui-xs font-mono text-kumo-subtle">
               {accentDraft || `${DEFAULT_ACCENT_COLOR} (default)`}
             </span>
             <div className="flex-1" />
@@ -599,8 +599,8 @@ export default function AdminPage() {
       {/* Full-width banner */}
       {activeTab === 'general' && (
         <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-kumo-strong mb-1">Banner</h2>
-          <p className="text-sm text-kumo-subtle mb-5">
+          <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Banner</h2>
+          <p className="text-ui-md text-kumo-subtle mb-5">
             A dismissible bar across the very top of the app (logged in or not). Markdown is
             supported, so you can include links. Leave empty to hide it. Applies on each
             user&rsquo;s next connection.
@@ -622,7 +622,7 @@ export default function AdminPage() {
 
           <div className="mt-4 flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-medium text-kumo-subtle mb-2">Type</p>
+              <p className="text-ui-xs font-medium text-kumo-subtle mb-2">Type</p>
               <div className="flex flex-wrap items-center gap-2">
                 {BANNER_COLORS.map((c) => {
                   const selected = bannerColorDraft === c
@@ -631,7 +631,7 @@ export default function AdminPage() {
                       key={c}
                       type="button"
                       onClick={() => setBannerColorDraft(c)}
-                      className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
+                      className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border text-ui-xs font-medium transition-colors ${
                         selected
                           ? 'border-kumo-default text-kumo-default bg-kumo-tint'
                           : 'border-kumo-line text-kumo-subtle hover:bg-kumo-tint'
@@ -679,8 +679,8 @@ export default function AdminPage() {
       {/* Top-bar notice */}
       {activeTab === 'general' && (
         <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-kumo-strong mb-1">Top-bar notice</h2>
-          <p className="text-sm text-kumo-subtle mb-5">
+          <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Top-bar notice</h2>
+          <p className="text-ui-md text-kumo-subtle mb-5">
             Shown centered in the top navigation bar. Markdown is supported, so you can include
             links. Keep it short — it renders on a single line. Leave empty to show nothing. Applies
             on each user&rsquo;s next connection.
@@ -701,7 +701,7 @@ export default function AdminPage() {
           />
 
           <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-kumo-subtle">
+            <span className="text-ui-xs text-kumo-subtle">
               {announcementDraft.length.toLocaleString()} / {MAX_ANNOUNCEMENT_LENGTH.toLocaleString()} characters
             </span>
             <div className="flex items-center gap-2">
@@ -735,8 +735,8 @@ export default function AdminPage() {
       {/* Agent system prompt additions */}
       {activeTab === 'general' && (
       <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-kumo-strong mb-1">Agent instructions</h2>
-        <p className="text-sm text-kumo-subtle mb-5">
+        <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Agent instructions</h2>
+        <p className="text-ui-md text-kumo-subtle mb-5">
           Extra instructions added to every agent&rsquo;s system prompt on this deployment. Use this
           for instance-specific context, conventions, or guardrails.
         </p>
@@ -756,7 +756,7 @@ export default function AdminPage() {
         />
 
         <div className="flex items-center justify-between mt-3">
-          <span className="text-xs text-kumo-subtle">
+          <span className="text-ui-xs text-kumo-subtle">
             {instructionsDraft.length.toLocaleString()} / {MAX_INSTANCE_INSTRUCTIONS_LENGTH.toLocaleString()} characters
           </span>
           <div className="flex items-center gap-2">
@@ -790,8 +790,8 @@ export default function AdminPage() {
       {/* Gatekeeper resources */}
       {activeTab === 'gatekeepers' && (
         <div className="bg-kumo-elevated border border-kumo-line rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-kumo-strong mb-1">Gatekeepers</h2>
-          <p className="text-sm text-kumo-subtle mb-5">
+          <h2 className="text-ui-xl font-semibold text-kumo-strong mb-1">Gatekeepers</h2>
+          <p className="text-ui-md text-kumo-subtle mb-5">
             Turn connectors and resource types on or off for each service. Auto-provisioned
             gatekeepers (like the Context Library) have three modes &mdash; disabled, optional, or
             enabled for everyone. Changes are soft: they don&rsquo;t revoke access a gadget already
@@ -799,7 +799,7 @@ export default function AdminPage() {
           </p>
 
           {resourceVendors.length === 0 && (
-            <p className="text-sm text-kumo-subtle">
+            <p className="text-ui-md text-kumo-subtle">
               No configurable gatekeepers are installed on this deployment.
             </p>
           )}
@@ -826,10 +826,10 @@ export default function AdminPage() {
                           className={`w-5 h-5 object-contain transition-[filter,opacity] ${mode === 'disabled' ? 'grayscale opacity-40' : ''}`}
                         />
                       )}
-                      <h3 className={`flex-1 text-sm font-semibold ${mode === 'disabled' ? 'text-kumo-subtle' : 'text-kumo-default'}`}>
+                      <h3 className={`flex-1 text-ui-md font-semibold ${mode === 'disabled' ? 'text-kumo-subtle' : 'text-kumo-default'}`}>
                         {vendor.displayName}
                       </h3>
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
+                      <span className="text-ui-2xs font-medium px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
                         auto-provisioned
                       </span>
                     </div>
@@ -846,8 +846,8 @@ export default function AdminPage() {
                               : 'border-kumo-line hover:bg-kumo-tint'
                           }`}
                         >
-                          <span className="block text-sm font-medium text-kumo-default">{opt.label}</span>
-                          <span className="block text-xs text-kumo-subtle mt-0.5">{opt.hint}</span>
+                          <span className="block text-ui-md font-medium text-kumo-default">{opt.label}</span>
+                          <span className="block text-ui-xs text-kumo-subtle mt-0.5">{opt.hint}</span>
                         </button>
                       ))}
                     </div>
@@ -879,15 +879,15 @@ export default function AdminPage() {
                       className={`w-5 h-5 object-contain transition-[filter,opacity] ${vendor.enabled ? '' : 'grayscale opacity-40'}`}
                     />
                   )}
-                  <h3 className={`flex-1 text-sm font-semibold ${vendor.enabled ? 'text-kumo-default' : 'text-kumo-subtle'}`}>
+                  <h3 className={`flex-1 text-ui-md font-semibold ${vendor.enabled ? 'text-kumo-default' : 'text-kumo-subtle'}`}>
                     {vendor.displayName}
                     {!vendor.enabled && (
-                      <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
+                      <span className="ml-2 text-ui-2xs font-medium px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
                         disabled
                       </span>
                     )}
                   </h3>
-                  <span className="text-xs text-kumo-subtle">
+                  <span className="text-ui-xs text-kumo-subtle">
                     {vendor.enabled ? 'Enabled' : 'Off'}
                   </span>
                   <span onClick={(e) => e.stopPropagation()}>
@@ -920,10 +920,10 @@ export default function AdminPage() {
                           className="flex cursor-pointer items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-kumo-tint transition-colors"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-kumo-default truncate">
+                            <p className="text-ui-md font-medium text-kumo-default truncate">
                               {resource.title}
                             </p>
-                            <p className="text-xs text-kumo-subtle mt-0.5">{resource.description}</p>
+                            <p className="text-ui-xs text-kumo-subtle mt-0.5">{resource.description}</p>
                           </div>
                           <span onClick={(e) => e.stopPropagation()}>
                             <Switch
@@ -939,7 +939,7 @@ export default function AdminPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-xs text-kumo-subtle px-3 py-1">
+                  <p className="text-ui-xs text-kumo-subtle px-3 py-1">
                     {vendor.resources.length} resource{vendor.resources.length === 1 ? '' : 's'} hidden while disabled.
                   </p>
                 )}

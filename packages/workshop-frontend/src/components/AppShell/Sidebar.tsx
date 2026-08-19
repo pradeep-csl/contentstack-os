@@ -65,7 +65,7 @@ export default function Sidebar({
         <Link to="/" aria-label={siteName} className="flex min-w-0 items-center gap-2">
           <SiteLogo size={20} className="shrink-0" />
           {!collapsed && (
-            <span className="truncate text-[14px] leading-5 font-semibold tracking-[-0.25px] text-kumo-strong">
+            <span className="truncate text-ui-md leading-5 font-semibold text-kumo-strong">
               {siteName}
             </span>
           )}

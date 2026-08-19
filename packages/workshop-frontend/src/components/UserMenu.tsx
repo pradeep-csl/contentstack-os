@@ -26,7 +26,7 @@ export default function UserMenu() {
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-xs font-medium text-kumo-strong">{initials}</span>
+              <span className="text-ui-xs font-medium text-kumo-strong">{initials}</span>
             )}
           </button>
         }

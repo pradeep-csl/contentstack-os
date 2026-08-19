@@ -28,7 +28,7 @@ function PermissionCard({
           <Shield size={14} className="text-kumo-brand" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-kumo-default">Permission requested</div>
+          <div className="text-ui-md font-semibold text-kumo-default">Permission requested</div>
           <div className="mt-0.5">
             <Text variant="secondary" size="xs" as="span">
               Workshop wants to access <strong>{perm.connectionName}</strong>
@@ -72,24 +72,24 @@ function PermissionCard({
           {/* Resources being accessed */}
           {perm.resources && perm.resources.length > 0 && (
             <div className="px-3 py-2 rounded-md bg-kumo-tint/50">
-              <span className="font-mono text-[10px] text-kumo-subtle uppercase tracking-wider block mb-1">
+              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase tracking-wider block mb-1">
                 Resources
               </span>
               {perm.resources.map((res) => (
                 <div key={res} className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1 h-1 rounded-full bg-kumo-brand flex-shrink-0" />
-                  <span className="text-xs text-kumo-default truncate">{res}</span>
+                  <span className="text-ui-xs text-kumo-default truncate">{res}</span>
                 </div>
               ))}
             </div>
           )}
           {/* API scopes */}
           <div className="px-3 py-2 rounded-md bg-kumo-tint/50">
-            <span className="font-mono text-[10px] text-kumo-subtle uppercase tracking-wider block mb-1">
+            <span className="font-mono text-ui-2xs text-kumo-subtle uppercase tracking-wider block mb-1">
               API scopes
             </span>
             {perm.scopes.map((scope) => (
-              <div key={scope} className="font-mono text-xs text-kumo-subtle">{scope}</div>
+              <div key={scope} className="font-mono text-ui-xs text-kumo-subtle">{scope}</div>
             ))}
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function PermissionToasts() {
           <div className="w-5 h-5 rounded-full flex items-center justify-center bg-kumo-success-tint">
             <Check size={11} className="text-kumo-success" />
           </div>
-          <span className="text-xs text-kumo-default">
+          <span className="text-ui-xs text-kumo-default">
             <strong>{grantedToast}</strong> access granted
           </span>
         </div>

@@ -14,7 +14,7 @@ import { useOutputFormats } from './useOutputFormats'
 // Matches the surrounding items in the composer menu, which are quieter and rounder than the
 // app-wide MENU_ITEM.
 const COMPOSER_MENU_ITEM =
-  '!h-auto rounded-xl !px-2 !py-1.5 text-[12px] leading-4 font-normal tracking-[-0.15px] ' +
+  '!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs leading-4 font-normal ' +
   'text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default'
 
 export default function ComposerFormatMenuItems({
@@ -31,7 +31,7 @@ export default function ComposerFormatMenuItems({
 
   return (
     <>
-      <p className="px-2 pb-1 pt-1.5 text-[10px] font-medium uppercase leading-4 tracking-[0.06em] text-kumo-subtle">
+      <p className="px-2 pb-1 pt-1.5 text-ui-2xs font-medium uppercase leading-4 tracking-[0.06em] text-kumo-subtle">
         Start with
       </p>
       {formats.map((format) => (

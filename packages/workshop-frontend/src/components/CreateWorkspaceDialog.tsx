@@ -49,10 +49,10 @@ export default function CreateWorkspaceDialog({
       >
         <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
           <div className="min-w-0">
-            <Dialog.Title className="text-[15px] leading-5 font-medium tracking-[-0.3px] text-kumo-strong">
+            <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-strong">
               Create workspace
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-[12px] leading-4 font-normal tracking-[-0.2px] text-kumo-subtle">
+            <Dialog.Description className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
               An isolated environment for a set of conversations, connections, and outputs.
             </Dialog.Description>
           </div>

@@ -27,8 +27,8 @@ export default function ComingSoonPreview({
             <Icon size={18} />
           </div>
           <div>
-            <p className="text-[15px] font-semibold tracking-[-0.25px] text-kumo-default">{title}</p>
-            <p className="mx-auto mt-1 max-w-xs text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+            <p className="text-ui-lg font-semibold text-kumo-default">{title}</p>
+            <p className="mx-auto mt-1 max-w-xs text-[13px] leading-[18px] text-kumo-subtle">
               {description}
             </p>
           </div>

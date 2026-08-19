@@ -49,10 +49,10 @@ export default function ConnectionConfigModal({
             {Logo && <Logo size={18} />}
           </div>
           <div className="flex-1 min-w-0">
-            <Dialog.Title className="text-sm font-semibold text-kumo-default">
+            <Dialog.Title className="text-ui-md font-semibold text-kumo-default">
               {connection.name}
             </Dialog.Title>
-            <Dialog.Description className="text-xs text-kumo-subtle">
+            <Dialog.Description className="text-ui-xs text-kumo-subtle">
               {connection.description}
             </Dialog.Description>
           </div>
@@ -101,7 +101,7 @@ export default function ConnectionConfigModal({
         {/* Resource list */}
         <div className="max-h-56 overflow-y-auto px-5 pb-4">
           {resources.length === 0 ? (
-            <p className="text-sm text-kumo-subtle text-center py-4">
+            <p className="text-ui-md text-kumo-subtle text-center py-4">
               No resources added yet
             </p>
           ) : (
@@ -111,7 +111,7 @@ export default function ConnectionConfigModal({
                   key={r.id}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-kumo-tint group"
                 >
-                  <span className="text-sm text-kumo-default flex-1 min-w-0 truncate">
+                  <span className="text-ui-md text-kumo-default flex-1 min-w-0 truncate">
                     {r.label}
                   </span>
                   <button

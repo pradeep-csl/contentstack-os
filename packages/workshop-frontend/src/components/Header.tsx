@@ -30,8 +30,8 @@ export default function Header() {
 
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
-  const navLinkClass = "text-sm px-3 py-1.5 rounded-md transition-colors text-kumo-subtle"
-  const navLinkActiveClass = "text-sm font-medium px-3 py-1.5 rounded-md transition-colors text-kumo-default bg-kumo-tint"
+  const navLinkClass = "text-ui-md px-3 py-1.5 rounded-md transition-colors text-kumo-subtle"
+  const navLinkActiveClass = "text-ui-md font-medium px-3 py-1.5 rounded-md transition-colors text-kumo-default bg-kumo-tint"
 
   return (
     <header
@@ -187,7 +187,7 @@ export default function Header() {
                 )}
                 <button
                   onClick={() => { closeMobileMenu(); auth.logout() }}
-                  className="text-left text-sm px-3 py-1.5 rounded-md text-kumo-danger hover:bg-kumo-tint transition-colors"
+                  className="text-left text-ui-md px-3 py-1.5 rounded-md text-kumo-danger hover:bg-kumo-tint transition-colors"
                 >
                   Sign out
                 </button>

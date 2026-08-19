@@ -69,13 +69,13 @@ export default function AccountSelectionModal() {
     // clicking outside.
     <Dialog.Root open role="alertdialog">
       <Dialog className="p-6 sm:w-[480px]" size="base">
-        <Dialog.Title className="text-lg font-semibold mb-2 flex items-center gap-2">
+        <Dialog.Title className="text-ui-xl font-semibold mb-2 flex items-center gap-2">
           <Warning size={22} weight="bold" className="text-kumo-warning" />
           Choose a Cloudflare account
         </Dialog.Title>
 
         <div className="space-y-4">
-          <p className="text-sm text-kumo-subtle">
+          <p className="text-ui-md text-kumo-subtle">
             Your Cloudflare connection has access to multiple accounts. Select the one whose credits
             should be billed for usage beyond the free tier.
           </p>
@@ -83,7 +83,7 @@ export default function AccountSelectionModal() {
           {accounts === null ? (
             <div className="flex justify-center py-6"><Loader size="base" /></div>
           ) : accounts.length === 0 ? (
-            <p className="text-sm text-kumo-subtle">No accounts available on this connection.</p>
+            <p className="text-ui-md text-kumo-subtle">No accounts available on this connection.</p>
           ) : (
             <Radio.Group
               appearance="card"

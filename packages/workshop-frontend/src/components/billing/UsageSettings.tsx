@@ -84,23 +84,23 @@ export default function UsageSettings() {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="px-1 text-[12px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
+      <h2 className="px-1 text-ui-xs font-medium uppercase tracking-[0.08em] text-kumo-subtle">
         Usage &amp; billing
       </h2>
       <div className="rounded-xl border border-kumo-line bg-kumo-base p-5">
       {loading || !usage ? (
-        <p className="text-sm text-kumo-subtle">Loading usage…</p>
+        <p className="text-ui-md text-kumo-subtle">Loading usage…</p>
       ) : (
         <div className="space-y-6">
           {/* Free daily allowance */}
           <div>
-            <p className="text-xs font-medium text-kumo-subtle mb-1">Free daily allowance</p>
-            <p className="text-sm text-kumo-default">
+            <p className="text-ui-xs font-medium text-kumo-subtle mb-1">Free daily allowance</p>
+            <p className="text-ui-md text-kumo-default">
               {usage.remaining} of {usage.dailyLimit}{' '}
               {usage.dailyLimit === 1 ? 'request' : 'requests'} remaining today
             </p>
             {usage.resetAt && (
-              <p className="text-xs text-kumo-subtle mt-1">
+              <p className="text-ui-xs text-kumo-subtle mt-1">
                 Resets at 00:00 UTC, in{' '}
                 <ResetCountdown resetAt={usage.resetAt} onElapsed={refresh} />.
               </p>
@@ -109,14 +109,14 @@ export default function UsageSettings() {
 
           {/* Cloudflare connection / credits */}
           <div>
-            <p className="text-xs font-medium text-kumo-subtle mb-1">Cloudflare account</p>
+            <p className="text-ui-xs font-medium text-kumo-subtle mb-1">Cloudflare account</p>
             {!usage.connected ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-kumo-subtle">
+                <div className="flex items-center gap-2 text-ui-md text-kumo-subtle">
                   <CloudflareLogo size={16} />
                   <span>Not connected</span>
                 </div>
-                <p className="text-sm text-kumo-subtle">
+                <p className="text-ui-md text-kumo-subtle">
                   Connect your Cloudflare account to keep building once your free allowance runs
                   out. Usage beyond the free tier is billed to your own Cloudflare AI Gateway
                   credits.
@@ -131,18 +131,18 @@ export default function UsageSettings() {
             ) : usage.needsAccountSelection ? (
               // Connected, but multiple accounts — force the user to choose which one to bill.
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-kumo-default">
+                <div className="flex items-center gap-2 text-ui-md text-kumo-default">
                   <Warning size={18} weight="bold" className="text-kumo-warning" />
                   <span>Choose which Cloudflare account to bill</span>
                 </div>
-                <p className="text-sm text-kumo-subtle">
+                <p className="text-ui-md text-kumo-subtle">
                   Your connection has access to multiple Cloudflare accounts. Select the one whose
                   AI Gateway credits should be used.
                 </p>
                 {accounts === null ? (
-                  <p className="text-sm text-kumo-subtle">Loading accounts…</p>
+                  <p className="text-ui-md text-kumo-subtle">Loading accounts…</p>
                 ) : accounts.length === 0 ? (
-                  <p className="text-sm text-kumo-subtle">
+                  <p className="text-ui-md text-kumo-subtle">
                     No accounts available on this connection.
                   </p>
                 ) : (
@@ -165,14 +165,14 @@ export default function UsageSettings() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-kumo-default">
+                <div className="flex items-center gap-2 text-ui-md text-kumo-default">
                   <CloudCheck size={18} weight="bold" className="text-kumo-success" />
                   <span>
                     Connected
                     {usage.accountName && <> — {usage.accountName}</>}
                   </span>
                 </div>
-                <p className="text-sm text-kumo-default">
+                <p className="text-ui-md text-kumo-default">
                   Account balance:{' '}
                   {usage.balance !== null ? (
                     <strong>${usage.balance.toFixed(2)}</strong>
@@ -195,7 +195,7 @@ export default function UsageSettings() {
             )}
           </div>
 
-          <p className="text-xs text-kumo-subtle border-t border-kumo-line pt-3">
+          <p className="text-ui-xs text-kumo-subtle border-t border-kumo-line pt-3">
             Learn more about{' '}
             <a
               href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/"

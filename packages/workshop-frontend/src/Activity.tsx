@@ -197,10 +197,10 @@ export default function Activity({
             <span className="grid h-9 w-9 place-items-center rounded-full bg-kumo-tint text-kumo-subtle">
               <Check size={17} weight="bold" />
             </span>
-            <p className="mt-3 text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+            <p className="mt-3 text-[13px] font-medium leading-[18px] text-kumo-default">
               Nothing to review
             </p>
-            <p className="mt-1 max-w-xs text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+            <p className="mt-1 max-w-xs text-[13px] leading-[18px] text-kumo-subtle">
               Requests that need your approval show up here and in the workspace header.
             </p>
             <WorkshopButton className="mt-4" onClick={() => onViewChange('history')}>
@@ -275,10 +275,10 @@ export default function Activity({
 
           {historyTotal === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-              <p className="m-0 text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+              <p className="m-0 text-[13px] font-medium leading-[18px] text-kumo-default">
                 No activity yet
               </p>
-              <p className="mt-1 max-w-xs text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+              <p className="mt-1 max-w-xs text-[13px] leading-[18px] text-kumo-subtle">
                 Every resource an agent reads or changes is recorded here.
               </p>
             </div>
@@ -288,14 +288,14 @@ export default function Activity({
               <button
                 type="button"
                 onClick={() => setHistoryFilter('all')}
-                className="mt-1.5 cursor-pointer text-[12px] font-medium text-kumo-subtle hover:text-kumo-default"
+                className="mt-1.5 cursor-pointer text-ui-xs font-medium text-kumo-subtle hover:text-kumo-default"
               >
                 Show all activity
               </button>
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto">
-              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle">
+              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle">
                 <span>Time</span>
                 <span>Event</span>
                 <span>Status</span>
@@ -303,7 +303,7 @@ export default function Activity({
               </div>
               {historyGroups.map(group => (
                 <section key={group.label}>
-                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-kumo-subtle backdrop-blur-sm">
+                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-ui-2xs font-medium uppercase tracking-[0.06em] text-kumo-subtle backdrop-blur-sm">
                     {group.label}
                   </h3>
                   {group.records.map(record => (
@@ -400,10 +400,10 @@ function AutoApprovalPanel({
   if (entries.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <p className="m-0 text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+        <p className="m-0 text-[13px] font-medium leading-[18px] text-kumo-default">
           {loadError ? 'Could not load auto-approval' : 'Nothing can run automatically'}
         </p>
-        <p className="mt-1 max-w-xs text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+        <p className="mt-1 max-w-xs text-[13px] leading-[18px] text-kumo-subtle">
           {loadError
             ? 'The current rules may be incomplete. Try loading them again.'
             : 'Action types appear here once a connected resource offers one its author marked safe to apply without review.'}
@@ -429,7 +429,7 @@ function AutoApprovalPanel({
           <button
             type="button"
             onClick={() => void refresh()}
-            className="cursor-pointer text-[12px] font-medium text-kumo-default hover:text-kumo-default-hover"
+            className="cursor-pointer text-ui-xs font-medium text-kumo-default hover:text-kumo-default-hover"
           >
             Retry
           </button>
@@ -446,7 +446,7 @@ function AutoApprovalPanel({
                 size={12}
                 className="h-5 w-5 rounded-md [&>img]:p-px"
               />
-              <h3 className="m-0 min-w-0 truncate text-[12px] font-medium leading-4 tracking-[-0.2px] text-kumo-subtle">
+              <h3 className="m-0 min-w-0 truncate text-ui-xs font-medium leading-4 text-kumo-subtle">
                 {group.title}
               </h3>
             </div>
@@ -459,10 +459,10 @@ function AutoApprovalPanel({
                   className="flex w-full items-center gap-3 border-b border-kumo-line/60 px-5 py-2.5 text-left"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                    <span className="block truncate text-[13px] leading-[18px] font-medium text-kumo-default">
                       {entry.actionKind.label}
                     </span>
-                    <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+                    <span className="mt-0.5 block text-ui-xs leading-4 text-kumo-subtle">
                       {entry.orphaned
                         ? 'This connection no longer offers this action; the rule still applies.'
                         : entry.enabled
@@ -515,7 +515,7 @@ function ReviewRequest({
             aria-expanded={expanded}
             className="flex max-w-full cursor-pointer items-center gap-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kumo-ring"
           >
-            <h3 className="m-0 truncate text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+            <h3 className="m-0 truncate text-[13px] font-medium leading-[18px] text-kumo-default">
               {record.description.title}
             </h3>
             <CaretRight
@@ -548,7 +548,7 @@ function ReviewRequest({
       </div>
 
       {record.description.description && (
-        <p className={`mt-1.5 max-w-2xl whitespace-pre-wrap text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle ${expanded ? '' : 'line-clamp-2'}`}>
+        <p className={`mt-1.5 max-w-2xl whitespace-pre-wrap text-[13px] leading-[18px] text-kumo-subtle ${expanded ? '' : 'line-clamp-2'}`}>
           {record.description.description}
         </p>
       )}
@@ -588,10 +588,10 @@ function HistoryRow({
         </time>
         <span className="flex min-w-0 items-center gap-2">
           <TypeIcon record={record} className="flex-shrink-0 text-kumo-subtle" />
-          <span className="truncate text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default">
+          <span className="truncate text-[13px] leading-[18px] text-kumo-default">
             {record.description.title}
           </span>
-          <span className="hidden flex-shrink-0 truncate text-[12px] leading-4 tracking-[-0.1px] text-kumo-subtle sm:inline">
+          <span className="hidden flex-shrink-0 truncate text-ui-xs leading-4 text-kumo-subtle sm:inline">
             {record.resourceTitle}
           </span>
         </span>
@@ -608,7 +608,7 @@ function HistoryRow({
       {expanded && (
         <div className="border-b border-kumo-line/70 px-5 pb-3 pl-[86px] pt-1">
           {record.description.description && (
-            <p className="m-0 whitespace-pre-wrap text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+            <p className="m-0 whitespace-pre-wrap text-[13px] leading-[18px] text-kumo-subtle">
               {record.description.description}
             </p>
           )}

@@ -162,10 +162,10 @@ function OutputCard({
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <FormatTile output={output.output} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-medium leading-[18px] tracking-[-0.25px] text-kumo-default">
+          <p className="truncate text-[13px] font-medium leading-[18px] text-kumo-default">
             {output.title || 'Untitled'}
           </p>
-          <p className="mt-0.5 truncate text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+          <p className="mt-0.5 truncate text-ui-xs leading-4 text-kumo-subtle">
             {subtitle(output)}
           </p>
         </div>
@@ -189,15 +189,15 @@ function OutputRow({
     >
       <FormatTile output={output.output} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium tracking-[-0.25px] text-kumo-default">
+        <p className="truncate text-ui-md font-medium text-kumo-default">
           {output.title || 'Untitled'}
         </p>
-        <p className="mt-0.5 truncate text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+        <p className="mt-0.5 truncate text-ui-xs leading-4 text-kumo-subtle">
           {formatOf(output.output).noun} · {output.workspaceTitle || 'Untitled workspace'}
         </p>
       </div>
       {/* Fixed-width meta columns so rows line up like a table. */}
-      <div className="hidden shrink-0 items-center gap-6 text-xs text-kumo-subtle lg:flex">
+      <div className="hidden shrink-0 items-center gap-6 text-ui-xs text-kumo-subtle lg:flex">
         <OutputProvenance owner={output.owner} />
         <span className="flex w-40 items-center justify-end gap-1 whitespace-nowrap">
           <Clock size={10} />
@@ -227,7 +227,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium tracking-[-0.25px] transition-colors ${
+      className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors ${
         active
           ? 'bg-kumo-fill text-kumo-strong'
           : 'text-kumo-subtle hover:bg-kumo-tint hover:text-kumo-default'
@@ -274,7 +274,7 @@ function ScopeSelect({
         render={
           <button
             type="button"
-            className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium tracking-[-0.25px] transition-colors ${
+            className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors ${
               value === 'all'
                 ? 'border-kumo-line text-kumo-subtle hover:text-kumo-default'
                 : 'border-kumo-line bg-kumo-fill text-kumo-strong'
@@ -344,12 +344,12 @@ function RenameOutputDialog({
         <form onSubmit={(event) => { event.preventDefault(); onSave() }}>
           <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
             <div className="min-w-0">
-              <Dialog.Title className="text-[15px] font-medium leading-5 tracking-[-0.3px] text-kumo-default">
+              <Dialog.Title className="text-ui-lg font-medium leading-5 text-kumo-default">
                 Rename output
               </Dialog.Title>
               {/* Renames the output itself, unlike the sidebar's workspace rename, which relabels
                   only your own copy. */}
-              <Dialog.Description className="mt-1 text-[12px] leading-4 text-kumo-subtle">
+              <Dialog.Description className="mt-1 text-ui-xs leading-4 text-kumo-subtle">
                 Renames the output for everyone with access to “{output?.workspaceTitle}”.
               </Dialog.Description>
             </div>
@@ -358,7 +358,7 @@ function RenameOutputDialog({
             </WorkshopIconButton>
           </div>
           <div className="px-5 py-4">
-            <label className="block text-[12px] font-medium text-kumo-subtle" htmlFor="rename-output-title">
+            <label className="block text-ui-xs font-medium text-kumo-subtle" htmlFor="rename-output-title">
               Name
             </label>
             <input
@@ -577,7 +577,7 @@ function OutputsPage() {
       <header className="flex items-end justify-between gap-4 px-3 pb-4 pt-10">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-kumo-default">Outputs</h1>
-          <p className="mt-1 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-subtle">
+          <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">
             Everything your workspaces have produced, in one place.
           </p>
         </div>
@@ -624,7 +624,7 @@ function OutputsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search outputs…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -638,7 +638,7 @@ function OutputsPage() {
             ))}
           </div>
         ) : loadError ? (
-          <div className="py-12 text-center text-sm">
+          <div className="py-12 text-center text-ui-md">
             <p className="text-kumo-danger">Something went wrong loading your outputs.</p>
             <button onClick={() => setReloadToken((n) => n + 1)} className="mt-1 text-kumo-brand underline">
               Try again
@@ -650,7 +650,7 @@ function OutputsPage() {
               <Stack size={18} />
             </div>
             <div>
-              <p className="text-sm font-medium text-kumo-default">
+              <p className="text-ui-md font-medium text-kumo-default">
                 {isFiltered ? 'No outputs match' : 'No outputs yet'}
               </p>
               <p className="mt-1 text-[13px] leading-[18px] text-kumo-subtle">

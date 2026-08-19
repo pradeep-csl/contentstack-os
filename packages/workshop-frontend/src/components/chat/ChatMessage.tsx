@@ -14,7 +14,7 @@ function AssistantAvatar() {
 function UserAvatar() {
   return (
     <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-kumo-tint">
-      <span className="text-[10px] font-semibold text-kumo-strong">U</span>
+      <span className="text-ui-2xs font-semibold text-kumo-strong">U</span>
     </div>
   )
 }
@@ -37,7 +37,7 @@ function RichContent({ text }: { text: string }) {
           return (
             <code
               key={i}
-              className="text-[11px] px-1 py-0.5 rounded bg-kumo-tint font-mono text-kumo-brand"
+              className="text-ui-2xs px-1 py-0.5 rounded bg-kumo-tint font-mono text-kumo-brand"
             >
               {part.slice(1, -1)}
             </code>
@@ -66,14 +66,14 @@ export default function ChatMessage({ message }: { message: ChatMessageType }) {
       <div className="flex-1 min-w-0 space-y-2">
         {/* Role + time */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-kumo-default">
+          <span className="text-ui-xs font-semibold text-kumo-default">
             {isUser ? 'You' : 'Workshop'}
           </span>
-          <span className="font-mono text-xs text-kumo-subtle">{message.timestamp}</span>
+          <span className="font-mono text-ui-xs text-kumo-subtle">{message.timestamp}</span>
         </div>
 
         {/* Content */}
-        <div className="text-sm leading-relaxed text-kumo-default">
+        <div className="text-ui-md leading-relaxed text-kumo-default">
           <RichContent text={message.content} />
           {message.isStreaming && (
             <span className="inline-flex items-center ml-1.5">

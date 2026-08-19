@@ -17,7 +17,7 @@ export function CountBadge({
 
   return (
     <span
-      className={`grid h-4 min-w-4 flex-shrink-0 place-items-center rounded-full px-1 text-[10px] font-semibold leading-none tabular-nums ${toneClassName} ${className}`}
+      className={`grid h-4 min-w-4 flex-shrink-0 place-items-center rounded-full px-1 text-ui-2xs font-semibold leading-none tabular-nums ${toneClassName} ${className}`}
     >
       {count > max ? `${max}+` : count}
     </span>
