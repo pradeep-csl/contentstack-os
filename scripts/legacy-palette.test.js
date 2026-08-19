@@ -34,6 +34,9 @@ const LEGACY = [
   '#fbbf24', '#93c5fd', '#fca5a5', '#e8e6f0', '#bdb7ae', '#b3d4ff',
   // Cloudflare-orange focus glow, non-hex forms.
   'rgb(255 106 0', 'rgb(255, 106, 0',
+  // Cloudflare-era typefaces. Named in --font-sans/--font-mono but never licensed, shipped or
+  // loaded, so the product silently rendered in the system fallback.
+  'ft kunst grotesk', 'apercu mono pro',
 ]
 
 // Build output and committed data blobs are not sources.
@@ -47,6 +50,12 @@ const SOURCE_EXT = /\.(ts|tsx|css|html|mjs|js|jsx|svg)$/
 const PENDING = new Set([
   // This file's own LEGACY array has to contain the legacy hex literals it's checking for.
   'scripts/legacy-palette.test.js',
+  // Cloudflare-era typefaces newly added to LEGACY by the workshop-frontend font migration. These
+  // are separate, self-contained UI stacks outside that task's scope (gatekeeper app bundles and
+  // the MCP connect-page palette copied from workshop-frontend/src/styles.css) — not yet migrated.
+  'packages/gatekeeper-context/app/styles.css',
+  'packages/gatekeeper-scheduler/app/styles.css',
+  'packages/mcp-shared/src/html.ts',
 ])
 
 function sourceFiles(dir, out = []) {
