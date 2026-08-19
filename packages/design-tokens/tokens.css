@@ -50,18 +50,24 @@
   --color-kumo-tip-stroke: transparent;
 
   /* ===== TEXT =====
-     `warning` text uses Venus attention-*dark*: #ffae0a on white is 1.86:1 and fails AA. */
-  --text-color-kumo-default: #475161;
+     Three content rungs and one disabled rung. There is no room on white for four passing greys —
+     measurement puts the ceiling at three — so `inactive` is reserved for genuinely disabled
+     controls and must never carry content. Ratios are against base / elevated / tint.
+
+     Deviates from Venus deliberately (spec T1): Venus's font-base, font-secondary and font-tertiary
+     are 8.02 / 4.59 / 2.05 on white, and the latter two fail on our tint surface. */
+  --text-color-kumo-default: #3d4658;        /* 9.48 / 8.82 / 8.14 — body, nav, row titles */
   --text-color-kumo-default-hover: #212121;
   --text-color-kumo-inverse: #ffffff;
-  --text-color-kumo-strong: #222222;
-  --text-color-kumo-subtle: #647696;
-  --text-color-kumo-inactive: #a9b6cb;
-  --text-color-kumo-brand: #6c5ce7;
-  --text-color-kumo-link: #6c5ce7;
-  --text-color-kumo-success: #007a52;
-  --text-color-kumo-danger: #d62400;
-  --text-color-kumo-warning: #704b00;
+  --text-color-kumo-strong: #1c2333;         /* 15.70 / 14.61 / 13.48 — headings, titles */
+  --text-color-kumo-subtle: #5b6580;         /* 5.80 / 5.40 / 4.98 — captions, metadata, eyebrows */
+  --text-color-kumo-inactive: #9aa5ba;       /* 2.48 — DISABLED CONTROLS ONLY. Not placeholders,
+                                                not timestamps, not labels. See tests. */
+  --text-color-kumo-brand: #5b48d9;          /* 6.22 — brand as *text*; fills stay #6c5ce7 */
+  --text-color-kumo-link: #5b48d9;
+  --text-color-kumo-success: #006946;        /* 6.75 */
+  --text-color-kumo-danger: #c92000;         /* 5.69 */
+  --text-color-kumo-warning: #704b00;        /* 7.79 — Venus attention-dark; #ffae0a is 1.86 */
   /* Placeholders are measured to sit only on `base` or a transparent parent, never on `tint`:
      4.94:1 on base, 4.60:1 on elevated. Do not put a placeholder on a tinted surface. */
   --text-color-kumo-placeholder: #66708a;
@@ -80,9 +86,9 @@
   --color-background-100: #ffffff;
   --color-background-200: #f7f9fc;
   --color-background-300: #edf1f7;
-  --color-foreground-100: #222222;
+  --color-foreground-100: #1c2333;
   --color-foreground-200: #212121;
-  --color-foreground-300: #475161;
+  --color-foreground-300: #3d4658;
   --color-border-100: #dde3ee;
   --color-border-100-50: #dde3ee80;
   --color-selection-bg: #efedfc;

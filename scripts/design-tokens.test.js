@@ -47,3 +47,67 @@ test('every Kumo text token that Kumo references is given a Contentstack value',
   const missing = [...referenced].filter((t) => !declared.has(t)).toSorted()
   assert.deepEqual(missing, [], 'declare these in packages/design-tokens/tokens.css')
 })
+
+const channel = (c) => {
+  const v = c / 255
+  return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+}
+
+const luminance = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+}
+
+export const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].toSorted((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+// Text that carries meaning. Every one of these must be readable on every surface it can land on.
+const CONTENT_TOKENS = [
+  '--text-color-kumo-strong',
+  '--text-color-kumo-default',
+  '--text-color-kumo-subtle',
+  '--text-color-kumo-link',
+  '--text-color-kumo-brand',
+  '--text-color-kumo-danger',
+  '--text-color-kumo-success',
+  '--text-color-kumo-warning',
+  '--text-color-kumo-info',
+]
+
+test('every content text token clears WCAG AA on every light surface', () => {
+  const theme = lightTheme()
+  const surfaces = [
+    ['base', '#ffffff'],
+    ['elevated', theme.get('--color-kumo-elevated')],
+    ['tint', theme.get('--color-kumo-tint')],
+  ]
+  const failures = []
+  for (const token of CONTENT_TOKENS) {
+    const value = theme.get(token)
+    assert.match(value, /^#[0-9a-f]{6}$/i, `${token} must be a 6-digit hex to be checked`)
+    for (const [label, surface] of surfaces) {
+      const ratio = contrast(value, surface)
+      if (ratio < 4.5) failures.push(`${token} on ${label}: ${ratio.toFixed(2)}`)
+    }
+  }
+  assert.deepEqual(failures, [], 'these fail AA as body text')
+})
+
+// The inverse guard. `inactive` marks a control the user cannot operate; if it becomes readable it
+// stops communicating that, and content starts being written in it again — which is the exact
+// regression this whole change is remediating.
+test('inactive stays below AA, so it cannot be reused for content', () => {
+  const value = lightTheme().get('--text-color-kumo-inactive')
+  const ratio = contrast(value, '#ffffff')
+  assert.ok(ratio < 4.5, `inactive is ${ratio.toFixed(2)}:1 — too readable to mean "disabled"`)
+})
+
+test('placeholder clears AA on the surfaces placeholders actually occupy', () => {
+  const theme = lightTheme()
+  for (const surface of ['#ffffff', theme.get('--color-kumo-elevated')]) {
+    const ratio = contrast(theme.get('--text-color-kumo-placeholder'), surface)
+    assert.ok(ratio >= 4.5, `placeholder on ${surface} is ${ratio.toFixed(2)}:1`)
+  }
+})
