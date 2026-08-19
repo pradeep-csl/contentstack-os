@@ -127,16 +127,51 @@ function tsxFiles(dir, out = []) {
 const repoPath = (file) => relative(ROOT, file).split(sep).join('/')
 
 // `inactive` is 2.48:1: the colour of a control the user cannot operate. It is legitimate only
-// when the style is scoped to the disabled state (`disabled:`, `group-disabled:`,
-// `peer-disabled:`, optionally chained after other variants). A bare `text-kumo-inactive` is
-// content at 2.48:1, which is the defect this guard exists to prevent — it was used that way
-// 212 times. No allowlist: every occurrence must justify itself on its own class string.
-const BARE_INACTIVE = /(?<!disabled:)(?<!group-disabled:)(?<!peer-disabled:)\btext-kumo-inactive\b/
+// when the style is scoped to a disabled state, wherever `disabled:`/`group-disabled:`/
+// `peer-disabled:` sits in the variant chain (either order, any chain length). A bare
+// `text-kumo-inactive` is content at 2.48:1, which is the defect this guard exists to prevent —
+// it was used that way 212 times. No allowlist: every occurrence must justify itself on its own
+// class string.
+//
+// A single negative-lookbehind regex can only see the one variant immediately adjacent to the
+// class name, so `disabled:hover:text-kumo-inactive` (disabled earlier in the chain, not
+// adjacent) was misclassified as bare by an earlier version of this guard. Instead, capture the
+// whole utility token — its full variant chain plus the class name — and search that chain for
+// `disabled:` (optionally `group-`/`peer-`-prefixed) anywhere in it.
+const INACTIVE_TOKEN = /[\w:[\]./-]*\btext-kumo-inactive\b/g
+const DISABLED_VARIANT = /(?:^|:)(?:group-|peer-)?disabled:/
+
+function bareInactiveIn(text) {
+  for (const [token] of text.matchAll(INACTIVE_TOKEN)) {
+    if (!DISABLED_VARIANT.test(token)) return true
+  }
+  return false
+}
+
+// Table-driven proof for the classifier itself, independent of the current state of the tree —
+// the file scan below passes vacuously once the tree is clean, so this is what actually stops the
+// next person from silently breaking the regex.
+const INACTIVE_TOKEN_CASES = [
+  ['text-kumo-inactive', true],
+  ['disabled:text-kumo-inactive', false],
+  ['group-disabled:text-kumo-inactive', false],
+  ['peer-disabled:text-kumo-inactive', false],
+  ['md:disabled:text-kumo-inactive', false],
+  ['hover:text-kumo-inactive', true],
+  ['hover:disabled:text-kumo-inactive', false],
+  ['disabled:hover:text-kumo-inactive', false],
+]
+
+test('the inactive classifier scopes disabled: correctly in either variant order', () => {
+  for (const [token, wantBare] of INACTIVE_TOKEN_CASES) {
+    assert.equal(bareInactiveIn(token), wantBare, `${token}: expected bare=${wantBare}`)
+  }
+})
 
 test('text-kumo-inactive is only ever scoped to a disabled state', () => {
   const offenders = []
   for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
-    if (BARE_INACTIVE.test(readFileSync(file, 'utf8'))) offenders.push(repoPath(file))
+    if (bareInactiveIn(readFileSync(file, 'utf8'))) offenders.push(repoPath(file))
   }
   assert.deepEqual(offenders, [], 'use text-kumo-subtle for content, or scope it with disabled:')
 })
