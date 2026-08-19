@@ -97,8 +97,8 @@ describe('Venus light palette', () => {
 
   it('uses Venus cool-grey surfaces', () => {
     expect(token(light, '--color-kumo-base')).toBe('#ffffff')
-    expect(token(light, '--color-kumo-elevated')).toBe('#f7f9fc')
-    expect(token(light, '--color-kumo-tint')).toBe('#edf1f7')
+    expect(token(light, '--color-kumo-elevated')).toBe('#f4f7fb')
+    expect(token(light, '--color-kumo-tint')).toBe('#e9eef6')
     expect(token(light, '--color-kumo-recessed')).toBe('#dde3ee')
   })
 
