@@ -155,8 +155,6 @@ const INTENTS: Intent[] = [
               && matches('packages/workshop-frontend/src/ChatInterface.tsx', /chatRail|railToneFor|RailNode/) },
   { id: 'F6.2', intent: 'the composer surface is flat, with no top border',
     holds: () => matches('packages/workshop-frontend/src/ChatInterface.tsx', /shrink-0 bg-kumo-base/) },
-  { id: 'F6.3', intent: 'the prompt card elevation still depends on the surface it sits on',
-    holds: () => matches('packages/workshop-frontend/src/ChatInterface.tsx', /themed-prompt-card-canvas-shadow/) },
 ]
 
 test('every fork intent has a unique, stable id', () => {

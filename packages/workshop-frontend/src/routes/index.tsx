@@ -180,7 +180,6 @@ export function HomePageContent({ prompt }: HomeSearch) {
           newChat
           offerFormats
           autoFocus
-          surface="canvas"
           minRows={3}
           seedText={seed?.text}
           seedNonce={seed?.nonce}

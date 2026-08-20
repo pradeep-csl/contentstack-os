@@ -297,33 +297,6 @@
     color-mix(in srgb, var(--color-kumo-fill) 65%, transparent);
 }
 
-.themed-prompt-card-shadow {
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-kumo-fill) 75%, transparent),
-    var(--shadow-venus-8);
-}
-
-.themed-prompt-card-shadow:focus-within {
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-kumo-fill) 85%, transparent),
-    var(--shadow-venus-16);
-}
-
-/* Composer resting on an open canvas rather than docked above scrolling content. Nothing passes
-   under it, so it carries no elevation at all -- its border is enough separation on an empty page,
-   where the docked card's venus-8 lift reads as a glow. Focus is a soft brand halo rather than more
-   elevation, since venus-16 on an otherwise empty page is the loudest thing on screen. */
-.themed-prompt-card-canvas-shadow {
-  box-shadow: none;
-}
-
-.themed-prompt-card-canvas-shadow:focus-within {
-  box-shadow:
-    inset 0 0 0 0px color-mix(in srgb, var(--color-kumo-brand) 55%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--color-kumo-brand) 12%, transparent),
-    var(--shadow-venus-1);
-}
-
 .themed-user-bubble-shadow {
   box-shadow:
     0 1px 1px rgba(0, 0, 0, 0.03),

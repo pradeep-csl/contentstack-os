@@ -52,7 +52,6 @@ Intents currently enforced. Adding fork behaviour worth defending means adding a
 | **F6** | **Chat timeline rail and composer** | |
 | F6.1 | The timeline rail is derived by its own module, not inline | `workshop-frontend/src/chatRail.ts` |
 | F6.2 | The composer surface is flat, with no top border | `workshop-frontend/src/ChatInterface.tsx` |
-| F6.3 | Prompt card elevation still depends on the surface it sits on | `workshop-frontend/src/ChatInterface.tsx` |
 
 ## Ceded
 
@@ -62,6 +61,7 @@ Fork intent deliberately given up, so the trade is a matter of record rather tha
 | --- | --- | --- | --- | --- |
 | F0.1 | `AGENTS.md` normalised to `-` bullets (chore `74d5464`) | `dd2b015` | Upstream rewrote the file with substantively newer content — the `.ts` script migration, Vite+, GitHub Actions. Keeping the fork's formatting meant keeping stale instructions. | None. Formatting only; no behaviour. |
 | F3.5 | `ConnectionLostBanner` restyled onto `text-ui-md` (part of the type remediation) | `dd2b015` | Upstream deleted the component as unreferenced. It was already dead code in the fork — defined, never rendered. | None. `GadgetEditor`'s `ReconnectingChip` is the live reconnect affordance and does carry `text-ui-xs`. |
+| F6.3 | Prompt card elevation varying by the surface it sits on (`docked` lifted, `canvas` flat) | `9f97b7e` (local) | Not displaced by upstream — a deliberate design change here. The composer went fully flat, which is what F6.2 already asserts; an elevation that varied by surface contradicted it, so the two intents could not both stand. The `surface` prop, its two `themed-prompt-card-*-shadow` rules, and the branch that chose between them are all gone. | Low, but not none. Those rules carried the card's only `:focus-within` treatment, and the composer textarea declares no focus style of its own — it paints transparent text over a mirror. Focusing the composer now changes nothing but the caret. Defensible for a text input, and no automated check covers it. |
 
 ## Deliberately *not* tracked here
 
