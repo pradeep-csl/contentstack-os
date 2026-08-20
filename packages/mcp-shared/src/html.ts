@@ -17,12 +17,16 @@ export function htmlResponse(body: string, status = 200): Response {
 // The palette and page frame every connect page shares.
 //
 // These pages open in their own browser tab, outside the Workshop, so they cannot reach Tailwind or
-// Kumo. The tokens are copied from `workshop-frontend/src/styles.css` (both palettes) so the tab
+// Kumo. The tokens are copied from `packages/design-tokens/tokens.css` (both palettes) so the tab
 // still reads as the same product. Only the base palette is copied: a deployment's admin-chosen
 // accent lives in the Workshop's AdminConfig, which a gatekeeper has no business reading.
 //
 // Form controls are absent, since a gatekeeper with a form appends its own rules, which is why the
 // tokens are CSS variables rather than literals.
+//
+// Kept honest by __tests__/html.test.ts, which re-derives this palette from tokens.css directly —
+// this copy drifted silently once already (fonts got fixed, colours didn't) with every other test
+// green, so "copied from X" in a comment is not enough on its own.
 export const PAGE_STYLE = `
   :root {
     color-scheme: light dark;
@@ -30,14 +34,17 @@ export const PAGE_STYLE = `
             "Helvetica Neue", sans-serif;
     --base: #ffffff;
     --control: #ffffff;
-    --line: #dde3ee;
-    --text: #475161;
-    --strong: #222222;
-    --subtle: #647696;
-    --brand: #6c5ce7;
-    --danger: #d62400;
+    /* tokens.css's light --color-kumo-line is translucent (#47516133); these pages have no
+       color-mix() guarantee outside a Workshop-owned build, so this is that same colour
+       pre-composited as a solid: #475161 at 20% over white. */
+    --line: #dadcdf;
+    --text: #3d4658;
+    --strong: #1c2333;
+    --subtle: #5b6580;
+    --brand: #5b48d9;
+    --danger: #c92000;
     /* Kumo's primary button is "contrast": near-black in light mode, the accent in dark. */
-    --contrast: #222222;
+    --contrast: #1c2333;
     --on-contrast: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
@@ -55,8 +62,7 @@ export const PAGE_STYLE = `
   }
 
   body { font: 15px/1.5 var(--font); margin: 0; padding: 48px 20px; display: flex;
-         justify-content: center; background: var(--base); color: var(--text);
-         -webkit-font-smoothing: antialiased; }
+         justify-content: center; background: var(--base); color: var(--text); }
   main { width: 100%; max-width: 420px; }
   h1 { font-size: 17px; font-weight: 600; color: var(--strong); margin: 0 0 6px;
        letter-spacing: -0.01em; }
