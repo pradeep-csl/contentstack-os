@@ -473,7 +473,7 @@ function GadgetUISession({ gadget, height, reloadTrigger, isVisible = true, chat
             <Sparkle size={22} weight="regular" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-ui-2xl leading-7 font-normal text-kumo-default">
+            <h2 className="text-ui-2xl font-normal text-kumo-strong">
               No gadget UI yet
             </h2>
             <p className="text-ui-lg leading-5 font-normal text-kumo-subtle">

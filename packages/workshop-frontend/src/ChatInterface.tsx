@@ -169,7 +169,7 @@ function CreatedGadgetChatCard({
             </span>
             <span className="mt-0.5 flex items-center gap-1.5 text-ui-xs text-kumo-subtle">
               {gadget.isPending && (
-                <span className="rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs font-medium leading-none">
+                <span className="rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs leading-none">
                   Draft
                 </span>
               )}
@@ -1405,7 +1405,7 @@ const ChatAttachmentThumbnail = memo(function ChatAttachmentThumbnail(
           )}
         </>
       ) : (
-        <div className="flex h-full w-full min-w-0 items-center justify-center gap-2 p-3 text-ui-xs leading-4 text-kumo-subtle">
+        <div className="flex h-full w-full min-w-0 items-center justify-center gap-2 p-3 text-ui-xs text-kumo-subtle">
           <FileIcon size={20} className="shrink-0 text-kumo-subtle" />
           <span className="min-w-0 truncate">{attachment.name ?? "Attached file"}</span>
         </div>
@@ -1464,7 +1464,7 @@ const ToolCallDetails = memo(function ToolCallDetails(
       )}
       {tc.toolName === "executeCode" ? (
         <>
-          <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">
+          <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">
             Code
           </span>
           <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
@@ -1472,7 +1472,7 @@ const ToolCallDetails = memo(function ToolCallDetails(
           </pre>
           {tc.output && (
             <>
-              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">
+              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">
                 Output
               </span>
               <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
@@ -1508,7 +1508,7 @@ const ObservationDetails = memo(function ObservationDetails(
             {log.description.title}
           </p>
           {metadata && (
-            <p className="mt-0.5 mb-0 truncate text-ui-xs leading-4 text-kumo-subtle">
+            <p className="mt-0.5 mb-0 truncate text-ui-xs text-kumo-subtle">
               {safeResourceUrl && log.resourceTitle ? (
                 <a
                   href={safeResourceUrl}
@@ -1557,10 +1557,10 @@ const NestedToolCallRow = memo(function NestedToolCallRow({
         <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
           <WorkIcon Icon={Icon} />
         </span>
-        <span className="flex min-w-0 flex-1 items-center gap-2 text-ui-md leading-5">
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-ui-md ">
           <span className="min-w-0 truncate">{label}</span>
           {tc.error && (
-            <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-danger">
+            <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs uppercase text-kumo-danger">
               Error
             </span>
           )}
@@ -1604,7 +1604,7 @@ const NestedObservationRow = memo(function NestedObservationRow({
         <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
           <WorkIcon Icon={MagnifyingGlass} />
         </span>
-        <span className="inline-flex min-w-0 max-w-full items-center gap-2 text-ui-md leading-5">
+        <span className="inline-flex min-w-0 max-w-full items-center gap-2 text-ui-md ">
           <span className="min-w-0 truncate">{label}</span>
           <CaretRight
             size={13}
@@ -1676,10 +1676,10 @@ const ToolGroupRow = memo(function ToolGroupRow({
           <WorkIcon Icon={group.Icon} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-center gap-2 text-ui-md leading-5">
+          <span className="flex min-w-0 items-center gap-2 text-ui-md ">
             <span className="min-w-0 truncate">{group.label}</span>
             {group.hasError && (
-              <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-danger">
+              <span className="flex-shrink-0 rounded-full bg-kumo-danger-tint px-2 py-0.5 text-ui-2xs uppercase text-kumo-danger">
                 Error
               </span>
             )}
@@ -1690,7 +1690,7 @@ const ToolGroupRow = memo(function ToolGroupRow({
             />
           </span>
           {group.detailLines.length > 1 && (
-            <span className="mt-1 block truncate font-mono text-ui-xs leading-4 text-kumo-subtle">
+            <span className="mt-1 block truncate font-mono text-ui-xs text-kumo-subtle">
               {group.detailLines.join(" · ")}
             </span>
           )}
@@ -1747,7 +1747,7 @@ const ToolGroupRow = memo(function ToolGroupRow({
             </button>
           </Tooltip>
           <Tooltip content={formatFullTimestamp(footerTimestamp)} asChild>
-            <span className="px-1 font-mono text-ui-2xs leading-4 text-kumo-subtle">
+            <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
               {footerTimestamp.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -3001,7 +3001,7 @@ export const ChatInput = ({
       {pendingConsoleLogCount > 0 && (
         <div className="pointer-events-none absolute inset-x-4 -top-10 z-10 flex justify-center">
           <div
-            className={`themed-floating-shadow pointer-events-auto flex items-center gap-2 rounded-full border px-3 py-1.5 text-ui-xs leading-4 ${logBannerClass}`}
+            className={`themed-floating-shadow pointer-events-auto flex items-center gap-2 rounded-full border px-3 py-1.5 text-ui-xs ${logBannerClass}`}
           >
             <Tooltip
               content={
@@ -3292,7 +3292,7 @@ export const ChatInput = ({
                 {onToggleThinkingTraces && (
                   <DropdownMenu.Item
                     onClick={onToggleThinkingTraces}
-                    className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs leading-4 font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
+                    className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                   >
                     <span className="mr-2 inline-flex h-4 w-4 items-center justify-center text-kumo-subtle">
                       <Brain size={14} />
@@ -3304,7 +3304,7 @@ export const ChatInput = ({
                 )}
                 <DropdownMenu.Item
                   onClick={() => attachmentInputRef.current?.click()}
-                  className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs leading-4 font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
+                  className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                 >
                   <span className="mr-2 inline-flex h-4 w-4 items-center justify-center text-kumo-subtle">
                     <FileIcon size={14} />
@@ -3349,11 +3349,11 @@ export const ChatInput = ({
                       <DropdownMenu.Item
                         key={model.id}
                         onClick={() => onModelChange(model.id)}
-                        className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs leading-4 font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
+                        className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                       >
                         <span className="min-w-0 flex-1 truncate">{model.name}</span>
                         {gatewayLabel(model.gateway) && (
-                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-subtle">
+                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs uppercase text-kumo-subtle">
                             {gatewayLabel(model.gateway)}
                           </span>
                         )}
@@ -3366,7 +3366,7 @@ export const ChatInput = ({
                   <div className="my-1 border-t border-kumo-line/70" />
                   <DropdownMenu.Item
                     onClick={() => onModelChange(null)}
-                    className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs leading-4 font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
+                    className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                   >
                     <span className="min-w-0 flex-1 truncate">No agent</span>
                     {selectedModel == null && (
@@ -6073,7 +6073,7 @@ function ChatInterface({
     const scope = msg.resourceTitle ?? msg.resourceUrl;
 
     return (
-      <div className="group/work max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+      <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
         <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-3">
           <div className="flex items-start gap-3">
             <GatekeeperIcon
@@ -6087,7 +6087,7 @@ function ChatInterface({
                   Connect {msg.vendorName}
                 </span>
                 {scope && (
-                  <span className="rounded-full bg-kumo-tint px-2 py-0.5 text-ui-2xs leading-4 text-kumo-subtle">
+                  <span className="rounded-full bg-kumo-tint px-2 py-0.5 text-ui-2xs text-kumo-subtle">
                     {scope}
                   </span>
                 )}
@@ -6153,7 +6153,7 @@ function ChatInterface({
           : "text-kumo-subtle";
 
       return (
-        <div className="group/work max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+        <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
           <div className="rounded-2xl border border-kumo-line bg-kumo-base px-4 py-3">
             <div className="flex items-start gap-3">
               <GatekeeperIcon
@@ -6175,7 +6175,7 @@ function ChatInterface({
                   </div>
                 )}
                 {log.resourceTitle && (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-ui-xs leading-4 text-kumo-subtle">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-ui-xs text-kumo-subtle">
                     <span className="min-w-0 truncate">
                       {safeResourceUrl ? (
                         <a
@@ -6213,7 +6213,7 @@ function ChatInterface({
       const metadata = log.resourceTitle;
 
       return (
-        <div className="group/work max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+        <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
           <button
             type="button"
             onClick={() => toggleActionExpansion(msg.actionId)}
@@ -6233,7 +6233,7 @@ function ChatInterface({
                 />
               </span>
               {metadata && (
-                <span className="mt-1 block truncate text-ui-xs leading-4 text-kumo-subtle">
+                <span className="mt-1 block truncate text-ui-xs text-kumo-subtle">
                   {metadata}
                 </span>
               )}
@@ -6313,7 +6313,7 @@ function ChatInterface({
     // Resource label, shown at the top of the blocking callout and at the bottom of the subtle
     // inline row.
     const resourceMeta = metadata ? (
-      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-ui-xs leading-4 text-kumo-subtle">
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-ui-xs text-kumo-subtle">
         {log.resourceTitle && (
           <span className="min-w-0 truncate">
             {safeResourceUrl ? (
@@ -6339,7 +6339,7 @@ function ChatInterface({
     // details, and the approve/deny actions.
     if (isBlocking) {
       return (
-        <div className="group/work max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+        <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
           <div className="rounded-2xl border border-kumo-brand/40 bg-kumo-brand/10 px-4 py-3">
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-kumo-tint text-kumo-brand" aria-hidden="true">
@@ -6376,7 +6376,7 @@ function ChatInterface({
     );
 
     return (
-      <div className="group/work max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+      <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
         {isPending ? (
           <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 px-1.5 py-1">
             <div className="flex min-w-[8rem] flex-1 items-center gap-3">
@@ -6453,7 +6453,7 @@ function ChatInterface({
                 <DropdownMenu.Item
                   key={scope.value}
                   onClick={() => setChatListScope(scope.value)}
-                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs leading-4 text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
+                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
                 >
                   <span className="mr-2 inline-flex h-3 w-3 items-center justify-center text-kumo-default">
                     {active ? <Check size={11} weight="bold" /> : null}
@@ -6490,7 +6490,7 @@ function ChatInterface({
                 <button
                   type="button"
                   onClick={() => setChatListScope("all")}
-                  className="mt-2 cursor-pointer rounded-md px-2 py-1 text-ui-xs leading-4 font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
+                  className="mt-2 cursor-pointer rounded-md px-2 py-1 text-ui-xs font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                 >
                   Show all
                 </button>
@@ -6499,7 +6499,7 @@ function ChatInterface({
               <div className="flex flex-col gap-4">
                 {bucketedVisibleChats.map(({ bucket, items }) => (
                   <section key={bucket} className="flex flex-col gap-0.5">
-                    <p className="mb-1 px-1 text-ui-2xs font-medium uppercase text-kumo-subtle">
+                    <p className="mb-1 px-1 text-ui-2xs uppercase text-kumo-subtle">
                       {CHAT_TIME_BUCKET_LABELS[bucket]}
                     </p>
                     {items.map((chat) => (
@@ -6548,20 +6548,20 @@ function ChatInterface({
                           </span>
                         )}
                         {!isRenaming && chat.activeAgent ? (
-                          <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs leading-4 font-medium text-kumo-brand">
+                          <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs text-kumo-brand">
                             <span className="h-1.5 w-1.5 rounded-full bg-kumo-brand animate-pulse" />
                             Working
                           </span>
                         ) : !isRenaming && chat.hasProposedChanges ? (
                           <Tooltip content="This conversation has pending changes" asChild>
-                            <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs leading-4 font-medium text-kumo-warning">
+                            <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs text-kumo-warning">
                               <span className="h-1.5 w-1.5 rounded-full bg-kumo-warning" />
                               Pending changes
                             </span>
                           </Tooltip>
                         ) : null}
                       </div>
-                      <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-xs leading-4 text-kumo-subtle">
+                      <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-xs text-kumo-subtle">
                         {chat.spawnerName && (
                           <>
                             <span className="truncate">Agent · {chat.spawnerName}</span>
@@ -6601,7 +6601,7 @@ function ChatInterface({
                           <DropdownMenu.Item
                             icon={<Pencil size={12} className="mr-2" />}
                             onClick={() => startListRename(chat.id, chat.title)}
-                            className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs leading-4 text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
+                            className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
                           >
                             Rename
                           </DropdownMenu.Item>
@@ -6609,7 +6609,7 @@ function ChatInterface({
                             icon={<Trash size={12} className="mr-2" />}
                             variant="danger"
                             onClick={() => handleDeleteChat(chat.id, chat.title)}
-                            className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs leading-4 transition-colors data-highlighted:bg-kumo-danger-tint"
+                            className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs transition-colors data-highlighted:bg-kumo-danger-tint"
                           >
                             Delete
                           </DropdownMenu.Item>
@@ -6810,7 +6810,7 @@ function ChatInterface({
                     className={`flex flex-col px-6 pt-8 ${pendingConsoleLogCount > 0 ? "pb-16" : "pb-8"} ${useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""}`}
                   >
                     {isLoadingEarlier && (
-                      <div className="mx-auto mb-6 text-ui-xs leading-4 font-medium text-kumo-subtle">
+                      <div className="mx-auto mb-6 text-ui-xs font-medium text-kumo-subtle">
                         Loading earlier messages…
                       </div>
                     )}
@@ -6825,7 +6825,7 @@ function ChatInterface({
                           <div key={entry.key} className={`${entryTopClass} mb-4 max-w-[860px]`}>
                             <div className="flex items-center gap-3" role="separator">
                               <span className="h-px flex-1 bg-kumo-line/60" aria-hidden="true" />
-                              <span className="flex-shrink-0 text-ui-2xs leading-4 font-medium text-kumo-subtle uppercase">
+                              <span className="flex-shrink-0 text-ui-2xs text-kumo-subtle uppercase">
                                 Kept in full from here
                               </span>
                               <span className="h-px flex-1 bg-kumo-line/60" aria-hidden="true" />
@@ -6865,7 +6865,7 @@ function ChatInterface({
                                 type="button"
                                 onClick={() => toggleCompactionSummary(entry.boundary.to)}
                                 aria-expanded={expanded}
-                                className="inline-flex cursor-pointer items-center gap-3 rounded-md px-1.5 text-ui-md leading-5 text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
+                                className="inline-flex cursor-pointer items-center gap-3 rounded-md px-1.5 text-ui-md text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                               >
                                 <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
                                   <Brain size={16} />
@@ -6892,7 +6892,7 @@ function ChatInterface({
                                 type="button"
                                 onClick={() => toggleCompactionSummary(entry.boundary.to)}
                                 aria-expanded={expanded}
-                                className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-ui-2xs leading-4 font-medium text-kumo-subtle uppercase transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
+                                className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-ui-2xs text-kumo-subtle uppercase transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                               >
                                 <Brain size={13} aria-hidden="true" />
                                 Context compacted
@@ -6911,7 +6911,7 @@ function ChatInterface({
 
                       if (entry.type === "modelChange") {
                         return (
-                          <div key={entry.key} className={`${entryTopClass} max-w-[860px] py-1 text-ui-md leading-5 text-kumo-subtle`}>
+                          <div key={entry.key} className={`${entryTopClass} max-w-[860px] py-1 text-ui-md text-kumo-subtle`}>
                             <div className="flex items-center gap-3 px-1.5 py-1">
                               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
                                 <Swap size={16} />
@@ -6940,7 +6940,7 @@ function ChatInterface({
                           createdGadgets.map((g) => g.title),
                         );
                         return (
-                          <div key={entry.key} className={`${entryTopClass} group/savedChanges max-w-[860px] py-1 text-ui-md leading-5 text-kumo-subtle`}>
+                          <div key={entry.key} className={`${entryTopClass} group/savedChanges max-w-[860px] py-1 text-ui-md text-kumo-subtle`}>
                             <div className="flex items-center gap-3 px-1.5 py-1">
                               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
                                 <PencilSimple size={15} />
@@ -6961,7 +6961,7 @@ function ChatInterface({
                                   </button>
                                 </Tooltip>
                                 <Tooltip content={formatFullTimestamp(entry.message.timestamp)} asChild>
-                                  <span className="px-1 font-mono text-ui-2xs leading-4 text-kumo-subtle">
+                                  <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
                                     {entry.message.timestamp.toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
@@ -7043,7 +7043,7 @@ function ChatInterface({
                                 />
                               </span>
                             </div>
-                            <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs leading-4 text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
+                            <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
                               {!(hideOwnUserName && msg.author.id === currentUser?.id) && (
                                 <span className="font-medium">{msg.author.name}</span>
                               )}
@@ -7092,7 +7092,7 @@ function ChatInterface({
                                   </div>
                                 )}
                               </div>
-                              <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs leading-4 text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
+                              <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
                                 {/* hideOwnUserName implies currentUser is non-null (see memo). */}
                                 {!(hideOwnUserName && msg.author.id === currentUser?.id) && (
                                   <span className="font-medium">{msg.author.name}</span>
@@ -7185,7 +7185,7 @@ function ChatInterface({
                                     );
                                   })()}
                                   <Tooltip content={formatFullTimestamp(msg.timestamp)} asChild>
-                                    <span className="px-1 font-mono text-ui-2xs leading-4 text-kumo-subtle">
+                                    <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
                                       {msg.timestamp.toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",
@@ -7252,7 +7252,7 @@ function ChatInterface({
                                   msg.sequence,
                                 );
                             return (
-                              <div className="max-w-[860px] py-1 text-ui-md leading-5 text-kumo-subtle">
+                              <div className="max-w-[860px] py-1 text-ui-md text-kumo-subtle">
                                 <Tooltip
                                   content={
                                     isMerge
@@ -7282,7 +7282,7 @@ function ChatInterface({
                         {msg.type === "connectionRequest" && renderConnectionRequestCard(msg)}
 
                         {msg.type === "useGadget" && (
-                          <div className="max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+                          <div className="max-w-[860px] text-ui-md text-kumo-subtle">
                             <Tooltip content={`Used the gadget at ${formatFullTimestamp(msg.timestamp)}`} asChild>
                               <span className="inline-flex items-center gap-3 px-1.5 py-1">
                                 <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
@@ -7302,7 +7302,7 @@ function ChatInterface({
                               !isAgentActive;
                             const expanded = expandedErrors.has(key);
                             return (
-                              <div className="group/work max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+                              <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
                                 <div className="flex w-full items-center gap-2 px-1.5 py-1">
                                   <button
                                     type="button"
@@ -7367,7 +7367,7 @@ function ChatInterface({
                           })()}
 
                         {msg.type === "agentCallback" && (
-                          <div className="max-w-[860px] text-ui-md leading-5 text-kumo-subtle">
+                          <div className="max-w-[860px] text-ui-md text-kumo-subtle">
                             <div className="flex items-center gap-3 px-1.5 py-1">
                               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
                                 <Code size={16} />
@@ -7411,7 +7411,7 @@ function ChatInterface({
                             ? "mt-2"
                             : "mt-4";
                       return (
-                        <div className={`${draftTopClass} max-w-[860px] py-1 text-ui-md leading-5 text-kumo-subtle`}>
+                        <div className={`${draftTopClass} max-w-[860px] py-1 text-ui-md text-kumo-subtle`}>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1.5">
                             <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
                               <Pencil size={16} />
@@ -7491,13 +7491,13 @@ function ChatInterface({
                       return (
                         <div className={`group/agent min-w-0 w-full max-w-[860px] space-y-2 ${provisionalTopClass}`}>
                           {isCompacting && (
-                            <div className={`inline-flex px-1.5 py-1 text-ui-md leading-5 ${styles.thinkingShimmer}`}>
+                            <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
                               Compacting…
                             </div>
                           )}
 
                           {showThinking && (
-                            <div className={`inline-flex px-1.5 py-1 text-ui-md leading-5 ${styles.thinkingShimmer}`}>
+                            <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
                               Thinking
                             </div>
                           )}
@@ -7534,7 +7534,7 @@ function ChatInterface({
                                       <WorkIcon Icon={getToolIcon(first.toolName, first.outputFormat)} />
                                     </span>
                                     <span className="min-w-0 flex-1">
-                                      <span className="flex min-w-0 items-center gap-2 text-ui-md leading-5">
+                                      <span className="flex min-w-0 items-center gap-2 text-ui-md ">
                                         <span className="min-w-0 truncate">{label}</span>
                                         <CaretRight
                                           size={13}
@@ -7543,7 +7543,7 @@ function ChatInterface({
                                         />
                                       </span>
                                       {detailLines.length > 1 && (
-                                        <span className="mt-1 block truncate font-mono text-ui-xs leading-4 text-kumo-subtle">
+                                        <span className="mt-1 block truncate font-mono text-ui-xs text-kumo-subtle">
                                           {detailLines.join(" · ")}
                                         </span>
                                       )}
@@ -7558,7 +7558,7 @@ function ChatInterface({
                                         >
                                           {toolCall.code && (
                                             <>
-                                              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">Code</span>
+                                              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">Code</span>
                                               <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
                                                 {toolCall.code}
                                               </pre>
@@ -7566,7 +7566,7 @@ function ChatInterface({
                                           )}
                                           {toolCall.output && (
                                             <>
-                                              <span className="font-mono text-ui-2xs leading-4 text-kumo-subtle uppercase">Output</span>
+                                              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">Output</span>
                                               <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
                                                 {toolCall.output}
                                               </pre>
@@ -7641,7 +7641,7 @@ function ChatInterface({
                       return (
                         <div className="themed-surface-inset relative flex items-center gap-2 overflow-hidden rounded-t-[calc(1rem-1px)] border-b border-kumo-line bg-kumo-elevated px-3.5 py-2">
                           <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-kumo-brand/40 to-transparent" aria-hidden="true" />
-                          <span className="min-w-0 flex-1 truncate text-ui-xs font-medium leading-4 text-kumo-default">
+                          <span className="min-w-0 flex-1 truncate text-ui-xs font-medium text-kumo-default">
                             Pending changes
                           </span>
                           <DiscardPendingChangesPopover
@@ -7679,7 +7679,7 @@ function ChatInterface({
                   />
 
                   {/* Token / cost summary. */}
-                  <div className="-mt-1 flex min-h-[1.25rem] items-start justify-end gap-4 px-4 pb-1 font-mono text-ui-2xs leading-4 text-kumo-subtle">
+                  <div className="-mt-1 flex min-h-[1.25rem] items-start justify-end gap-4 px-4 pb-1 font-mono text-ui-2xs text-kumo-subtle">
                     {currentChatMetadata?.totalTokens != null && (
                       <span>
                         {currentChatMetadata.totalTokens.toLocaleString()} tokens

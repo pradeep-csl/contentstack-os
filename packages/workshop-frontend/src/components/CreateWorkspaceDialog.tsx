@@ -52,7 +52,7 @@ export default function CreateWorkspaceDialog({
             <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-strong">
               Create workspace
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <Dialog.Description className="mt-1 text-ui-xs font-normal text-kumo-subtle">
               An isolated environment for a set of conversations, connections, and outputs.
             </Dialog.Description>
           </div>

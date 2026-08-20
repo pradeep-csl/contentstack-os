@@ -24,7 +24,7 @@ export function TabButton({ active, onClick, children, badgeCount = 0, className
       {children}
       {badgeCount > 0 && (
         <span
-          className="inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-kumo-contrast px-1 text-ui-2xs leading-none font-semibold text-kumo-inverse"
+          className="inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-kumo-contrast px-1 text-ui-2xs leading-none text-kumo-inverse"
           style={{ fontVariantNumeric: 'tabular-nums' }}
           aria-label={`${badgeCount} pending`}
         >

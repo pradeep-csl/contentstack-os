@@ -222,7 +222,7 @@ export default function ConnectConnectorModal({
               )}
             </div>
             <div className="min-w-0">
-              <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-default">
+              <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-strong">
                 {headerTitle}
               </Dialog.Title>
               {headerSubline}
@@ -246,7 +246,7 @@ export default function ConnectConnectorModal({
 
           {supportedResources.length > 0 && (
             <div className="mt-5">
-              <h3 className="mb-2 text-ui-xs leading-4 font-semibold uppercase tracking-wider text-kumo-subtle">
+              <h3 className="mb-2 text-ui-xs font-semibold uppercase tracking-wider text-kumo-subtle">
                 {granular
                   ? isManage
                     ? 'Resources'
@@ -274,7 +274,7 @@ export default function ConnectConnectorModal({
                         <p className="text-ui-sm font-medium text-kumo-default">
                           {resource.title}
                         </p>
-                        <p className="mt-0.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
+                        <p className="mt-0.5 text-ui-xs font-normal text-kumo-subtle">
                           {resource.description}
                         </p>
                       </div>
@@ -339,15 +339,15 @@ export default function ConnectConnectorModal({
 
         <div className="shrink-0 flex items-center justify-between gap-3 border-t border-kumo-line bg-kumo-base px-5 py-3">
           {isManage && confirmingDisconnect ? (
-            <p className="m-0 min-w-0 flex-1 text-ui-xs leading-4 font-normal text-kumo-default">
+            <p className="m-0 min-w-0 flex-1 text-ui-xs font-normal text-kumo-default">
               Disconnect {vendorDescription.displayName}? Gadgets using this will lose access.
             </p>
           ) : isManage && hasPending ? (
-            <p className="m-0 min-w-0 flex-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <p className="m-0 min-w-0 flex-1 text-ui-xs font-normal text-kumo-subtle">
               {pendingPatterns.length} resource{pendingPatterns.length === 1 ? '' : 's'} to add
             </p>
           ) : !isManage && granular && noneSelected ? (
-            <p className="m-0 min-w-0 flex-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <p className="m-0 min-w-0 flex-1 text-ui-xs font-normal text-kumo-subtle">
               Select at least one resource to continue.
             </p>
           ) : (

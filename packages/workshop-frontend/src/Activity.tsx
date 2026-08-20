@@ -295,7 +295,7 @@ export default function Activity({
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto">
-              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-ui-2xs font-medium uppercase text-kumo-subtle">
+              <div className="grid grid-cols-[54px_minmax(0,1fr)_auto_16px] items-center gap-3 border-b border-kumo-line bg-kumo-elevated/50 px-5 py-1.5 text-ui-2xs uppercase text-kumo-subtle">
                 <span>Time</span>
                 <span>Event</span>
                 <span>Status</span>
@@ -303,7 +303,7 @@ export default function Activity({
               </div>
               {historyGroups.map(group => (
                 <section key={group.label}>
-                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-ui-2xs font-medium uppercase text-kumo-subtle backdrop-blur-sm">
+                  <h3 className="sticky top-0 m-0 border-b border-kumo-line bg-kumo-base/90 px-5 py-1 text-ui-2xs uppercase text-kumo-subtle backdrop-blur-sm">
                     {group.label}
                   </h3>
                   {group.records.map(record => (
@@ -446,7 +446,7 @@ function AutoApprovalPanel({
                 size={12}
                 className="h-5 w-5 rounded-md [&>img]:p-px"
               />
-              <h3 className="m-0 min-w-0 truncate text-ui-xs font-medium leading-4 text-kumo-subtle">
+              <h3 className="m-0 min-w-0 truncate text-ui-xs font-medium text-kumo-subtle">
                 {group.title}
               </h3>
             </div>
@@ -462,7 +462,7 @@ function AutoApprovalPanel({
                     <span className="block truncate text-ui-sm font-medium text-kumo-default">
                       {entry.actionKind.label}
                     </span>
-                    <span className="mt-0.5 block text-ui-xs leading-4 text-kumo-subtle">
+                    <span className="mt-0.5 block text-ui-xs text-kumo-subtle">
                       {entry.orphaned
                         ? 'This connection no longer offers this action; the rule still applies.'
                         : entry.enabled
@@ -591,7 +591,7 @@ function HistoryRow({
           <span className="truncate text-ui-sm text-kumo-default">
             {record.description.title}
           </span>
-          <span className="hidden flex-shrink-0 truncate text-ui-xs leading-4 text-kumo-subtle sm:inline">
+          <span className="hidden flex-shrink-0 truncate text-ui-xs text-kumo-subtle sm:inline">
             {record.resourceTitle}
           </span>
         </span>

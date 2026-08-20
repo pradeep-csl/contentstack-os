@@ -68,7 +68,7 @@ export default function WorkpiecePicker({
         }`}
       >
         {expanded && (
-          <span className="text-ui-2xs font-medium uppercase">Outputs</span>
+          <span className="text-ui-2xs uppercase">Outputs</span>
         )}
         {expanded ? <CaretRight size={14} /> : <CaretLeft size={14} />}
       </button>
@@ -149,7 +149,7 @@ export default function WorkpiecePicker({
                   )}
                   {isPending && (
                     expanded ? (
-                      <span className="flex-shrink-0 rounded-full bg-kumo-base px-1.5 py-0.5 text-ui-2xs leading-none font-medium text-kumo-subtle">
+                      <span className="flex-shrink-0 rounded-full bg-kumo-base px-1.5 py-0.5 text-ui-2xs leading-none text-kumo-subtle">
                         Draft
                       </span>
                     ) : (

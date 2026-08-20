@@ -66,12 +66,12 @@ function ModelRow({
             {model.name}
           </span>
           {gatewayLabel(model.gateway) && (
-            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-subtle">
+            <span className="shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs uppercase text-kumo-subtle">
               {gatewayLabel(model.gateway)}
             </span>
           )}
           {isQuick && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] px-1.5 py-0.5 text-ui-2xs font-semibold uppercase text-kumo-brand">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] px-1.5 py-0.5 text-ui-2xs uppercase text-kumo-brand">
               <Lightning size={9} weight="fill" />
               quick
             </span>
@@ -194,7 +194,7 @@ function ProvidersPage() {
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 sm:px-10">
       <header className="flex items-end justify-between gap-4 px-3 pb-3 pt-10">
         <div className="min-w-0">
-          <h1 className="text-ui-3xl font-semibold text-kumo-default">AI providers</h1>
+          <h1 className="text-ui-3xl font-semibold text-kumo-strong">AI providers</h1>
           <p className="mt-1 text-ui-md text-kumo-subtle">
             Configure the AI models available to your workspaces.
           </p>

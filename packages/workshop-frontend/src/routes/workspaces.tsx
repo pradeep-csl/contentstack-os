@@ -16,7 +16,7 @@ function WorkspacesPage() {
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 sm:px-10">
       <header className="flex items-end justify-between gap-4 px-3 pb-3 pt-10">
         <div className="min-w-0">
-          <h1 className="text-ui-3xl font-semibold text-kumo-default">Workspaces</h1>
+          <h1 className="text-ui-3xl font-semibold text-kumo-strong">Workspaces</h1>
           <p className="mt-1 text-ui-md text-kumo-subtle">
             Each workspace is an isolated environment with its own conversations, gatekeepers, and outputs.
           </p>

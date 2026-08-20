@@ -61,7 +61,7 @@ export default function ActivityNotifications({
         className="themed-floating-shadow !z-[1100] !w-[min(340px,calc(100vw-24px))] !min-w-0 overflow-hidden rounded-lg border border-kumo-line !outline-none bg-kumo-base !p-0 [&>:first-child]:hidden"
       >
         <div className="flex items-center justify-between gap-2 px-3.5 pb-1 pt-2.5">
-          <Popover.Title className="text-ui-2xs font-medium uppercase text-kumo-subtle">
+          <Popover.Title className="text-ui-2xs uppercase text-kumo-subtle">
             Needs review
           </Popover.Title>
           <CountBadge count={pending.length} />

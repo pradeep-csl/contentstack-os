@@ -72,7 +72,7 @@ export default function WorkspaceOpenErrorPage({ kind, onRetry, onGoToWorkspaces
           id={titleId}
           ref={titleRef}
           tabIndex={-1}
-          className="mt-5 text-ui-2xl leading-7 font-semibold text-kumo-default outline-none"
+          className="mt-5 text-ui-2xl font-semibold text-kumo-strong outline-none"
         >
           {title}
         </h1>

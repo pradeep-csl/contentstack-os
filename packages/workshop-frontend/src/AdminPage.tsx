@@ -388,7 +388,7 @@ export default function AdminPage() {
   return (
     <div className="mx-auto w-full max-w-[1040px] px-4 sm:px-8 py-8 space-y-6">
       <div>
-        <h1 className="text-ui-3xl font-semibold text-kumo-default">Admin</h1>
+        <h1 className="text-ui-3xl font-semibold text-kumo-strong">Admin</h1>
         <p className="text-ui-md text-kumo-subtle mt-1">
           Deployment-wide settings. Changes apply to all users on their next connection.
         </p>
@@ -829,7 +829,7 @@ export default function AdminPage() {
                       <h3 className={`flex-1 text-ui-md font-semibold ${mode === 'disabled' ? 'text-kumo-subtle' : 'text-kumo-default'}`}>
                         {vendor.displayName}
                       </h3>
-                      <span className="text-ui-2xs font-medium px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
+                      <span className="text-ui-2xs px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
                         auto-provisioned
                       </span>
                     </div>
@@ -882,7 +882,7 @@ export default function AdminPage() {
                   <h3 className={`flex-1 text-ui-md font-semibold ${vendor.enabled ? 'text-kumo-default' : 'text-kumo-subtle'}`}>
                     {vendor.displayName}
                     {!vendor.enabled && (
-                      <span className="ml-2 text-ui-2xs font-medium px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
+                      <span className="ml-2 text-ui-2xs px-1.5 py-0.5 rounded-md bg-kumo-tint text-kumo-subtle border border-kumo-line">
                         disabled
                       </span>
                     )}

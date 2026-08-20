@@ -14,7 +14,7 @@ function AssistantAvatar() {
 function UserAvatar() {
   return (
     <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-kumo-tint">
-      <span className="text-ui-2xs font-semibold text-kumo-strong">U</span>
+      <span className="text-ui-2xs text-kumo-strong">U</span>
     </div>
   )
 }

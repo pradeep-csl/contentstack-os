@@ -443,11 +443,11 @@ export default function CodeDiffEditor({
             </button>
           </div>
           <div
-            className="pointer-events-none flex h-7 items-center gap-2 rounded-lg border border-kumo-line bg-kumo-base px-2 font-mono text-ui-2xs leading-4 shadow-sm"
+            className="pointer-events-none flex h-7 items-center gap-2 rounded-lg border border-kumo-line bg-kumo-base px-2 font-mono text-ui-2xs shadow-sm"
             style={{ fontFamily: monoFont }}
           >
             {model.status !== 'Modified' && (
-              <span className="text-ui-2xs font-medium text-kumo-subtle">{model.status}</span>
+              <span className="text-ui-2xs text-kumo-subtle">{model.status}</span>
             )}
             <span className="text-kumo-danger">-{model.deletions}</span>
             <span className="text-kumo-success">+{model.additions}</span>

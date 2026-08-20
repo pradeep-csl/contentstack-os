@@ -357,7 +357,7 @@ export default function CommandPalette({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search workspaces and actions…"
-            className="h-12 w-full bg-transparent text-ui-md leading-5 text-kumo-default placeholder:text-kumo-placeholder focus:outline-none"
+            className="h-12 w-full bg-transparent text-ui-md text-kumo-default placeholder:text-kumo-placeholder focus:outline-none"
           />
           <kbd className="shrink-0 rounded border border-kumo-line px-1.5 py-0.5 font-sans text-ui-2xs leading-none text-kumo-subtle">
             ESC
@@ -373,7 +373,7 @@ export default function CommandPalette({
               const start = groups.slice(0, gi).reduce((n, g) => n + g.items.length, 0)
               return (
                 <div key={group.heading} className="mb-1 last:mb-0">
-                  <p className="px-2.5 pt-1.5 pb-1 text-ui-2xs font-medium uppercase text-kumo-subtle">
+                  <p className="px-2.5 pt-1.5 pb-1 text-ui-2xs uppercase text-kumo-subtle">
                     {group.heading}
                   </p>
                   {group.items.map((cmd, j) => {

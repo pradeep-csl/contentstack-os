@@ -36,10 +36,10 @@ export default function AutoApproveConfirmDialog({
       >
         <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
           <div className="min-w-0">
-            <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-default">
+            <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-strong">
               Always approve “{actionLabel}”?
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <Dialog.Description className="mt-1 text-ui-xs font-normal text-kumo-subtle">
               Future <span className="font-medium text-kumo-default">{actionLabel}</span> actions on{' '}
               <span className="font-medium text-kumo-default">{resourceTitle}</span> will be applied
               automatically, without asking for approval. This action will be applied now too.

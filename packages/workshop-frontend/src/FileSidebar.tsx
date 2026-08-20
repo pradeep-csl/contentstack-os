@@ -116,7 +116,7 @@ export default function FileSidebar({
   return (
     <div className="flex h-full w-[244px] flex-col border-r border-kumo-line bg-kumo-base">
       <div className="flex h-9 shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2">
-        <span className="text-ui-2xs font-medium uppercase text-kumo-subtle">
+        <span className="text-ui-2xs uppercase text-kumo-subtle">
           Files
         </span>
         <WorkshopIconButton
@@ -184,10 +184,10 @@ export default function FileSidebar({
         >
           <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
             <div className="min-w-0">
-              <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-default">
+              <Dialog.Title className="text-ui-lg leading-5 font-medium text-kumo-strong">
                 New file
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+              <Dialog.Description className="mt-1 text-ui-xs font-normal text-kumo-subtle">
                 Create a new file in this gadget.
               </Dialog.Description>
             </div>
@@ -409,7 +409,7 @@ function FileRow({
             <DropdownMenu.Item
               icon={<DownloadSimple size={12} className="mr-2" />}
               onClick={onDownload}
-              className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs leading-4 text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
+              className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
             >
               Download
             </DropdownMenu.Item>
@@ -418,7 +418,7 @@ function FileRow({
                 <DropdownMenu.Item
                   icon={<Pencil size={12} className="mr-2" />}
                   onClick={onRename}
-                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs leading-4 text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
+                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
                 >
                   Rename
                 </DropdownMenu.Item>
@@ -426,7 +426,7 @@ function FileRow({
                   icon={<Trash size={12} className="mr-2" />}
                   variant="danger"
                   onClick={onDelete}
-                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs leading-4 transition-colors data-highlighted:bg-kumo-danger-tint"
+                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs transition-colors data-highlighted:bg-kumo-danger-tint"
                 >
                   Delete
                 </DropdownMenu.Item>

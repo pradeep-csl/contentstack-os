@@ -118,7 +118,7 @@ export function AgentSpawnerConfigForm({
             </Select.Option>
           ))}
         </Select>
-        <p className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+        <p className="mt-1 text-ui-xs font-normal text-kumo-subtle">
           Choose "None" to create conversations without an agent.
         </p>
       </ConnectionConfigField>
@@ -128,7 +128,7 @@ export function AgentSpawnerConfigForm({
         description="What spawned agents may use, and the names they see it under."
       >
         {env.length === 0 ? (
-          <p className="text-ui-xs leading-4 font-normal text-kumo-subtle">
+          <p className="text-ui-xs font-normal text-kumo-subtle">
             Nothing is available to offer spawned agents here. Create the agent from a gadget's
             Connections tab to give it access to that gadget and its resources.
           </p>
@@ -148,13 +148,13 @@ export function AgentSpawnerConfigForm({
                   onChange={(e) => updateRow(index, { name: e.target.value })}
                   className="!h-8 w-[180px] min-w-0 font-mono"
                 />
-                <span className="min-w-0 flex-1 truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
+                <span className="min-w-0 flex-1 truncate text-ui-xs font-normal text-kumo-subtle">
                   {row.targetTitle}
                 </span>
               </div>
             ))}
             {envError && (
-              <p className="text-ui-xs leading-4 font-normal text-kumo-danger">
+              <p className="text-ui-xs font-normal text-kumo-danger">
                 {envError}
               </p>
             )}

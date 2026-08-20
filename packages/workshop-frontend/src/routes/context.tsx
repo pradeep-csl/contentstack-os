@@ -44,7 +44,7 @@ function ContextRow({ item }: { item: ContextItem }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-ui-md font-medium text-kumo-default">{item.name}</p>
-        <p className="mt-0.5 truncate text-ui-xs leading-4 text-kumo-subtle">
+        <p className="mt-0.5 truncate text-ui-xs text-kumo-subtle">
           {label} · {item.detail}
         </p>
       </div>
@@ -61,7 +61,7 @@ function ContextPage() {
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 sm:px-10">
       <header className="px-3 pb-4 pt-10">
-        <h1 className="text-ui-3xl font-semibold text-kumo-default">Context &amp; Skills</h1>
+        <h1 className="text-ui-3xl font-semibold text-kumo-strong">Context &amp; Skills</h1>
         <p className="mt-1 text-ui-md text-kumo-subtle">
           Curated collections of knowledge your agents read, plus reusable skills they can apply.
         </p>

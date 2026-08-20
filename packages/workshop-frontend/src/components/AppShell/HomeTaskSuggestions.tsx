@@ -111,7 +111,7 @@ function SuggestionRow({
           <span className="block truncate text-ui-md font-medium text-kumo-strong">
             {label}
           </span>
-          <span className="block truncate text-ui-xs leading-4 text-kumo-subtle">
+          <span className="block truncate text-ui-xs text-kumo-subtle">
             {description}
           </span>
         </span>

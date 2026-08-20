@@ -165,7 +165,7 @@ function OutputCard({
           <p className="truncate text-ui-md font-medium text-kumo-default">
             {output.title || 'Untitled'}
           </p>
-          <p className="mt-0.5 truncate text-ui-xs leading-4 text-kumo-subtle">
+          <p className="mt-0.5 truncate text-ui-xs text-kumo-subtle">
             {subtitle(output)}
           </p>
         </div>
@@ -192,7 +192,7 @@ function OutputRow({
         <p className="truncate text-ui-md font-medium text-kumo-default">
           {output.title || 'Untitled'}
         </p>
-        <p className="mt-0.5 truncate text-ui-xs leading-4 text-kumo-subtle">
+        <p className="mt-0.5 truncate text-ui-xs text-kumo-subtle">
           {formatOf(output.output).noun} · {output.workspaceTitle || 'Untitled workspace'}
         </p>
       </div>
@@ -344,12 +344,12 @@ function RenameOutputDialog({
         <form onSubmit={(event) => { event.preventDefault(); onSave() }}>
           <div className="flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
             <div className="min-w-0">
-              <Dialog.Title className="text-ui-lg font-medium leading-5 text-kumo-default">
+              <Dialog.Title className="text-ui-lg font-medium leading-5 text-kumo-strong">
                 Rename output
               </Dialog.Title>
               {/* Renames the output itself, unlike the sidebar's workspace rename, which relabels
                   only your own copy. */}
-              <Dialog.Description className="mt-1 text-ui-xs leading-4 text-kumo-subtle">
+              <Dialog.Description className="mt-1 text-ui-xs text-kumo-subtle">
                 Renames the output for everyone with access to “{output?.workspaceTitle}”.
               </Dialog.Description>
             </div>
@@ -576,7 +576,7 @@ function OutputsPage() {
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col px-6 sm:px-10">
       <header className="flex items-end justify-between gap-4 px-3 pb-4 pt-10">
         <div className="min-w-0">
-          <h1 className="text-ui-3xl font-semibold text-kumo-default">Outputs</h1>
+          <h1 className="text-ui-3xl font-semibold text-kumo-strong">Outputs</h1>
           <p className="mt-1 text-ui-md text-kumo-subtle">
             Everything your workspaces have produced, in one place.
           </p>

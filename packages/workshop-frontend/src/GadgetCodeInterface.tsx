@@ -879,7 +879,7 @@ export default function GadgetCodeInterface({ overseer, filesRoot, height = '100
         <div className="flex flex-col bg-kumo-base" style={{ flex: 1, minWidth: 0 }}>
           {activeFile && (
             <div className="flex h-9 shrink-0 items-center justify-between gap-3 border-b border-kumo-line bg-kumo-base px-3">
-              <div className="min-w-0 text-ui-xs leading-4 text-kumo-subtle">
+              <div className="min-w-0 text-ui-xs text-kumo-subtle">
                 {activeFileModeLabel} <span className="font-mono font-medium text-kumo-default">{activeFile}</span>
               </div>
               <WorkshopIconButton

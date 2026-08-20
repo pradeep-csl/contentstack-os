@@ -304,7 +304,7 @@ export default function ObserverConfigModal({
                       {matching.length === 1 ? (
                         <div className="flex min-h-10 items-center gap-3 rounded-lg border border-kumo-line bg-kumo-elevated/50 px-3 py-2">
                           <div className="min-w-0 flex-1">
-                            <div className="text-ui-2xs leading-4 text-kumo-subtle">Using your account</div>
+                            <div className="text-ui-2xs text-kumo-subtle">Using your account</div>
                             <div className="truncate text-ui-md font-medium text-kumo-default">
                               {accountLabel(matching[0], matching[0].id)}
                             </div>

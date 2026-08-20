@@ -803,7 +803,7 @@ export default function GatekeeperModal({
       >
         <div ref={headerRef} className="shrink-0 flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
           <div className="min-w-0">
-            <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-default">
+            <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-strong">
               {selectedConnection ? selectedConnection.title : 'Create New Connection'}
             </Dialog.Title>
             <Dialog.Description className="mt-1 text-ui-sm font-normal text-kumo-subtle">
@@ -827,7 +827,7 @@ export default function GatekeeperModal({
               <button
                 type="button"
                 onClick={() => setSelectedConnectionId(null)}
-                className="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-ui-xs leading-4 font-medium text-kumo-subtle transition-colors hover:text-kumo-default"
+                className="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-ui-xs font-medium text-kumo-subtle transition-colors hover:text-kumo-default"
               >
                 <CaretLeft size={13} />
                 All connection types
@@ -1010,7 +1010,7 @@ function ConnectionTypeRow({
         <p className="truncate text-ui-sm font-medium text-kumo-default">
           {connection.title}
         </p>
-        <p className="mt-0.5 line-clamp-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+        <p className="mt-0.5 line-clamp-1 text-ui-xs font-normal text-kumo-subtle">
           {connection.vendor} · {connection.description}
         </p>
       </div>
@@ -1089,7 +1089,7 @@ function ConnectionGroupRow({
           <p className="truncate text-ui-sm font-medium text-kumo-default">
             {label}
           </p>
-          <p className="mt-0.5 line-clamp-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+          <p className="mt-0.5 line-clamp-1 text-ui-xs font-normal text-kumo-subtle">
             {subtitle}
           </p>
         </div>

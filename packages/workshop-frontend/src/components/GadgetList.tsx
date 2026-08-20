@@ -511,7 +511,7 @@ function HomeFeaturedBlueprintCard({
             <p className="m-0 truncate text-ui-md font-semibold text-kumo-strong">
               {blueprint.metadata.title}
             </p>
-            <p className={`mt-0.5 line-clamp-2 min-h-8 text-ui-xs leading-4 ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-subtle italic'}`}>
+            <p className={`mt-0.5 line-clamp-2 min-h-8 text-ui-xs ${blueprint.metadata.description ? 'text-kumo-subtle' : 'text-kumo-subtle italic'}`}>
               {blueprint.metadata.description || 'No description'}
             </p>
             {badges.length > 0 && (

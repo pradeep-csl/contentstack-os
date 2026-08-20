@@ -248,7 +248,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-6 pb-16 sm:px-10">
       <header className="px-1 pb-2 pt-10">
-        <h1 className="text-ui-3xl font-semibold text-kumo-default">Profile</h1>
+        <h1 className="text-ui-3xl font-semibold text-kumo-strong">Profile</h1>
         <p className="mt-1 text-ui-md text-kumo-subtle">
           Manage your account details, avatar, and security.
         </p>
@@ -296,7 +296,7 @@ export default function SettingsPage() {
                 <p className="truncate text-ui-lg font-medium text-kumo-default">
                   {userInfo?.name}
                 </p>
-                <p className="mt-0.5 text-ui-xs leading-4 text-kumo-subtle">
+                <p className="mt-0.5 text-ui-xs text-kumo-subtle">
                   Click the avatar to upload a new photo
                 </p>
               </div>

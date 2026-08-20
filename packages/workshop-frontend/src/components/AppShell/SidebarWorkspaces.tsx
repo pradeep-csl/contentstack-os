@@ -418,7 +418,7 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
         icon={<Star size={12} weight="regular" className="text-kumo-subtle" />}
       >
         {favorites.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-ui-xs leading-4 text-kumo-subtle">
+          <p className="px-2.5 py-1.5 text-ui-xs text-kumo-subtle">
             Favorite a workspace to keep it here.
           </p>
         ) : (
@@ -450,7 +450,7 @@ export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: bool
             ))}
           </div>
         ) : recent.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-ui-xs leading-4 text-kumo-subtle">
+          <p className="px-2.5 py-1.5 text-ui-xs text-kumo-subtle">
             {search ? 'No matches.' : 'No workspaces yet.'}
           </p>
         ) : (

@@ -2,7 +2,7 @@
 // own padding, and a selection that reads as the thing Tab will act on.
 
 export const PICKER_CAPTION =
-  'text-ui-2xs font-medium uppercase leading-4 text-kumo-subtle'
+  'text-ui-2xs uppercase text-kumo-subtle'
 
 export const PICKER_ROW =
   'flex cursor-pointer items-center gap-2.5 px-3.5 py-1.5 transition-colors hover:bg-kumo-tint'
@@ -19,7 +19,7 @@ export function TabHint() {
   return (
     <kbd
       aria-hidden="true"
-      className="flex-shrink-0 rounded border border-kumo-line bg-kumo-base px-1 py-px font-sans text-ui-2xs font-medium leading-4 text-kumo-subtle"
+      className="flex-shrink-0 rounded border border-kumo-line bg-kumo-base px-1 py-px font-sans text-ui-2xs text-kumo-subtle"
     >
       Tab
     </kbd>

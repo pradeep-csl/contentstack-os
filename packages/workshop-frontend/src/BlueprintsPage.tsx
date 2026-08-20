@@ -79,7 +79,7 @@ export default function BlueprintsPage() {
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col px-6 sm:px-10">
       <header className="flex items-end justify-between gap-4 px-3 pb-4 pt-10">
         <div className="min-w-0">
-          <h1 className="text-ui-3xl font-semibold text-kumo-default">Explore</h1>
+          <h1 className="text-ui-3xl font-semibold text-kumo-strong">Explore</h1>
           <p className="mt-1 text-ui-md text-kumo-subtle">
             Discover featured blueprints to use as starting points. Open one to create a workspace
             from it, or save it to reuse later.
@@ -196,7 +196,7 @@ function FeaturedBlueprintCard({
             {blueprint.metadata.title}
           </p>
           <p
-            className={`mt-0.5 line-clamp-1 text-ui-xs leading-4 ${
+            className={`mt-0.5 line-clamp-1 text-ui-xs ${
               blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-subtle"
             }`}
           >
@@ -242,7 +242,7 @@ function FeaturedBlueprintRow({
           {blueprint.metadata.title}
         </p>
         <p
-          className={`mt-0.5 line-clamp-1 text-ui-xs leading-4 ${
+          className={`mt-0.5 line-clamp-1 text-ui-xs ${
             blueprint.metadata.description ? "text-kumo-subtle" : "italic text-kumo-subtle"
           }`}
         >

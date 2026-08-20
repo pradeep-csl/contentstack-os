@@ -135,7 +135,7 @@ export default function AdminFormatsPanel({
           }
         />
         <DropdownMenu.Content className={MENU_CONTENT}>
-          <p className="px-2 pb-1.5 pt-1 text-ui-2xs font-medium uppercase text-kumo-subtle">
+          <p className="px-2 pb-1.5 pt-1 text-ui-2xs uppercase text-kumo-subtle">
             Offer as a standard format
           </p>
           {available.map((candidate) => (
@@ -167,7 +167,7 @@ export default function AdminFormatsPanel({
 function PreviewStrip({ formats }: { formats: AdminFormat[] }) {
   return (
     <div className="mb-5 rounded-lg border border-dashed border-kumo-line bg-kumo-tint/40 p-4">
-      <p className="mb-2.5 text-ui-2xs font-medium uppercase text-kumo-subtle">
+      <p className="mb-2.5 text-ui-2xs uppercase text-kumo-subtle">
         What people will see
       </p>
       {formats.length === 0 ? (
@@ -187,7 +187,7 @@ function PreviewStrip({ formats }: { formats: AdminFormat[] }) {
           ))}
         </div>
       )}
-      <p className="mt-2.5 text-ui-xs leading-4 text-kumo-subtle">
+      <p className="mt-2.5 text-ui-xs text-kumo-subtle">
         In the composer’s + menu, the command palette, and on an empty Outputs page, in this order.
       </p>
     </div>
@@ -373,7 +373,7 @@ function FormatRow({
                     only its last line, and showing the label alone made an empty hint look like the
                     agent had been told nothing. Mirrors #listStandardFormats in overseer.ts. */}
                 {format.output && (
-                  <p className="mt-2 flex items-start gap-1.5 rounded-md bg-kumo-tint/60 px-2.5 py-2 font-mono text-ui-2xs leading-4 text-kumo-default">
+                  <p className="mt-2 flex items-start gap-1.5 rounded-md bg-kumo-tint/60 px-2.5 py-2 font-mono text-ui-2xs text-kumo-default">
                     <Sparkle size={12} className="mt-0.5 shrink-0" />
                     <span className="min-w-0">
                       <span className="block">
@@ -395,7 +395,7 @@ function FormatRow({
                   when it comes back. Removing would discard all three to reach the same visible
                   result. The backend refuses it too -- this is an RPC. */}
               <div className="flex items-end justify-between gap-4 border-t border-kumo-line pt-3">
-                <p className="text-ui-xs leading-4 text-kumo-subtle">
+                <p className="text-ui-xs text-kumo-subtle">
                   {(format.enabled
                     ? 'Turning this off removes it from the menus above and from the agent’s catalog. Outputs already made from it keep working. '
                     : 'Currently hidden from the menus above and from the agent’s catalog. ') +
@@ -439,7 +439,7 @@ function Fieldset({
   return (
     <div>
       <p className="text-ui-sm font-medium text-kumo-default">{title}</p>
-      <p className="mb-2 mt-0.5 text-ui-xs leading-4 text-kumo-subtle">{detail}</p>
+      <p className="mb-2 mt-0.5 text-ui-xs text-kumo-subtle">{detail}</p>
       {children}
     </div>
   )
@@ -448,7 +448,7 @@ function Fieldset({
 function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'warn' }) {
   return (
     <span
-      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs font-medium leading-none ${
+      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-none ${
         tone === 'warn' ? 'bg-kumo-danger/10 text-kumo-danger' : 'bg-kumo-fill text-kumo-subtle'
       }`}
     >
@@ -488,7 +488,7 @@ function OverrideField({
 
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-ui-2xs font-medium uppercase text-kumo-subtle">
+      <span className="text-ui-2xs uppercase text-kumo-subtle">
         {label}
         {overridden && (
           <span className="ml-1 normal-case tracking-normal text-kumo-subtle">(overridden)</span>
@@ -524,7 +524,7 @@ function IconPicker({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-ui-2xs font-medium uppercase text-kumo-subtle">
+      <span className="text-ui-2xs uppercase text-kumo-subtle">
         Icon
       </span>
       <DropdownMenu>

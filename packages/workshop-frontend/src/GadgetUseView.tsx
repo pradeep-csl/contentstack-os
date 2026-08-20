@@ -69,7 +69,7 @@ export default function GadgetUseView({
 
           <span className="text-kumo-subtle flex-shrink-0">/</span>
 
-          <span className="text-ui-md leading-5 font-medium text-kumo-default truncate">
+          <span className="text-ui-md font-medium text-kumo-default truncate">
             {metadata.title}
           </span>
 
@@ -89,7 +89,7 @@ export default function GadgetUseView({
                 type="button"
                 onClick={() => onSelectGadget(g.id)}
                 aria-current={g.id === selectedGadgetId ? 'true' : undefined}
-                className={`flex-shrink-0 cursor-pointer rounded-full px-3 py-1 text-ui-xs leading-4 transition-colors duration-150 ease-out ${
+                className={`flex-shrink-0 cursor-pointer rounded-full px-3 py-1 text-ui-xs transition-colors duration-150 ease-out ${
                   g.id === selectedGadgetId
                     ? 'bg-kumo-contrast font-medium text-kumo-inverse'
                     : 'bg-kumo-tint text-kumo-subtle hover:text-kumo-default'

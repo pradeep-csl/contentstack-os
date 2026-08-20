@@ -793,12 +793,12 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
         <header className="mb-10 grid gap-7 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="min-w-0">
             {isFeatured && (
-              <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] px-2 py-1 text-ui-2xs leading-4 font-semibold text-kumo-brand">
+              <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] px-2 py-1 text-ui-2xs text-kumo-brand">
                 <Star size={12} weight="fill" />
                 Featured
               </span>
             )}
-            <h1 className="m-0 text-ui-3xl font-semibold text-kumo-default">
+            <h1 className="m-0 text-ui-3xl font-semibold text-kumo-strong">
               {meta.title}
             </h1>
             {meta.description && (
@@ -828,7 +828,7 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
                   type="button"
                   onClick={handleStartConfigure}
                   disabled={createDisabled}
-                  className="press inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-lg bg-kumo-brand px-4 text-ui-md leading-5 font-semibold text-white transition-colors duration-150 ease-out hover:bg-kumo-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  className="press inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-lg bg-kumo-brand px-4 text-ui-md font-semibold text-white transition-colors duration-150 ease-out hover:bg-kumo-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {creating ? 'Creating...' : primaryActionLabel}
                 </button>
@@ -1010,7 +1010,7 @@ export default function BlueprintLandingPage({ rpcStub }: Props) {
             <>
               <div className="shrink-0 flex items-start justify-between gap-4 border-b border-kumo-line px-5 py-4">
                 <div className="min-w-0">
-                  <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-default">
+                  <Dialog.Title className="text-ui-xl leading-6 font-medium text-kumo-strong">
                     Configure {activeBinding.title || activeBindingName}
                   </Dialog.Title>
                   <Dialog.Description className="mt-1 text-ui-sm font-normal text-kumo-subtle">
@@ -1181,7 +1181,7 @@ function BlueprintStatePage({
           {loading && (
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-kumo-brand border-t-transparent" />
           )}
-          <h1 className="m-0 text-ui-2xl leading-7 font-semibold text-kumo-default">
+          <h1 className="m-0 text-ui-2xl font-semibold text-kumo-strong">
             {title}
           </h1>
           {message && (
@@ -1297,10 +1297,10 @@ function BlueprintBindingSummaryCard({
       <BindingIconTile binding={binding} vendor={vendor} />
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="m-0 truncate text-ui-md leading-5 font-medium text-kumo-default">
+          <h3 className="m-0 truncate text-ui-md font-medium text-kumo-default">
             {title}
           </h3>
-          <span className={`rounded-full px-2 py-0.5 text-ui-2xs leading-4 font-medium ${
+          <span className={`rounded-full px-2 py-0.5 text-ui-2xs ${
             assignment
               ? 'bg-kumo-success-tint text-kumo-success'
               : suggestion
@@ -1310,7 +1310,7 @@ function BlueprintBindingSummaryCard({
             {status}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
+        <p className="mt-0.5 truncate text-ui-xs font-normal text-kumo-subtle">
           {usingLabel
             ? <>Using: <span>{usingLabel}</span></>
             : suggestion
@@ -1321,7 +1321,7 @@ function BlueprintBindingSummaryCard({
       <button
         type="button"
         onClick={onConfigure}
-        className="press inline-flex h-8 cursor-pointer items-center justify-center rounded-lg border border-kumo-line bg-kumo-base px-3 text-ui-xs leading-4 font-medium text-kumo-default transition-colors duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint"
+        className="press inline-flex h-8 cursor-pointer items-center justify-center rounded-lg border border-kumo-line bg-kumo-base px-3 text-ui-xs font-medium text-kumo-default transition-colors duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint"
       >
         {actionLabel}
       </button>
@@ -1661,7 +1661,7 @@ function BlueprintGatekeeperBindingField({
       {selectedAccount && (
         <div className="space-y-2.5">
           {binding.resourceUrl && (
-            <p className="m-0 pl-[2px] text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <p className="m-0 pl-[2px] text-ui-xs font-normal text-kumo-subtle">
               Blueprint recommends: <span className="break-all text-kumo-default">{formatSuggestedResource(binding.resourceUrl)}</span>
             </p>
           )}

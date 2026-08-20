@@ -26,7 +26,7 @@ export function EmptyState({
         <EmptyIcon size={18} />
       </div>
       <div className="relative">
-        <p className="m-0 text-ui-md leading-5 font-medium text-kumo-default">
+        <p className="m-0 text-ui-md font-medium text-kumo-default">
           {title}
         </p>
         <p className="mx-auto mt-1 max-w-sm text-ui-sm font-normal text-kumo-subtle">

@@ -52,8 +52,8 @@ export function BlueprintBindingCard({
     : 'flex items-start gap-3 px-3 pt-3'
   const descriptionWrapperClass = flat ? '' : 'px-3 pt-2'
   const footerClass = flat
-    ? 'flex items-center [&_label]:!text-ui-xs [&_label]:!leading-4 [&_label]:!font-normal [&_label]:!text-kumo-subtle'
-    : 'mt-2 flex items-center border-t border-kumo-line/70 px-3 py-2 [&_label]:!text-ui-xs [&_label]:!leading-4 [&_label]:!font-normal [&_label]:!text-kumo-subtle'
+    ? 'flex items-center [&_label]:!text-ui-xs [&_label]:! [&_label]:!font-normal [&_label]:!text-kumo-subtle'
+    : 'mt-2 flex items-center border-t border-kumo-line/70 px-3 py-2 [&_label]:!text-ui-xs [&_label]:! [&_label]:!font-normal [&_label]:!text-kumo-subtle'
 
   return (
     <div className={containerClass}>
@@ -69,7 +69,7 @@ export function BlueprintBindingCard({
             placeholder="Connection name"
             className="!h-8 w-full bg-kumo-base text-ui-md font-medium"
           />
-          <p className="mt-1 text-ui-2xs leading-4 text-kumo-subtle">
+          <p className="mt-1 text-ui-2xs text-kumo-subtle">
             Referenced in code as: <span className="font-mono text-kumo-subtle">{bindingName}</span>
           </p>
         </div>

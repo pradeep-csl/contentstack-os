@@ -197,7 +197,7 @@ function PaneLabel({
         : <FormatGlyph output={output} size="sm" className="flex-shrink-0" weight="regular" />}
       <span className="truncate">{title}</span>
       {badge !== undefined && (
-        <span className="rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs font-medium leading-none text-kumo-subtle">
+        <span className="rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs leading-none text-kumo-subtle">
           {badge}
         </span>
       )}
@@ -283,7 +283,7 @@ function PaneWorkpieceTabs({
             <FormatGlyph output={gadget.output} size="sm" className="flex-shrink-0" weight="regular" />
             <span className="truncate">{gadget.title}</span>
             {gadget.chatId !== undefined && (
-              <span className="flex-shrink-0 rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs font-medium leading-none text-kumo-subtle">
+              <span className="flex-shrink-0 rounded-full bg-kumo-fill px-1.5 py-0.5 text-ui-2xs leading-none text-kumo-subtle">
                 Draft
               </span>
             )}
@@ -1349,7 +1349,7 @@ export default function GadgetEditor() {
                   if (e.key === 'Escape') handleCancelEdit()
                 }}
                 autoFocus
-                className="!h-7 w-56 bg-kumo-tint text-ui-md leading-5 font-medium"
+                className="!h-7 w-56 bg-kumo-tint text-ui-md font-medium"
               />
               <WorkshopIconButton
                 onClick={handleSaveTitle}
@@ -1369,7 +1369,7 @@ export default function GadgetEditor() {
             </div>
           ) : (
             <div className="flex items-center gap-1 min-w-0">
-              <span className="text-ui-md leading-5 font-medium text-kumo-default truncate">
+              <span className="text-ui-md font-medium text-kumo-default truncate">
                 {metadata.title}
               </span>
               <WorkshopIconButton
@@ -1399,7 +1399,7 @@ export default function GadgetEditor() {
           />
 
           {metadata.totalCost != null && (
-            <span className="mr-2 text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <span className="mr-2 text-ui-xs font-normal text-kumo-subtle">
               {formatHeaderCost(metadata.totalCost)}
             </span>
           )}
@@ -1669,7 +1669,7 @@ export default function GadgetEditor() {
                   className="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2 transform"
                 >
                   <div className="rounded-full border border-kumo-line bg-kumo-base/90 px-4 py-1.5 text-ui-sm text-kumo-default shadow-md backdrop-blur-sm">
-                    Press <kbd className="rounded border border-kumo-line bg-kumo-elevated px-1.5 py-0.5 text-ui-2xs font-medium">Esc</kbd> to exit full screen
+                    Press <kbd className="rounded border border-kumo-line bg-kumo-elevated px-1.5 py-0.5 text-ui-2xs ">Esc</kbd> to exit full screen
                   </div>
                 </div>
               )}

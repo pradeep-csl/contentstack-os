@@ -61,7 +61,7 @@ export default function SidebarGadgetRow({
       title={collapsed ? gadget.title || 'Untitled workspace' : undefined}
     >
       <div
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-kumo-fill text-ui-2xs font-medium text-kumo-subtle"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-kumo-fill text-ui-2xs text-kumo-subtle"
         aria-hidden="true"
       >
         {initials(gadget.title)}

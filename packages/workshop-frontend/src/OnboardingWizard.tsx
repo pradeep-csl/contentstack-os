@@ -369,7 +369,7 @@ export default function OnboardingWizard({
         {/* Header */}
         <div className="text-center mb-8">
           <h1
-            className={`text-ui-3xl font-semibold text-kumo-default transition-all duration-500 delay-100 ${
+            className={`text-ui-3xl font-semibold text-kumo-strong transition-all duration-500 delay-100 ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}
           >
@@ -558,7 +558,7 @@ export default function OnboardingWizard({
                             <p className="text-ui-md font-medium text-kumo-default truncate">
                               {model.name}
                               {gatewayLabel(model.gateway) && (
-                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs font-semibold uppercase text-kumo-subtle">
+                                <span className="ml-1.5 rounded-full bg-kumo-tint px-1.5 py-0.5 align-middle text-ui-2xs uppercase text-kumo-subtle">
                                   {gatewayLabel(model.gateway)}
                                 </span>
                               )}

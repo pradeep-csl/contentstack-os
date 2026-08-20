@@ -125,7 +125,7 @@ function ConnectorCard({
 
   const badgeEl = badge ? (
     <span
-      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-3 font-semibold uppercase ${
+      className={`shrink-0 rounded-full px-1.5 py-0.5 text-ui-2xs leading-3 uppercase ${
         badge.tone === 'new'
           ? 'bg-[color-mix(in_srgb,var(--color-kumo-brand)_10%,transparent)] text-kumo-brand'
           : 'bg-kumo-tint text-kumo-subtle'
@@ -144,7 +144,7 @@ function ConnectorCard({
           if (!reconnectBusy) onReconnect()
         }}
         disabled={reconnectBusy}
-        className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-kumo-line bg-kumo-base px-3 text-ui-xs leading-4 font-medium text-kumo-default transition-[background-color,border-color,opacity,transform] duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
+        className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-kumo-line bg-kumo-base px-3 text-ui-xs font-medium text-kumo-default transition-[background-color,border-color,opacity,transform] duration-150 ease-out hover:border-kumo-fill hover:bg-kumo-tint active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
       >
         <ArrowsClockwise size={12} weight="bold" />
         {reconnectBusy ? 'Opening...' : 'Reconnect'}
@@ -186,7 +186,7 @@ function ConnectorCard({
             {badgeEl}
           </div>
           {(metaLine || tagline) && (
-            <div className="mt-0.5 truncate text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <div className="mt-0.5 truncate text-ui-xs font-normal text-kumo-subtle">
               {metaLine ?? tagline}
             </div>
           )}
@@ -219,7 +219,7 @@ function ConnectorCard({
           {badgeEl}
         </div>
         {metaLine && (
-          <div className="mt-0.5 flex items-center gap-1.5 text-ui-xs leading-4 font-normal text-kumo-subtle">
+          <div className="mt-0.5 flex items-center gap-1.5 text-ui-xs font-normal text-kumo-subtle">
             {metaLine}
           </div>
         )}
@@ -238,12 +238,12 @@ function ConnectorCard({
 function SectionEyebrow({ label, count }: { label: string; count?: number }) {
   return (
     <div className="mb-3.5 flex items-center gap-3 px-1">
-      <h2 className="m-0 text-ui-2xs leading-4 font-semibold uppercase text-kumo-subtle">
+      <h2 className="m-0 text-ui-2xs uppercase text-kumo-subtle">
         {label}
       </h2>
       <div className="h-px flex-1 bg-kumo-line" />
       {typeof count === 'number' && (
-        <span className="text-ui-2xs leading-4 font-semibold text-kumo-subtle">
+        <span className="text-ui-2xs text-kumo-subtle">
           {count}
         </span>
       )}
@@ -411,10 +411,10 @@ function ConnectorsHeroDiagram({
               <ShieldCheck size={16} weight="duotone" />
             </div>
             <div className="min-w-0">
-              <p className="m-0 text-ui-xs leading-4 font-semibold text-kumo-default">
+              <p className="m-0 text-ui-xs font-semibold text-kumo-default">
                 Gatekeeper
               </p>
-              <p className="mt-1 text-ui-2xs leading-4 font-normal text-kumo-subtle">
+              <p className="mt-1 text-ui-2xs text-kumo-subtle">
                 Keeps each workspace limited to the resources you connect and ensures every user has the required permissions before accessing them.
               </p>
             </div>
@@ -742,7 +742,7 @@ function ConnectorsPage() {
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-8 sm:py-14">
         <header className="mb-8 grid gap-8 lg:grid-cols-[minmax(0,540px)_444px] lg:items-center lg:justify-between">
           <div>
-            <h1 className="m-0 text-ui-3xl font-semibold text-kumo-default">
+            <h1 className="m-0 text-ui-3xl font-semibold text-kumo-strong">
               Gatekeepers
             </h1>
             <p className="mt-2 text-ui-md font-normal text-kumo-subtle">
@@ -775,7 +775,7 @@ function ConnectorsPage() {
             <p className="m-0 text-ui-sm font-medium text-kumo-danger">
               Something went wrong loading your gatekeepers.
             </p>
-            <p className="mt-1 text-ui-xs leading-4 font-normal text-kumo-subtle">
+            <p className="mt-1 text-ui-xs font-normal text-kumo-subtle">
               Check your connection and try refreshing the page.
             </p>
           </div>
