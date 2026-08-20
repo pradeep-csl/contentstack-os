@@ -196,11 +196,11 @@ export default function SchedulerPage({
 
       {!isEmpty && (
         <>
-          <label className="mt-4 flex h-9 items-center gap-2 rounded-lg border border-kumo-line bg-kumo-control px-3 text-kumo-inactive focus-within:ring-2 focus-within:ring-kumo-ring">
+          <label className="mt-4 flex h-9 items-center gap-2 rounded-lg border border-kumo-line bg-kumo-control px-3 text-kumo-subtle focus-within:ring-2 focus-within:ring-kumo-ring">
             <MagnifyingGlass size={15} />
             <span className="sr-only">Search scheduled tasks</span>
             <input
-              className="min-w-0 flex-1 bg-transparent text-sm text-kumo-default outline-none placeholder:text-kumo-inactive"
+              className="min-w-0 flex-1 bg-transparent text-sm text-kumo-default outline-none placeholder:text-kumo-placeholder"
               type="search"
               value={query}
               maxLength={200}
@@ -293,7 +293,7 @@ export default function SchedulerPage({
       <section className={isEmpty ? "mt-6" : "mt-8"} aria-labelledby="get-started-heading">
         <h2
           id="get-started-heading"
-          className="text-xs font-medium uppercase tracking-[0.12em] text-kumo-inactive"
+          className="text-xs font-medium uppercase tracking-[0.12em] text-kumo-subtle"
         >
           Get started
         </h2>
@@ -313,7 +313,7 @@ export default function SchedulerPage({
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-kumo-default">
                     {starter.title}{" "}
-                    <span className="ml-1 font-normal text-kumo-inactive">{starter.cadence}</span>
+                    <span className="ml-1 font-normal text-kumo-subtle">{starter.cadence}</span>
                   </span>
                   <span className="block truncate text-xs text-kumo-subtle">
                     {starter.description}
@@ -385,7 +385,7 @@ function ScheduleRow({
               {timing.relative}
             </span>
             {timing.absolute && (
-              <span className="block text-[11px] text-kumo-inactive">{timing.absolute}</span>
+              <span className="block text-[11px] text-kumo-subtle">{timing.absolute}</span>
             )}
           </span>
         </button>
@@ -395,7 +395,7 @@ function ScheduleRow({
             data-action="toggle-diagnostic"
             aria-expanded={expanded}
             aria-label={`${expanded ? "Hide" : "Show"} why ${schedule.title} needs attention`}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-kumo-inactive hover:bg-kumo-fill hover:text-kumo-default"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-kumo-subtle hover:bg-kumo-fill hover:text-kumo-default"
             onClick={onToggle}
           >
             <CaretDown

@@ -389,14 +389,14 @@ function CollectionRow({
         </p>
         <p
           className={`mt-0.5 line-clamp-1 text-[12px] leading-4 tracking-[-0.2px] ${
-            hasDescription ? "text-kumo-subtle" : "italic text-kumo-inactive"
+            hasDescription ? "text-kumo-subtle" : "italic text-kumo-subtle"
           }`}
         >
           {hasDescription ? collection.description : "No description"}
         </p>
       </div>
       {/* Fixed-width meta columns so rows line up like a table. */}
-      <div className="hidden shrink-0 items-center gap-6 text-xs text-kumo-inactive lg:flex">
+      <div className="hidden shrink-0 items-center gap-6 text-xs text-kumo-subtle lg:flex">
         <CollectionProvenance source={collection.source} />
         <span className="flex w-16 items-center justify-end gap-1 whitespace-nowrap">
           <Clock size={10} />
@@ -488,7 +488,7 @@ function WorkshopInput({ className = "", ...props }: ComponentProps<typeof Input
   return (
     <Input
       {...props}
-      className={`!h-9 rounded-lg border border-kumo-line bg-kumo-base px-3 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
+      className={`!h-9 rounded-lg border border-kumo-line bg-kumo-base px-3 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
     />
   );
 }
@@ -497,7 +497,7 @@ function WorkshopInputArea({ className = "", ...props }: ComponentProps<typeof I
   return (
     <InputArea
       {...props}
-      className={`rounded-lg border border-kumo-line bg-kumo-base px-3 py-2 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
+      className={`rounded-lg border border-kumo-line bg-kumo-base px-3 py-2 text-[13px] leading-[18px] font-normal tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder shadow-none focus:border-kumo-ring focus:outline-none focus:ring-1 focus:ring-kumo-ring/15 ${className}`}
     />
   );
 }
@@ -512,7 +512,7 @@ function FieldLabel({
   return (
     <label className="mb-1.5 flex items-center gap-1.5 text-[12px] leading-4 font-medium tracking-[-0.2px] text-kumo-subtle">
       <span>{children}</span>
-      {optional ? <span className="font-normal text-kumo-inactive">Optional</span> : null}
+      {optional ? <span className="font-normal text-kumo-subtle">Optional</span> : null}
     </label>
   );
 }
@@ -585,7 +585,7 @@ function CollectionNameField({
           }}
           placeholder="A short name, e.g., Brand guidelines"
           autoFocus={autoFocus}
-          className="h-9 min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 pr-2 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default outline-none placeholder:text-kumo-inactive"
+          className="h-9 min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 pr-2 text-[13px] leading-[18px] tracking-[-0.25px] text-kumo-default outline-none placeholder:text-kumo-placeholder"
         />
       </div>
     </>
@@ -1050,14 +1050,14 @@ export default function ContextLibraryPage() {
           <div className="relative">
             <MagnifyingGlass
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-inactive"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-subtle"
             />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search collections…"
-              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-inactive transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
+              className="h-9 w-full rounded-lg border border-kumo-line bg-kumo-base pl-9 pr-4 text-[13px] tracking-[-0.25px] text-kumo-default placeholder:text-kumo-placeholder transition-[border-color,box-shadow] duration-150 ease-out focus:border-kumo-ring focus:outline-none focus:ring-[3px] focus:ring-kumo-ring/15"
             />
           </div>
         </div>
@@ -1123,7 +1123,7 @@ function MetaField({
 }) {
   return (
     <div className={`flex flex-col gap-1 ${align === "right" ? "items-end text-right" : ""}`}>
-      <span className="text-[11px] leading-none font-medium tracking-[-0.1px] text-kumo-inactive">
+      <span className="text-[11px] leading-none font-medium tracking-[-0.1px] text-kumo-subtle">
         {label}
       </span>
       <span className="text-[13px] leading-[18px] tracking-[-0.2px] text-kumo-default">
@@ -1277,7 +1277,7 @@ function CollectionOverview({
               {metadata.description}
             </p>
           ) : (
-            <p className="text-[13px] italic leading-5 text-kumo-inactive">
+            <p className="text-[13px] italic leading-5 text-kumo-subtle">
               No description yet.
             </p>
           )}
@@ -2081,7 +2081,7 @@ const treePad = (depth: number, isFile: boolean) =>
 
 // Hover-kebab trigger styling for tree rows: hidden until row hover / menu open.
 const TREE_ROW_TRIGGER =
-  "!h-5 !w-5 shrink-0 text-kumo-inactive opacity-0 hover:bg-kumo-tint hover:text-kumo-default group-hover:opacity-100 data-[popup-open]:opacity-100";
+  "!h-5 !w-5 shrink-0 text-kumo-subtle opacity-0 hover:bg-kumo-tint hover:text-kumo-default group-hover:opacity-100 data-[popup-open]:opacity-100";
 
 // Inline text field for the tree's create and rename rows: auto-focus, Enter-commit/Escape-cancel,
 // and a blur guard that skips commit when focus moves to an action button. Rename rows pass
@@ -2120,7 +2120,7 @@ function TreeInlineInput({
       spellCheck={false}
       autoCapitalize="off"
       autoCorrect="off"
-      className={`min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] tracking-[-0.2px] text-kumo-default outline-none placeholder:text-kumo-inactive ${className}`}
+      className={`min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] tracking-[-0.2px] text-kumo-default outline-none placeholder:text-kumo-placeholder ${className}`}
     />
   );
 }
@@ -2133,7 +2133,7 @@ function CreateRow({ depth, ctx }: { depth: number; ctx: TreeCtx }) {
       style={{ paddingLeft: `${treePad(depth, !isFolder)}px` }}
     >
       {isFolder ? (
-        <CaretRight size={12} className="shrink-0 text-kumo-inactive" />
+        <CaretRight size={12} className="shrink-0 text-kumo-subtle" />
       ) : (
         <FileText size={14} className="shrink-0 text-kumo-subtle" />
       )}
@@ -2215,9 +2215,9 @@ function FolderView({
             className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
           >
             {open ? (
-              <CaretDown size={12} className="shrink-0 text-kumo-inactive" />
+              <CaretDown size={12} className="shrink-0 text-kumo-subtle" />
             ) : (
-              <CaretRight size={12} className="shrink-0 text-kumo-inactive" />
+              <CaretRight size={12} className="shrink-0 text-kumo-subtle" />
             )}
             {ctx.renaming === folder.path ? (
               <TreeInlineInput
@@ -2236,7 +2236,7 @@ function FolderView({
                 {isSkill && (
                   <span
                     title="Contains a valid Agent Skill"
-                    className="shrink-0 text-[10px] font-medium uppercase leading-none tracking-[0.4px] text-kumo-inactive"
+                    className="shrink-0 text-[10px] font-medium uppercase leading-none tracking-[0.4px] text-kumo-subtle"
                   >
                     skill
                   </span>
@@ -2918,7 +2918,7 @@ function CollectionEditor({
           )}
 
           <div className="flex h-8 shrink-0 items-center justify-between gap-2 px-5">
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-kumo-inactive">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-kumo-subtle">
               Files
             </span>
             {canEditDocuments && (
@@ -2993,7 +2993,7 @@ function CollectionEditor({
             {loading ? (
               <p className="px-2 py-2 text-[13px] text-kumo-subtle">Loading…</p>
             ) : docs.length === 0 && pendingFolders.size === 0 && !creating ? (
-              <p className="px-2 py-2 text-[12px] leading-5 text-kumo-inactive">
+              <p className="px-2 py-2 text-[12px] leading-5 text-kumo-subtle">
                 {metadata?.content.source === "git"
                   ? supportsGitCollections
                     ? "No files yet. Mirror content from git, then refresh."
@@ -3143,7 +3143,7 @@ function MarkdownPreview({
               {content}
             </ReactMarkdown>
           ) : (
-            <p className="italic text-kumo-inactive">This document is empty.</p>
+            <p className="italic text-kumo-subtle">This document is empty.</p>
           )}
         </div>
       </div>
@@ -3488,7 +3488,7 @@ function DocumentEditor({
           )}
           {extractedDescription !== null && (
             <span
-              className="ml-1 text-kumo-inactive"
+              className="ml-1 text-kumo-subtle"
               title="Defined in this file; edit it in the document below."
             >
               · from file
@@ -3498,7 +3498,7 @@ function DocumentEditor({
         {extractedDescription !== null ? (
           <p className="max-w-3xl text-[14px] leading-5 tracking-[-0.2px] text-kumo-default">
             {effectiveDescription || (
-              <span className="italic text-kumo-inactive">No description in this file yet.</span>
+              <span className="italic text-kumo-subtle">No description in this file yet.</span>
             )}
           </p>
         ) : descriptionIsEditable ? (
@@ -3510,12 +3510,12 @@ function DocumentEditor({
               setDirty(documentIsDirty(nextDescription, body));
             }}
             placeholder="Describe what this document contains and when an agent should use it…"
-            className="w-full bg-transparent text-[14px] leading-5 tracking-[-0.2px] text-kumo-default placeholder:text-kumo-inactive focus:outline-none"
+            className="w-full bg-transparent text-[14px] leading-5 tracking-[-0.2px] text-kumo-default placeholder:text-kumo-placeholder focus:outline-none"
           />
         ) : (
           <p className="max-w-3xl text-[14px] leading-5 tracking-[-0.2px] text-kumo-default">
             {description || (
-              <span className="italic text-kumo-inactive">No description yet.</span>
+              <span className="italic text-kumo-subtle">No description yet.</span>
             )}
           </p>
         )}
