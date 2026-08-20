@@ -36,16 +36,60 @@ function kumoFiles(dir, out = []) {
   return out
 }
 
-test('every Kumo text token that Kumo references is given a Contentstack value', () => {
+function referencedKumoTokens() {
   const referenced = new Set()
   for (const file of kumoFiles(KUMO_DIST)) {
-    for (const [, name] of readFileSync(file, 'utf8').matchAll(/--(text-color-kumo-[a-z-]+)/g)) {
+    for (const [, name] of readFileSync(file, 'utf8').matchAll(/--((?:text-)?color-kumo-[a-z-]+)/g)) {
       referenced.add(`--${name}`)
     }
   }
+  return referenced
+}
+
+// Kumo's compiled `dist/` doesn't only reference `--text-color-kumo-*` (content text): it also
+// references bare `--color-kumo-*` (surfaces, fills, badges, banners, focus rings, hairlines) that
+// this same completeness guard used to miss entirely. Two were live defects — `--color-kumo-hairline`
+// and `--color-kumo-focus` are now declared in tokens.css — and the rest are real but not yet
+// audited. Rather than declare 26+ values blind, they're recorded here so the guard still catches
+// anything *new* that Kumo starts consuming, without pretending the backlog is closed.
+//
+// Note: `[a-z-]+` doesn't match digits, so the twelve-plus `--color-kumo-neutral-<n>` variants all
+// collapse into the single captured name `--color-kumo-neutral-` (matching stops at the first
+// digit). That's fine here — one allowlist entry still covers the whole family.
+const PENDING_KUMO_TOKENS = new Set([
+  '--color-kumo-badge-blue',
+  '--color-kumo-badge-green',
+  '--color-kumo-badge-inverted',
+  '--color-kumo-badge-neutral',
+  '--color-kumo-badge-orange',
+  '--color-kumo-badge-purple',
+  '--color-kumo-badge-red',
+  '--color-kumo-badge-teal',
+  '--color-kumo-banner-info',
+  '--color-kumo-banner-warning',
+  '--color-kumo-canvas',
+  '--color-kumo-neutral-',
+  '--color-kumo-shadow-drop',
+  '--color-kumo-shadow-edge',
+])
+
+test('every Kumo text token that Kumo references is given a Contentstack value', () => {
   const declared = lightTheme()
-  const missing = [...referenced].filter((t) => !declared.has(t)).toSorted()
+  const missing = [...referencedKumoTokens()]
+    .filter((t) => !declared.has(t) && !PENDING_KUMO_TOKENS.has(t))
+    .toSorted()
   assert.deepEqual(missing, [], 'declare these in packages/design-tokens/tokens.css')
+})
+
+// Same ratchet shape as PENDING_SIZES: an allowlist entry that Kumo no longer references, or that
+// tokens.css now declares, is stale and must be removed rather than left to rot.
+test('the pending Kumo tokens allowlist has no stale entries', () => {
+  const declared = lightTheme()
+  const referenced = referencedKumoTokens()
+  const stale = [...PENDING_KUMO_TOKENS].filter(
+    (t) => declared.has(t) || !referenced.has(t),
+  )
+  assert.deepEqual(stale, [], 'these are declared or no longer referenced — remove them from PENDING_KUMO_TOKENS')
 })
 
 // Contrast value assertions (content tokens clear AA, `inactive` stays below AA, placeholder on
@@ -67,6 +111,24 @@ function tsxFiles(dir, out = []) {
 
 const repoPath = (file) => relative(ROOT, file).split(sep).join('/')
 
+// `gatekeeper-context/app` and `gatekeeper-scheduler/app` import the same `packages/design-tokens/
+// tokens.css` as workshop-frontend, so they inherited the retuned Kumo text ramp — but until now
+// these three scans only walked `packages/workshop-frontend/src`, so 31 bare `text-kumo-inactive`
+// content uses in those two app bundles went undetected. The inactive-scope and 2xs/tracking guards
+// below apply unconditionally now that the fix has landed. `text-ui-*` doesn't exist outside
+// workshop-frontend (see styles.css), so the sizing guard alone needs a pending allowlist for these
+// two packages' pre-existing ad-hoc debt (~75 px sizes, 48 negative px trackings, 4 tracking-tight)
+// — recorded, not migrated, since there's no scale here to migrate onto.
+const SCAN_DIRS = [
+  join(ROOT, 'packages/workshop-frontend/src'),
+  join(ROOT, 'packages/gatekeeper-context/app'),
+  join(ROOT, 'packages/gatekeeper-scheduler/app'),
+]
+
+function allScanFiles() {
+  return SCAN_DIRS.flatMap((dir) => tsxFiles(dir))
+}
+
 // `inactive` is 2.48:1: the colour of a control the user cannot operate. It is legitimate only
 // when the style is scoped to a disabled state, wherever `disabled:`/`group-disabled:`/
 // `peer-disabled:` sits in the variant chain (either order, any chain length). A bare
@@ -79,7 +141,12 @@ const repoPath = (file) => relative(ROOT, file).split(sep).join('/')
 // adjacent) was misclassified as bare by an earlier version of this guard. Instead, capture the
 // whole utility token — its full variant chain plus the class name — and search that chain for
 // `disabled:` (optionally `group-`/`peer-`-prefixed) anywhere in it.
-const INACTIVE_TOKEN = /[\w:[\]./-]*\btext-kumo-inactive\b/g
+//
+// `!` is in the character class too: Tailwind's important-modifier prefix (`disabled:!text-kumo-
+// inactive`) sits between the last `:` and the class name, and without it here the leading
+// `disabled:` variant falls outside the captured token — exactly the false-bare misclassification
+// this guard exists to avoid, just one character earlier than the original bug.
+const INACTIVE_TOKEN = /[\w:[\]./!-]*\btext-kumo-inactive\b/g
 const DISABLED_VARIANT = /(?:^|:)(?:group-|peer-)?disabled:/
 
 function bareInactiveIn(text) {
@@ -101,6 +168,7 @@ const INACTIVE_TOKEN_CASES = [
   ['hover:text-kumo-inactive', true],
   ['hover:disabled:text-kumo-inactive', false],
   ['disabled:hover:text-kumo-inactive', false],
+  ['disabled:!text-kumo-inactive', false],
 ]
 
 test('the inactive classifier scopes disabled: correctly in either variant order', () => {
@@ -111,7 +179,7 @@ test('the inactive classifier scopes disabled: correctly in either variant order
 
 test('text-kumo-inactive is only ever scoped to a disabled state', () => {
   const offenders = []
-  for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
+  for (const file of allScanFiles()) {
     if (bareInactiveIn(readFileSync(file, 'utf8'))) offenders.push(repoPath(file))
   }
   assert.deepEqual(offenders, [], 'use text-kumo-subtle for content, or scope it with disabled:')
@@ -220,7 +288,7 @@ test('the 2xs/tracking classifier flags text-ui-2xs lines carrying any tracking 
 
 test('text-ui-2xs never shares a line with a tracking-* utility', () => {
   const offenders = []
-  for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
+  for (const file of allScanFiles()) {
     const rel = repoPath(file)
     const lines = readFileSync(file, 'utf8').split('\n')
     lines.forEach((line, i) => {
@@ -230,18 +298,109 @@ test('text-ui-2xs never shares a line with a tracking-* utility', () => {
   assert.deepEqual(offenders, [], 'text-ui-2xs already supplies +0.06em — delete the tracking-* override')
 })
 
-test('sizing comes from the text-ui-* scale outside the pending allowlist', () => {
+// Same mechanism, same fix, different axis: `text-ui-2xs` also bakes in its own font-weight
+// (600). A sibling `font-*` utility has equal specificity and wins on source order, silently
+// overriding it — 34 sites carried `font-medium` (500) and 3 `font-normal` (400), undoing the
+// token's weight; 19 `font-semibold` and 1 `font-bold` merely restated or exceeded it, which is
+// dead weight for the same reason a restated tracking bracket is. One policy, not two: if a
+// heading genuinely needs a different weight, change the scale step, don't override it per line.
+const WEIGHT_UTILITY = /\bfont-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black)\b/
+
+function has2xsWeightCollision(line) {
+  return TWOXS_TOKEN.test(line) && WEIGHT_UTILITY.test(line)
+}
+
+const TWOXS_WEIGHT_CASES = [
+  ['text-ui-2xs font-medium uppercase text-kumo-subtle', true],
+  ['text-ui-2xs font-semibold uppercase text-kumo-subtle', true],
+  ['text-ui-2xs font-normal uppercase text-kumo-subtle', true],
+  ['text-ui-2xs font-bold uppercase text-kumo-subtle', true],
+  ['text-ui-xs font-medium uppercase text-kumo-subtle', false],
+  ['text-ui-2xs uppercase text-kumo-subtle', false],
+]
+
+test('the 2xs/weight classifier flags text-ui-2xs lines carrying any font-weight utility', () => {
+  for (const [line, want] of TWOXS_WEIGHT_CASES) {
+    assert.equal(has2xsWeightCollision(line), want, `${line}: expected ${want}`)
+  }
+})
+
+test('text-ui-2xs never shares a line with a font-weight utility', () => {
   const offenders = []
   for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
     const rel = repoPath(file)
-    if (PENDING_SIZES.has(rel)) continue
+    const lines = readFileSync(file, 'utf8').split('\n')
+    lines.forEach((line, i) => {
+      if (has2xsWeightCollision(line)) offenders.push(`${rel}:${i + 1}`)
+    })
+  }
+  assert.deepEqual(offenders, [], 'text-ui-2xs already supplies weight 600 — delete the font-* override')
+})
+
+// The heading steps of the scale (3xl page titles, 2xl section headings) exist to carry the
+// `strong` text role — that's the whole point of having a bigger step. A heading sized `text-ui-3xl`
+// or `text-ui-2xl` but left at `text-kumo-default` (or any other text-color) is a heading that reads
+// like body copy: the exact gap a whole-branch review found at 21 of the 26 headings this scale
+// step touches. Same shape as the 2xs/tracking guard above: catch the omission on the line itself
+// rather than trusting convention.
+const HEADING_STEP = /\btext-ui-(?:3xl|2xl)\b/
+const STRONG_ROLE = /\btext-kumo-strong\b/
+
+function missingStrongRole(line) {
+  return HEADING_STEP.test(line) && !STRONG_ROLE.test(line)
+}
+
+const HEADING_STEP_CASES = [
+  ['text-ui-3xl font-semibold text-kumo-strong', false],
+  ['text-ui-3xl font-semibold text-kumo-default', true],
+  ['text-ui-2xl leading-7 font-semibold text-kumo-strong', false],
+  ['text-ui-2xl leading-7 font-semibold text-kumo-default', true],
+  ['text-ui-xl leading-6 font-medium text-kumo-default', false],
+  ['text-ui-md text-kumo-subtle', false],
+]
+
+test('the heading-role classifier flags text-ui-3xl/2xl lines missing text-kumo-strong', () => {
+  for (const [line, want] of HEADING_STEP_CASES) {
+    assert.equal(missingStrongRole(line), want, `${line}: expected ${want}`)
+  }
+})
+
+test('every text-ui-3xl/2xl heading carries the text-kumo-strong role', () => {
+  const offenders = []
+  for (const file of tsxFiles(join(ROOT, 'packages/workshop-frontend/src'))) {
+    const rel = repoPath(file)
+    const lines = readFileSync(file, 'utf8').split('\n')
+    lines.forEach((line, i) => {
+      if (missingStrongRole(line)) offenders.push(`${rel}:${i + 1}`)
+    })
+  }
+  assert.deepEqual(offenders, [], 'a text-ui-3xl/2xl heading should carry text-kumo-strong')
+})
+
+// `gatekeeper-context/app` and `gatekeeper-scheduler/app` have no `text-ui-*` scale to migrate onto
+// (it's defined only in `workshop-frontend/src/styles.css`), so their pre-existing ad-hoc sizing —
+// bare Tailwind classes are the *correct* choice there, not debt — can't be closed the way
+// PENDING_SIZES was. This is a separate, file-granular allowlist so that real ratchet
+// (PENDING_SIZES, which must stay empty) isn't diluted with debt that has nowhere to migrate to.
+const PENDING_GATEKEEPER_SIZES = new Set([
+  'packages/gatekeeper-context/app/ContextLibraryPage.tsx',
+  'packages/gatekeeper-context/app/ErrorBoundary.tsx',
+  'packages/gatekeeper-scheduler/app/ErrorBoundary.tsx',
+  'packages/gatekeeper-scheduler/app/SchedulerPage.tsx',
+])
+
+test('sizing comes from the text-ui-* scale outside the pending allowlist', () => {
+  const offenders = []
+  for (const file of allScanFiles()) {
+    const rel = repoPath(file)
+    if (PENDING_SIZES.has(rel) || PENDING_GATEKEEPER_SIZES.has(rel)) continue
     const text = readFileSync(file, 'utf8')
     const hits = []
     if (BANNED_SIZE.test(text)) hits.push('ad-hoc or Tailwind size')
     if (BANNED_TRACKING.test(text)) hits.push('px letter-spacing')
     if (hits.length) offenders.push(`${rel}: ${hits.join(', ')}`)
   }
-  assert.deepEqual(offenders, [], 'migrate to text-ui-*, or add to PENDING_SIZES')
+  assert.deepEqual(offenders, [], 'migrate to text-ui-*, or add to PENDING_SIZES/PENDING_GATEKEEPER_SIZES')
 })
 
 test('the sizes allowlist has no stale entries', () => {
@@ -256,4 +415,12 @@ test('the sizes allowlist has no stale entries', () => {
 // requires deleting this test rather than quietly appending a path to the Set above.
 test('PENDING_SIZES stays empty', () => {
   assert.deepEqual([...PENDING_SIZES], [])
+})
+
+test('the gatekeeper sizes allowlist has no stale entries', () => {
+  const stale = [...PENDING_GATEKEEPER_SIZES].filter((rel) => {
+    const text = readFileSync(join(ROOT, rel), 'utf8')
+    return !BANNED_SIZE.test(text) && !BANNED_TRACKING.test(text)
+  })
+  assert.deepEqual(stale, [], 'these are clean — remove them from PENDING_GATEKEEPER_SIZES')
 })

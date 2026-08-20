@@ -527,14 +527,6 @@ html {
   }
 }
 
-/* Kumo Select: use text-sm consistently for trigger and dropdown options.
-   The trigger can be overridden via className, but the dropdown options have
-   hardcoded text-base with no override mechanism — this global rule fixes it. */
-[role="listbox"] [role="option"] {
-  font-size: 0.875rem !important; /* text-sm: 14px */
-  line-height: 1.25rem !important;
-}
-
 /* Prevent body scroll on desktop home page (two-column layout) */
 @media (min-width: 1024px) {
   body:has(.home-layout) {

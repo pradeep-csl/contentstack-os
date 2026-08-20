@@ -45,6 +45,9 @@ const REQUIRED_TOKENS = [
   '--text-color-kumo-subtle', '--text-color-kumo-inactive',
   '--text-color-kumo-brand', '--text-color-kumo-link',
   '--text-color-kumo-success', '--text-color-kumo-danger', '--text-color-kumo-warning',
+  '--text-color-kumo-placeholder', '--text-color-kumo-info',
+  '--text-color-kumo-badge-orange-subtle', '--text-color-kumo-badge-teal-subtle',
+  '--text-color-kumo-badge-neutral-subtle', '--text-color-kumo-badge-inverted',
 ]
 
 describe('shared design tokens', () => {
