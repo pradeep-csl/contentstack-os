@@ -87,7 +87,7 @@ import {
   BlueprintOutput,
   MessageFormatRef,
   OutputIcon,
-  OutputFormatOffer,
+  OutputFormatOffer
 } from "@gadgets/workshop-shared/api";
 import {
   ActionKind,
@@ -105,7 +105,9 @@ import {
   type MirrorToken
 } from "./components/chat/ComposerMirror";
 import {
-  slashCommandKey, useSlashCommandChoice, type OverseerSource,
+  slashCommandKey,
+  useSlashCommandChoice,
+  type OverseerSource
 } from "./components/chat/slash-command-catalog";
 import {
   removeComposerToken,
@@ -149,7 +151,7 @@ import {
   readComposerDraft,
   serializeComposerDraft,
   writeComposerDraft,
-  type StoredComposerDraft,
+  type StoredComposerDraft
 } from "./composerDraft";
 
 export interface StreamingProposedChanges {
@@ -361,19 +363,29 @@ type FormatToken = ComposerRange & {
   logo?: string;
 };
 
-function formatTokensFromDraft(draft: StoredComposerDraft | undefined): FormatToken[] {
-  return draft?.formats.map(({position, length, noun, icon}) => ({
-    start: position,
-    length,
-    noun,
-    icon,
-  })) ?? [];
+function formatTokensFromDraft(
+  draft: StoredComposerDraft | undefined
+): FormatToken[] {
+  return (
+    draft?.formats.map(({ position, length, noun, icon }) => ({
+      start: position,
+      length,
+      noun,
+      icon
+    })) ?? []
+  );
 }
 
-function slashCommandFromDraft(draft: StoredComposerDraft | undefined): SelectedSlashCommand | null {
+function slashCommandFromDraft(
+  draft: StoredComposerDraft | undefined
+): SelectedSlashCommand | null {
   const command = draft?.command;
   return command
-    ? { start: command.position, length: command.length, choice: command.choice }
+    ? {
+        start: command.position,
+        length: command.length,
+        choice: command.choice
+      }
     : null;
 }
 
@@ -1376,13 +1388,15 @@ const MARKDOWN_COMPONENTS_NO_CAPSULES = getMarkdownComponents();
  * single newline in a user message survives to the DOM as a literal "\n" so the
  * `whitespace-pre-wrap` wrapper at the user-message render site renders it as a hard break.
  */
-export const MarkdownMessage = memo(function MarkdownMessage(
-  { message, capsules, formats }: {
-    message: string;
-    capsules?: CapsuleSpecifier[];
-    formats?: MessageFormatRef[];
-  },
-): ReactNode {
+export const MarkdownMessage = memo(function MarkdownMessage({
+  message,
+  capsules,
+  formats
+}: {
+  message: string;
+  capsules?: CapsuleSpecifier[];
+  formats?: MessageFormatRef[];
+}): ReactNode {
   const tokenizedMessage = useMemo(
     () =>
       capsules?.length || formats?.length
@@ -2212,17 +2226,23 @@ export const ChatInput = ({
   const [inputValue, setInputValue] = useState(() => initialDraft?.text ?? "");
   const [capsules, setCapsules] = useState<InputCapsule[]>([]);
   const [formatTokens, setFormatTokens] = useState<FormatToken[]>(() =>
-    formatTokensFromDraft(initialDraft));
-  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+    formatTokensFromDraft(initialDraft)
+  );
+  const [pendingAttachments, setPendingAttachments] = useState<
+    PendingAttachment[]
+  >([]);
   const [isSending, setIsSending] = useState(false);
   // The chat the "may not have been sent" hint belongs to; the render condition scopes it, and
   // leaving the chat dismisses it.
-  const [sendHiccup, setSendHiccup] = useState<{ chatKey?: number | null } | null>(null);
+  const [sendHiccup, setSendHiccup] = useState<{
+    chatKey?: number | null;
+  } | null>(null);
   useEffect(() => setSendHiccup(null), [chatKey]);
   const [isAttachmentDragActive, setIsAttachmentDragActive] = useState(false);
-  const [selectedSlashCommand, setSelectedSlashCommand] = useState<SelectedSlashCommand | null>(
-    () => slashCommandFromDraft(initialDraft),
-  );
+  const [selectedSlashCommand, setSelectedSlashCommand] =
+    useState<SelectedSlashCommand | null>(() =>
+      slashCommandFromDraft(initialDraft)
+    );
   // The caret the slash command picker parses at. Deliberately updated only when it moves to a
   // different command token (see `syncPickerCaret`): the mirror owns the caret the user sees,
   // so ordinary caret movement doesn't have to re-render the composer.
@@ -2289,11 +2309,14 @@ export const ChatInput = ({
   const placeRestoredCaretAtEnd = (
     text: string,
     key: string | undefined,
-    generation: number,
+    generation: number
   ) => {
     requestAnimationFrame(() => {
-      if (draftRestoreGenerationRef.current !== generation ||
-          loadedDraftKeyRef.current !== key || inputValueRef.current !== text) {
+      if (
+        draftRestoreGenerationRef.current !== generation ||
+        loadedDraftKeyRef.current !== key ||
+        inputValueRef.current !== text
+      ) {
         return;
       }
       const textarea = composerTextareaRef.current;
@@ -2307,33 +2330,51 @@ export const ChatInput = ({
   const composerMatchesStoredDraft = (draft: StoredComposerDraft) => {
     const currentCommand = selectedSlashCommandRef.current;
     const storedCommand = draft.command;
-    if (inputValueRef.current !== draft.text || capsulesRef.current.length > 0 ||
-        !!currentCommand !== !!storedCommand || currentCommand && storedCommand &&
+    if (
+      inputValueRef.current !== draft.text ||
+      capsulesRef.current.length > 0 ||
+      !!currentCommand !== !!storedCommand ||
+      (currentCommand &&
+        storedCommand &&
         (currentCommand.start !== storedCommand.position ||
           currentCommand.length !== storedCommand.length ||
           slashCommandKey(currentCommand.choice.selection) !==
-            slashCommandKey(storedCommand.choice.selection))) {
+            slashCommandKey(storedCommand.choice.selection)))
+    ) {
       return false;
     }
     const currentFormats = formatTokensRef.current;
-    return currentFormats.length === draft.formats.length && currentFormats.every((format, index) => {
-      const stored = draft.formats[index];
-      return !format.logo && format.start === stored.position && format.length === stored.length &&
-        format.noun === stored.noun && format.icon === stored.icon;
-    });
+    return (
+      currentFormats.length === draft.formats.length &&
+      currentFormats.every((format, index) => {
+        const stored = draft.formats[index];
+        return (
+          !format.logo &&
+          format.start === stored.position &&
+          format.length === stored.length &&
+          format.noun === stored.noun &&
+          format.icon === stored.icon
+        );
+      })
+    );
   };
 
   const restoreDraftPresentation = (
     draft: StoredComposerDraft,
     key: string | undefined,
-    generation: number,
+    generation: number
   ) => {
     placeRestoredCaretAtEnd(draft.text, key, generation);
     if (draft.formats.length === 0) return;
-    void Promise.all(draft.formats.map(({icon}) => formatIconDataUrl(icon))).then((logos) => {
+    void Promise.all(
+      draft.formats.map(({ icon }) => formatIconDataUrl(icon))
+    ).then((logos) => {
       requestAnimationFrame(() => {
-        if (draftRestoreGenerationRef.current !== generation ||
-            loadedDraftKeyRef.current !== key || !composerMatchesStoredDraft(draft)) {
+        if (
+          draftRestoreGenerationRef.current !== generation ||
+          loadedDraftKeyRef.current !== key ||
+          !composerMatchesStoredDraft(draft)
+        ) {
           return;
         }
         const restored = decorateComposerDraft(draft, logos, CAPSULE_LOGO_SLOT);
@@ -2367,19 +2408,23 @@ export const ChatInput = ({
     loadedDraftKeyRef.current = draftStorageKey;
     skipDraftWriteRef.current = true;
     const storedDraft = readComposerDraft(draftStorageKey);
-    const preserveLocalDraft = previousKey === undefined &&
+    const preserveLocalDraft =
+      previousKey === undefined &&
       (draftEditedRef.current || inputValueRef.current.length > 0);
     if (preserveLocalDraft) {
-      writeComposerDraft(draftStorageKey, serializeComposerDraft(
-        inputValueRef.current,
-        capsulesRef.current.map(({start, length, description}) => ({
-          start,
-          length,
-          url: description.url,
-        })),
-        formatTokensRef.current,
-        selectedSlashCommandRef.current ?? undefined,
-      ));
+      writeComposerDraft(
+        draftStorageKey,
+        serializeComposerDraft(
+          inputValueRef.current,
+          capsulesRef.current.map(({ start, length, description }) => ({
+            start,
+            length,
+            url: description.url
+          })),
+          formatTokensRef.current,
+          selectedSlashCommandRef.current ?? undefined
+        )
+      );
       skipDraftWriteRef.current = false;
       return;
     }
@@ -2390,7 +2435,8 @@ export const ChatInput = ({
     }
     setFormatTokens(formatTokensFromDraft(storedDraft));
     setSelectedSlashCommand(slashCommandFromDraft(storedDraft));
-    if (storedDraft) restoreDraftPresentation(storedDraft, draftStorageKey, generation);
+    if (storedDraft)
+      restoreDraftPresentation(storedDraft, draftStorageKey, generation);
   }, [draftStorageKey]);
 
   useEffect(() => {
@@ -2398,17 +2444,26 @@ export const ChatInput = ({
       skipDraftWriteRef.current = false;
       return;
     }
-    writeComposerDraft(draftStorageKey, serializeComposerDraft(
-      inputValue,
-      capsules.map(({start, length, description}) => ({
-        start,
-        length,
-        url: description.url,
-      })),
-      formatTokens,
-      selectedSlashCommand ?? undefined,
-    ));
-  }, [capsules, draftStorageKey, formatTokens, inputValue, selectedSlashCommand]);
+    writeComposerDraft(
+      draftStorageKey,
+      serializeComposerDraft(
+        inputValue,
+        capsules.map(({ start, length, description }) => ({
+          start,
+          length,
+          url: description.url
+        })),
+        formatTokens,
+        selectedSlashCommand ?? undefined
+      )
+    );
+  }, [
+    capsules,
+    draftStorageKey,
+    formatTokens,
+    inputValue,
+    selectedSlashCommand
+  ]);
 
   // Seed the composer from an external suggestion (Home task cards). Re-runs whenever the nonce
   // changes so picking the same suggestion twice still works. Focus + move the cursor to the end.
@@ -2869,25 +2924,42 @@ export const ChatInput = ({
 
   // Completing a command leaves the `/name` text in place (only its color changes) and parks the
   // caret past it so the next keystroke doesn't grow the token.
-  const applySlashCommandSelection = useCallback((
-      choice: SlashCommandChoice, tokenStart: number, tokenEnd: number) => {
-    const splice = spliceComposerToken(
-        inputValueRef.current, tokenStart, tokenEnd, `/${choice.name}`);
-    setInputValue(splice.value);
-    setCapsules(previous => previous.map(capsule =>
-      capsule.start >= tokenEnd
-        ? {...capsule, start: capsule.start + splice.delta}
-        : capsule));
-    setFormatTokens(previous => previous.map(token => token.start >= tokenEnd
-      ? {...token, start: token.start + splice.delta}
-      : token));
-    setSelectedSlashCommand({choice, start: splice.start, length: splice.length});
-    requestAnimationFrame(() => {
-      composerTextareaRef.current?.focus();
-      moveCaret(splice.caret);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const applySlashCommandSelection = useCallback(
+    (choice: SlashCommandChoice, tokenStart: number, tokenEnd: number) => {
+      const splice = spliceComposerToken(
+        inputValueRef.current,
+        tokenStart,
+        tokenEnd,
+        `/${choice.name}`
+      );
+      setInputValue(splice.value);
+      setCapsules((previous) =>
+        previous.map((capsule) =>
+          capsule.start >= tokenEnd
+            ? { ...capsule, start: capsule.start + splice.delta }
+            : capsule
+        )
+      );
+      setFormatTokens((previous) =>
+        previous.map((token) =>
+          token.start >= tokenEnd
+            ? { ...token, start: token.start + splice.delta }
+            : token
+        )
+      );
+      setSelectedSlashCommand({
+        choice,
+        start: splice.start,
+        length: splice.length
+      });
+      requestAnimationFrame(() => {
+        composerTextareaRef.current?.focus();
+        moveCaret(splice.caret);
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    []
+  );
 
   // Keeps the resolved command anchored to its text when text is inserted or removed before it.
   const shiftSelectedSlashCommand = (position: number, delta: number) => {
@@ -2901,9 +2973,13 @@ export const ChatInput = ({
 
   const shiftFormatTokens = (position: number, delta: number) => {
     if (delta === 0) return;
-    setFormatTokens(previous => previous.map(token => token.start >= position
-      ? {...token, start: token.start + delta}
-      : token));
+    setFormatTokens((previous) =>
+      previous.map((token) =>
+        token.start >= position
+          ? { ...token, start: token.start + delta }
+          : token
+      )
+    );
   };
 
   const slashCommandPicker = useSlashCommandPicker({
@@ -2980,9 +3056,13 @@ export const ChatInput = ({
         // removed, since it exists purely so the mirror has somewhere to paint the icon. Applied
         // back-to-front so earlier offsets stay valid while the text is rewritten.
         let text = messageInput;
-        for (const token of [...formatTokens].toSorted((a, b) => b.start - a.start)) {
-          text = text.slice(0, token.start) + token.noun +
-              text.slice(token.start + token.length);
+        for (const token of [...formatTokens].toSorted(
+          (a, b) => b.start - a.start
+        )) {
+          text =
+            text.slice(0, token.start) +
+            token.noun +
+            text.slice(token.start + token.length);
         }
         inputCapsules = capsules.map((capsule) => {
           const delta = formatShiftBefore(capsule.start);
@@ -3112,13 +3192,17 @@ export const ChatInput = ({
       // Positions are resolved against the text as sent, which for a slash command is its
       // arguments: the part the transcript renders as the user's words.
       const formatRefs = locateMessageFormatRefs(
-          typeof message === "string" ? message : message.args,
-          [...formatTokens].toSorted((a, b) => a.start - b.start));
+        typeof message === "string" ? message : message.args,
+        [...formatTokens].toSorted((a, b) => a.start - b.start)
+      );
 
-      await onSend(message, selectedModel,
-          capsuleSpecifiers?.length ? capsuleSpecifiers : undefined,
-          readyAttachments.length ? readyAttachments : undefined,
-          formatRefs);
+      await onSend(
+        message,
+        selectedModel,
+        capsuleSpecifiers?.length ? capsuleSpecifiers : undefined,
+        readyAttachments.length ? readyAttachments : undefined,
+        formatRefs
+      );
       writeComposerDraft(sendingDraftKey, undefined);
       if (loadedDraftKeyRef.current !== sendingDraftKey) return;
       draftEditedRef.current = false;
@@ -3651,17 +3735,19 @@ export const ChatInput = ({
       )
     );
     shiftSelectedSlashCommand(at, splice.delta);
-    setFormatTokens(previous => [
-      ...previous.map(token => token.start >= at
-        ? {...token, start: token.start + splice.delta}
-        : token),
+    setFormatTokens((previous) => [
+      ...previous.map((token) =>
+        token.start >= at
+          ? { ...token, start: token.start + splice.delta }
+          : token
+      ),
       {
         noun: format.output.noun,
         icon: format.output.icon,
         logo,
         start: splice.start,
-        length: splice.length,
-      },
+        length: splice.length
+      }
     ]);
     requestAnimationFrame(() => {
       composerTextareaRef.current?.focus();
@@ -3808,7 +3894,7 @@ export const ChatInput = ({
           only needs a resting edge. */}
       <div
         ref={promptCardRef}
-        className={`${surface === "canvas" ? "themed-prompt-card-canvas-shadow" : "themed-prompt-card-shadow"} relative overflow-visible rounded-2xl border border-kumo-line bg-kumo-control transition-shadow duration-150 ease-out`}
+        className={`relative overflow-visible rounded-2xl border border-kumo-line bg-kumo-control transition-shadow duration-150 ease-out`}
         onDragEnter={handleAttachmentDragEnter}
         onDragOver={handleAttachmentDragOver}
         onDragLeave={handleAttachmentDragLeave}
@@ -6259,8 +6345,11 @@ function ChatInterface({
         }
       } catch (err) {
         if (!logRpcFailure("Failed to subscribe to chats:", err)) {
-          reportIssue('chat.subscription-load', err)
-          toasts.add({ title: "Unable to load conversations", variant: "error" });
+          reportIssue("chat.subscription-load", err);
+          toasts.add({
+            title: "Unable to load conversations",
+            variant: "error"
+          });
         }
       }
     };
@@ -6429,7 +6518,11 @@ function ChatInterface({
         );
       }
     } catch (err) {
-      if (!logRpcFailure("Failed to send message:", err, { reportSite: "chat.send" })) {
+      if (
+        !logRpcFailure("Failed to send message:", err, {
+          reportSite: "chat.send"
+        })
+      ) {
         toasts.add({ title: "Failed to send message", variant: "error" });
       }
       throw err;
@@ -6460,7 +6553,11 @@ function ChatInterface({
       );
       onNavigateToChatRef.current(newChatId);
     } catch (err) {
-      if (!logRpcFailure("Failed to create new chat:", err, { reportSite: "chat.new" })) {
+      if (
+        !logRpcFailure("Failed to create new chat:", err, {
+          reportSite: "chat.new"
+        })
+      ) {
         toasts.add({ title: "Failed to start conversation", variant: "error" });
       }
       throw err;
@@ -7807,8 +7904,12 @@ function ChatInterface({
       {/* New chat input — pinned to bottom. ChatInput supplies its own
           horizontal padding, so the wrapper just adds the top divider; no
           extra p-4 (which would shrink the input vs. the in-chat composer). */}
-      <div className="flex-shrink-0 border-t border-kumo-line">
-        <div className={useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""}>
+      <div className="flex-shrink-0 border-kumo-line">
+        <div
+          className={
+            useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""
+          }
+        >
           {/* Attachments and pending resource operations belong to this workspace's composer. */}
           <ChatInput
             key={workspaceId}
@@ -7825,9 +7926,14 @@ function ChatInterface({
             onToggleThinkingTraces={toggleShowThinkingTraces}
             minRows={2}
             newChat
-            draftStorageKey={currentUser && workspaceId
-              ? composerDraftStorageKey(currentUser.id, `workspace:${workspaceId}:new`)
-              : undefined}
+            draftStorageKey={
+              currentUser && workspaceId
+                ? composerDraftStorageKey(
+                    currentUser.id,
+                    `workspace:${workspaceId}:new`
+                  )
+                : undefined
+            }
           />
           {/* Reserve the same height as the token/cost row to avoid layout shift. */}
           <div aria-hidden className="min-h-[1rem]" />
@@ -9236,7 +9342,13 @@ function ChatInterface({
 
               {/* ── Bottom: input, update state, and cost ──────────────── */}
               <div className={`shrink-0 bg-kumo-base`}>
-                <div className={useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""}>
+                <div
+                  className={
+                    useConstrainedChatWidth
+                      ? "mx-auto w-full max-w-[920px]"
+                      : ""
+                  }
+                >
                   {/* Remount all transient composer state when the conversation changes. */}
                   <ChatInput
                     key={`${workspaceId}:${selectedChatId}`}
@@ -9258,12 +9370,14 @@ function ChatInterface({
                     onStop={handleStop}
                     showThinkingTraces={showThinkingTraces}
                     onToggleThinkingTraces={toggleShowThinkingTraces}
-                    draftStorageKey={currentUser && workspaceId && selectedChatId !== null
-                      ? composerDraftStorageKey(
-                          currentUser.id,
-                          `workspace:${workspaceId}:chat:${selectedChatId}`,
-                        )
-                      : undefined}
+                    draftStorageKey={
+                      currentUser && workspaceId && selectedChatId !== null
+                        ? composerDraftStorageKey(
+                            currentUser.id,
+                            `workspace:${workspaceId}:chat:${selectedChatId}`
+                          )
+                        : undefined
+                    }
                     blockedReason={
                       hasPendingConnectionRequest
                         ? "Set up or deny the connection request above to continue."
