@@ -11,14 +11,14 @@ import {
   type ReactNode,
   type SetStateAction,
   type DragEvent as ReactDragEvent,
-  type PointerEvent as ReactPointerEvent,
+  type PointerEvent as ReactPointerEvent
 } from "react";
-import { reportIssue } from './errorReporting'
+import { reportIssue } from "./errorReporting";
 import {
   DropdownMenu,
   Popover,
   Tooltip,
-  useKumoToastManager,
+  useKumoToastManager
 } from "@cloudflare/kumo";
 
 import {
@@ -49,19 +49,21 @@ import {
   MagnifyingGlass,
   Question,
   ArrowUpRight,
-  Blueprint,
+  Blueprint
 } from "@phosphor-icons/react";
 import { RpcStub, RpcTarget } from "capnweb";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import * as Y from "yjs";
 import styles from "./ChatInterface.module.css";
-import {
-  getStoredSelectedModel,
-  persistSelectedModel,
-} from "./modelSelection";
+import { getStoredSelectedModel, persistSelectedModel } from "./modelSelection";
 import { gatewayLabel } from "./modelListDisplay";
-import { railStatusLabel, railToneFor, type RailNodeSpec, type RailTone } from "./chatRail";
+import {
+  railStatusLabel,
+  railToneFor,
+  type RailNodeSpec,
+  type RailTone
+} from "./chatRail";
 import {
   Overseer,
   GatekeeperClient,
@@ -83,20 +85,32 @@ import {
   WorkpieceId,
   BlueprintOutput,
   MessageFormatRef,
-  OutputFormatOffer,
+  OutputFormatOffer
 } from "@gadgets/workshop-shared/api";
-import { ActionKind, ResourceDescription } from "@gadgets/workshop-shared/gatekeeper";
 import {
-  parseSlashCommandInput, slashCommandTokenKey, stripSlashCommandToken,
+  ActionKind,
+  ResourceDescription
+} from "@gadgets/workshop-shared/gatekeeper";
+import {
+  parseSlashCommandInput,
+  slashCommandTokenKey,
+  stripSlashCommandToken
 } from "./components/chat/slash-command-input";
 import {
-  ComposerMirror, composerTextareaClass, type ComposerMirrorHandle, type MirrorToken,
+  ComposerMirror,
+  composerTextareaClass,
+  type ComposerMirrorHandle,
+  type MirrorToken
 } from "./components/chat/ComposerMirror";
 import {
-  useSlashCommandChoice, type OverseerSource,
+  useSlashCommandChoice,
+  type OverseerSource
 } from "./components/chat/slash-command-catalog";
 import {
-  removeComposerToken, snapCaretOutOfRanges, spliceComposerToken, type ComposerRange,
+  removeComposerToken,
+  snapCaretOutOfRanges,
+  spliceComposerToken,
+  type ComposerRange
 } from "./components/chat/composer-tokens";
 import CapsuleOverlay, { CAPSULE_OVERLAY_GAP } from "./CapsuleOverlay";
 import type { SelectableItem } from "./ResourcePicker";
@@ -113,7 +127,11 @@ import { normalizeResourceUrl } from "./resourceMatching";
 import DeleteConfirmationDialog from "./components/DeleteConfirmationDialog";
 import AutoApproveConfirmDialog from "./components/AutoApproveConfirmDialog";
 import { AlwaysApproveButton, ResolveButton } from "./components/ResolveButton";
-import { WorkshopButton, WorkshopIconButton, WorkshopInput } from "./components/WorkshopControls";
+import {
+  WorkshopButton,
+  WorkshopIconButton,
+  WorkshopInput
+} from "./components/WorkshopControls";
 import { useActionEntries } from "./useActions";
 import { useAlwaysApproveTag } from "./useAlwaysApproveTag";
 import { useResolveAction } from "./useResolveAction";
@@ -142,7 +160,7 @@ type CreatedGadgetCardInfo = {
 
 function CreatedGadgetChatCard({
   gadget,
-  onOpen,
+  onOpen
 }: {
   gadget: CreatedGadgetCardInfo;
   onOpen: () => void;
@@ -176,8 +194,8 @@ function CreatedGadgetChatCard({
               )}
               <span>
                 {gadget.isPending
-                    ? `New ${formatOf(gadget.output).noun.toLowerCase()} · Click to preview`
-                    : `${formatOf(gadget.output).noun} · Click to open`}
+                  ? `New ${formatOf(gadget.output).noun.toLowerCase()} · Click to preview`
+                  : `${formatOf(gadget.output).noun} · Click to open`}
               </span>
             </span>
           </span>
@@ -213,7 +231,7 @@ type ChatListScope = "direct" | "agents" | "all";
 const CHAT_LIST_SCOPE_LABELS: Record<ChatListScope, string> = {
   all: "All",
   direct: "Started by people",
-  agents: "Started by agents",
+  agents: "Started by agents"
 };
 
 const SHOW_THINKING_TRACES_KEY = "showThinkingTraces";
@@ -230,7 +248,10 @@ function getStoredShowThinkingTraces(): boolean {
 
 function persistShowThinkingTraces(show: boolean): void {
   try {
-    window.localStorage.setItem(SHOW_THINKING_TRACES_KEY, show ? "true" : "false");
+    window.localStorage.setItem(
+      SHOW_THINKING_TRACES_KEY,
+      show ? "true" : "false"
+    );
   } catch {
     // private mode / sandboxed iframes
   }
@@ -238,13 +259,15 @@ function persistShowThinkingTraces(show: boolean): void {
 
 function refreshDraftLatestAuthor(state: DraftChatState) {
   state.latestAuthor =
-    state.entries.length > 0 ? state.entries[state.entries.length - 1].author : null;
+    state.entries.length > 0
+      ? state.entries[state.entries.length - 1].author
+      : null;
 }
 
 function pruneDraftEntriesBefore(
   drafts: Map<number, DraftChatState>,
   chatId: number,
-  cutoff: Date,
+  cutoff: Date
 ) {
   let state = drafts.get(chatId);
   if (!state) {
@@ -253,7 +276,7 @@ function pruneDraftEntriesBefore(
 
   const cutoffTime = cutoff.getTime();
   const nextEntries = state.entries.filter(
-    (entry) => entry.timestamp.getTime() > cutoffTime,
+    (entry) => entry.timestamp.getTime() > cutoffTime
   );
   if (nextEntries.length === state.entries.length) {
     return false;
@@ -271,13 +294,13 @@ function pruneDraftEntriesBefore(
 
 function getOrCreateDraftChatState(
   drafts: Map<number, DraftChatState>,
-  chatId: number,
+  chatId: number
 ): DraftChatState {
   let state = drafts.get(chatId);
   if (!state) {
     state = {
       entries: [],
-      latestAuthor: null,
+      latestAuthor: null
     };
     drafts.set(chatId, state);
   }
@@ -285,16 +308,21 @@ function getOrCreateDraftChatState(
 }
 
 // Auto-resize a textarea element between min and max row heights.
-function autoResizeTextarea(textarea: HTMLTextAreaElement, minRows: number, maxRows: number) {
-  textarea.style.height = 'auto'
-  const cs = getComputedStyle(textarea)
-  const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5
-  const paddingY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
-  const borderY = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth)
-  const minH = lineHeight * minRows + paddingY + borderY
-  const maxH = lineHeight * maxRows + paddingY + borderY
-  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minH), maxH)}px`
-  textarea.style.overflow = textarea.scrollHeight > maxH ? 'auto' : 'hidden'
+function autoResizeTextarea(
+  textarea: HTMLTextAreaElement,
+  minRows: number,
+  maxRows: number
+) {
+  textarea.style.height = "auto";
+  const cs = getComputedStyle(textarea);
+  const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5;
+  const paddingY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const borderY =
+    parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+  const minH = lineHeight * minRows + paddingY + borderY;
+  const maxH = lineHeight * maxRows + paddingY + borderY;
+  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minH), maxH)}px`;
+  textarea.style.overflow = textarea.scrollHeight > maxH ? "auto" : "hidden";
 }
 
 // Internal capsule state tracked within ChatInput (not yet sent).
@@ -332,9 +360,10 @@ function cssLogoUrl(url: string | undefined): string | undefined {
   // keystroke, so escape each one once.
   let cached = cssLogoUrls.get(url);
   if (cached === undefined) {
-    cached = /^(https?:\/\/|data:image\/)/.test(url) && !/\s/.test(url)
-      ? `url("${url.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}")`
-      : "";
+    cached =
+      /^(https?:\/\/|data:image\/)/.test(url) && !/\s/.test(url)
+        ? `url("${url.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}")`
+        : "";
     cssLogoUrls.set(url, cached);
   }
   return cached || undefined;
@@ -367,31 +396,56 @@ const MAX_CHAT_ATTACHMENT_TOTAL_BYTES = 5 * 1024 * 1024;
 const MAX_CHAT_ATTACHMENT_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
 const CHAT_ATTACHMENT_IMAGE_MAX_EDGE = 1568;
 
-function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality?: number
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Failed to encode image.")), type, quality);
+    canvas.toBlob(
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error("Failed to encode image.")),
+      type,
+      quality
+    );
   });
 }
 
-async function prepareChatAttachment(file: File): Promise<{blob: Blob, mimeType: string}> {
+async function prepareChatAttachment(
+  file: File
+): Promise<{ blob: Blob; mimeType: string }> {
   if (!file.type.startsWith("image/")) {
     if (file.size > MAX_CHAT_ATTACHMENT_BYTES) {
-      throw new Error(`Attachments must be ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_BYTES)} or smaller.`);
+      throw new Error(
+        `Attachments must be ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_BYTES)} or smaller.`
+      );
     }
     return { blob: file, mimeType: file.type || "application/octet-stream" };
   }
   if (file.size > MAX_CHAT_ATTACHMENT_SOURCE_IMAGE_BYTES) {
-    throw new Error(`Images must be ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_SOURCE_IMAGE_BYTES)} or smaller before resizing.`);
+    throw new Error(
+      `Images must be ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_SOURCE_IMAGE_BYTES)} or smaller before resizing.`
+    );
   }
 
   const bitmap = await createImageBitmap(file);
   try {
-    const supportedOriginalType = file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp";
-    if (supportedOriginalType && file.size <= MAX_CHAT_ATTACHMENT_BYTES && Math.max(bitmap.width, bitmap.height) <= CHAT_ATTACHMENT_IMAGE_MAX_EDGE) {
+    const supportedOriginalType =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/webp";
+    if (
+      supportedOriginalType &&
+      file.size <= MAX_CHAT_ATTACHMENT_BYTES &&
+      Math.max(bitmap.width, bitmap.height) <= CHAT_ATTACHMENT_IMAGE_MAX_EDGE
+    ) {
       return { blob: file, mimeType: file.type };
     }
 
-    const scale = Math.min(1, CHAT_ATTACHMENT_IMAGE_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(
+      1,
+      CHAT_ATTACHMENT_IMAGE_MAX_EDGE / Math.max(bitmap.width, bitmap.height)
+    );
     const width = Math.max(1, Math.round(bitmap.width * scale));
     const height = Math.max(1, Math.round(bitmap.height * scale));
     const canvas = document.createElement("canvas");
@@ -408,7 +462,9 @@ async function prepareChatAttachment(file: File): Promise<{blob: Blob, mimeType:
     const quality = outputMimeType === "image/png" ? undefined : 0.85;
     const blob = await canvasToBlob(canvas, outputMimeType, quality);
     if (blob.size > MAX_CHAT_ATTACHMENT_BYTES) {
-      throw new Error(`Attachments must be ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_BYTES)} or smaller.`);
+      throw new Error(
+        `Attachments must be ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_BYTES)} or smaller.`
+      );
     }
     return { blob, mimeType: outputMimeType };
   } finally {
@@ -437,7 +493,7 @@ type TokenizedCapsuleMessage = {
 function generateCapsuleToken(
   message: string,
   index: number,
-  usedTokens: Set<string>,
+  usedTokens: Set<string>
 ) {
   let attempt = 0;
   while (true) {
@@ -458,22 +514,26 @@ type Mention =
 
 function mentionText(mention: Mention): string {
   return mention.kind === "capsule"
-      ? mention.capsule.description.title
-      : mention.format.noun;
+    ? mention.capsule.description.title
+    : mention.format.noun;
 }
 
 function buildTokenizedCapsuleMessage(
   message: string,
   capsules: CapsuleSpecifier[] | undefined,
-  formats: MessageFormatRef[] | undefined,
+  formats: MessageFormatRef[] | undefined
 ): TokenizedCapsuleMessage {
   const spans = [
-    ...(capsules ?? []).map(capsule =>
-        ({position: capsule.position, length: capsule.length,
-          mention: {kind: "capsule", capsule} as Mention})),
-    ...(formats ?? []).map(format =>
-        ({position: format.position, length: format.length,
-          mention: {kind: "format", format} as Mention})),
+    ...(capsules ?? []).map((capsule) => ({
+      position: capsule.position,
+      length: capsule.length,
+      mention: { kind: "capsule", capsule } as Mention
+    })),
+    ...(formats ?? []).map((format) => ({
+      position: format.position,
+      length: format.length,
+      mention: { kind: "format", format } as Mention
+    }))
   ].toSorted((a, b) => a.position - b.position);
 
   const usedTokens = new Set<string>();
@@ -500,7 +560,7 @@ function buildTokenizedCapsuleMessage(
 
 function splitTextOnCapsuleTokens(
   value: string,
-  mentionsByToken: Map<string, Mention>,
+  mentionsByToken: Map<string, Mention>
 ): MarkdownAstNode[] | null {
   const tokens = [...mentionsByToken.keys()];
   const parts: MarkdownAstNode[] = [];
@@ -527,7 +587,7 @@ function splitTextOnCapsuleTokens(
     if (nextIndex > cursor) {
       parts.push({
         type: "text",
-        value: value.slice(cursor, nextIndex),
+        value: value.slice(cursor, nextIndex)
       });
     }
 
@@ -540,9 +600,9 @@ function splitTextOnCapsuleTokens(
           value: (() => {
             const mention = mentionsByToken.get(nextToken);
             return mention ? mentionText(mention) : nextToken;
-          })(),
-        },
-      ],
+          })()
+        }
+      ]
     });
 
     cursor = nextIndex + nextToken.length;
@@ -555,7 +615,7 @@ function splitTextOnCapsuleTokens(
   if (cursor < value.length) {
     parts.push({
       type: "text",
-      value: value.slice(cursor),
+      value: value.slice(cursor)
     });
   }
 
@@ -564,7 +624,7 @@ function splitTextOnCapsuleTokens(
 
 function replaceCapsuleTokensInTree(
   node: MarkdownAstNode,
-  mentionsByToken: Map<string, Mention>,
+  mentionsByToken: Map<string, Mention>
 ) {
   if (!node.children || node.children.length === 0) {
     return;
@@ -575,7 +635,7 @@ function replaceCapsuleTokensInTree(
     if (child.type === "text" && typeof child.value === "string") {
       const replacementNodes = splitTextOnCapsuleTokens(
         child.value,
-        mentionsByToken,
+        mentionsByToken
       );
       if (replacementNodes) {
         nextChildren.push(...replacementNodes);
@@ -605,7 +665,7 @@ function createCapsuleRemarkPlugin(mentionsByToken: Map<string, Mention>) {
 // name, and a still-streaming call may not have either yet.)
 function formatGadgetBindingTarget(
   gadget: string | undefined,
-  name: string | undefined,
+  name: string | undefined
 ): string | undefined {
   if (!name) return gadget;
   return gadget ? `${gadget}.${name}` : name;
@@ -619,7 +679,7 @@ type ToolOutputResolver = (tc: AiToolCall) => BlueprintOutput | undefined;
 
 export function resolveToolCallOutput(
   tc: AiToolCall,
-  outputOfWorkpiece: (gadgetId: WorkpieceId) => BlueprintOutput | undefined,
+  outputOfWorkpiece: (gadgetId: WorkpieceId) => BlueprintOutput | undefined
 ): BlueprintOutput | undefined {
   if (tc.toolName !== "createGadget") return undefined;
   const gadgetId = (tc.output as { gadgetId?: unknown } | undefined)?.gadgetId;
@@ -628,7 +688,7 @@ export function resolveToolCallOutput(
 
 function getToolCallSummary(
   tc: AiToolCall,
-  outputOf?: ToolOutputResolver,
+  outputOf?: ToolOutputResolver
 ): { verb: string; target?: string } {
   switch (tc.toolName) {
     case "readFile":
@@ -644,20 +704,25 @@ function getToolCallSummary(
         verb: "Connected",
         target: tc.input.entrypoint
           ? `${tc.input.bindingName} → ${tc.input.entrypoint}`
-          : tc.input.bindingName,
+          : tc.input.bindingName
       };
     case "setGadgetBinding":
       return {
         verb: "Wired up",
-        target: formatGadgetBindingTarget(tc.input.gadget, tc.input.name ?? tc.input.source),
+        target: formatGadgetBindingTarget(
+          tc.input.gadget,
+          tc.input.name ?? tc.input.source
+        )
       };
     // Obsolete predecessor of `setGadgetBinding`; appears only in old chat logs.
     case "saveCapsuleAsBinding":
       return { verb: "Saved resource", target: tc.input.bindingName };
     case "createGadget": {
-
       const output = outputOf?.(tc);
-      return { verb: `Created ${output?.noun ?? "gadget"}`, target: tc.input.title };
+      return {
+        verb: `Created ${output?.noun ?? "gadget"}`,
+        target: tc.input.title
+      };
     }
     case "executeCode": {
       // Prefer the first non-empty line as a preview. `code` may be absent while the tool call's
@@ -672,7 +737,7 @@ function getToolCallSummary(
           ? firstLine.length > 60
             ? `${firstLine.slice(0, 57)}…`
             : firstLine
-          : undefined,
+          : undefined
       };
     }
     case "giveUp":
@@ -691,7 +756,10 @@ function getToolCallSummary(
     case "listBlueprints":
       return { verb: "Listed blueprints" };
     case "listConnectableResources":
-      return { verb: "Listed connectable resources", target: tc.input.vendorId };
+      return {
+        verb: "Listed connectable resources",
+        target: tc.input.vendorId
+      };
     case "requestConnection":
       return { verb: "Requested connection", target: tc.input.vendorId };
   }
@@ -712,7 +780,9 @@ type PendingTurnChanges = {
   createdGadgetTitles: string[];
 };
 type ObservationChatMessage = ActionChatMessage & {
-  actionLog: NonNullable<ActionChatMessage["actionLog"]> & { type: "observation" };
+  actionLog: NonNullable<ActionChatMessage["actionLog"]> & {
+    type: "observation";
+  };
 };
 
 type ToolCallGroup = {
@@ -729,7 +799,11 @@ function lowerFirst(text: string): string {
   return text ? text[0].toLowerCase() + text.slice(1) : text;
 }
 
-function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+function pluralize(
+  count: number,
+  singular: string,
+  plural = `${singular}s`
+): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
@@ -741,7 +815,10 @@ function describeObservationCount(count: number): string {
   return count === 1 ? "Read 1 resource" : `${count} resource reads`;
 }
 
-function describeToolCallCount(toolName: AiToolCall["toolName"], count: number): string {
+function describeToolCallCount(
+  toolName: AiToolCall["toolName"],
+  count: number
+): string {
   switch (toolName) {
     case "readFile":
       return `Read ${pluralize(count, "file")}`;
@@ -772,7 +849,9 @@ function describeToolCallCount(toolName: AiToolCall["toolName"], count: number):
     case "listConnectableResources":
       return `Listed connectable resources`;
     case "requestConnection":
-      return count === 1 ? "Requested a connection" : `Requested ${count} connections`;
+      return count === 1
+        ? "Requested a connection"
+        : `Requested ${count} connections`;
   }
   const _exhaustive: never = toolName;
   return _exhaustive;
@@ -781,7 +860,7 @@ function describeToolCallCount(toolName: AiToolCall["toolName"], count: number):
 // `output` names a format when the call is known to be producing one, so the row can use its icon.
 function getToolIcon(
   toolName: AiToolCall["toolName"] | null | undefined,
-  output?: BlueprintOutput,
+  output?: BlueprintOutput
 ): PhosphorIcon {
   if (output) return FORMAT_ICONS[output.icon];
   switch (toolName) {
@@ -813,7 +892,9 @@ function getToolIcon(
   }
 }
 
-function getProvisionalToolLabel(toolName: AiToolCall["toolName"] | null | undefined) {
+function getProvisionalToolLabel(
+  toolName: AiToolCall["toolName"] | null | undefined
+) {
   switch (toolName) {
     case "readFile":
       return "Reading file";
@@ -851,63 +932,102 @@ function getToolTarget(tc: AiToolCall): string | undefined {
 // Present-tense verb for an in-progress tool call.
 function getProvisionalToolVerb(toolName: AiToolCall["toolName"]): string {
   switch (toolName) {
-    case "readFile": return "Reading";
-    case "writeFile": return "Writing";
-    case "editFile": return "Editing";
-    case "describeBinding": return "Inspecting";
-    case "setBindingHook": return "Connecting";
-    case "setGadgetBinding": return "Wiring up";
-    case "saveCapsuleAsBinding": return "Saving";
-    case "createGadget": return "Creating gadget";
-    case "executeCode": return "Running code";
-    case "webFetch": return "Fetching";
-    case "observeUserChanges": return "Observing user changes";
-    case "giveUp": return "Stopping";
-    case "listBlueprints": return "Listing blueprints";
-    case "listConnectableResources": return "Listing connectable resources";
-    case "requestConnection": return "Requesting a connection";
+    case "readFile":
+      return "Reading";
+    case "writeFile":
+      return "Writing";
+    case "editFile":
+      return "Editing";
+    case "describeBinding":
+      return "Inspecting";
+    case "setBindingHook":
+      return "Connecting";
+    case "setGadgetBinding":
+      return "Wiring up";
+    case "saveCapsuleAsBinding":
+      return "Saving";
+    case "createGadget":
+      return "Creating gadget";
+    case "executeCode":
+      return "Running code";
+    case "webFetch":
+      return "Fetching";
+    case "observeUserChanges":
+      return "Observing user changes";
+    case "giveUp":
+      return "Stopping";
+    case "listBlueprints":
+      return "Listing blueprints";
+    case "listConnectableResources":
+      return "Listing connectable resources";
+    case "requestConnection":
+      return "Requesting a connection";
   }
   const _exhaustive: never = toolName;
   return _exhaustive;
 }
 
 // Present-tense, count-aware label mirroring describeToolCallCount (e.g. "Writing 5 files").
-function describeProvisionalToolCount(toolName: AiToolCall["toolName"], count: number): string {
+function describeProvisionalToolCount(
+  toolName: AiToolCall["toolName"],
+  count: number
+): string {
   if (count <= 1) return getProvisionalToolLabel(toolName);
   switch (toolName) {
-    case "readFile": return `Reading ${pluralize(count, "file")}`;
-    case "writeFile": return `Writing ${pluralize(count, "file")}`;
-    case "editFile": return `Making ${count} edits`;
-    case "webFetch": return `Fetching ${pluralize(count, "page")}`;
-    case "executeCode": return count === 1 ? "Running code" : `Running code ${formatTimes(count)}`;
-    case "describeBinding": return `Inspecting ${pluralize(count, "binding")}`;
-    case "setBindingHook": return `Connecting ${pluralize(count, "binding")}`;
-    case "setGadgetBinding": return `Wiring up ${pluralize(count, "binding")}`;
-    case "saveCapsuleAsBinding": return `Saving ${pluralize(count, "resource")}`;
-    case "createGadget": return `Creating ${pluralize(count, "gadget")}`;
-    case "observeUserChanges": return `Observing ${pluralize(count, "change set")}`;
-    case "giveUp": return "Stopping";
-    case "listBlueprints": return "Listing blueprints";
-    case "listConnectableResources": return "Listing connectable resources";
-    case "requestConnection": return `Requesting ${pluralize(count, "connection")}`;
+    case "readFile":
+      return `Reading ${pluralize(count, "file")}`;
+    case "writeFile":
+      return `Writing ${pluralize(count, "file")}`;
+    case "editFile":
+      return `Making ${count} edits`;
+    case "webFetch":
+      return `Fetching ${pluralize(count, "page")}`;
+    case "executeCode":
+      return count === 1
+        ? "Running code"
+        : `Running code ${formatTimes(count)}`;
+    case "describeBinding":
+      return `Inspecting ${pluralize(count, "binding")}`;
+    case "setBindingHook":
+      return `Connecting ${pluralize(count, "binding")}`;
+    case "setGadgetBinding":
+      return `Wiring up ${pluralize(count, "binding")}`;
+    case "saveCapsuleAsBinding":
+      return `Saving ${pluralize(count, "resource")}`;
+    case "createGadget":
+      return `Creating ${pluralize(count, "gadget")}`;
+    case "observeUserChanges":
+      return `Observing ${pluralize(count, "change set")}`;
+    case "giveUp":
+      return "Stopping";
+    case "listBlueprints":
+      return "Listing blueprints";
+    case "listConnectableResources":
+      return "Listing connectable resources";
+    case "requestConnection":
+      return `Requesting ${pluralize(count, "connection")}`;
   }
   const _exhaustive: never = toolName;
   return _exhaustive;
 }
 
 // Builds the label + detail lines for the in-progress tool-call row.
-function buildProvisionalToolSummary(
-  calls: ProvisionalToolCallState[],
-): { label: string; detailLines: string[] } {
-
+function buildProvisionalToolSummary(calls: ProvisionalToolCallState[]): {
+  label: string;
+  detailLines: string[];
+} {
   if (calls.length === 1 && calls[0].outputFormat) {
     return { label: `Creating ${calls[0].outputFormat.noun}`, detailLines: [] };
   }
   const toolNames = Array.from(
-    new Set(calls.map((c) => c.toolName).filter((n): n is AiToolCall["toolName"] => !!n)),
+    new Set(
+      calls
+        .map((c) => c.toolName)
+        .filter((n): n is AiToolCall["toolName"] => !!n)
+    )
   );
   const detailLines = Array.from(
-    new Set(calls.map((c) => c.target).filter((t): t is string => Boolean(t))),
+    new Set(calls.map((c) => c.target).filter((t): t is string => Boolean(t)))
   );
 
   if (toolNames.length === 0) {
@@ -918,12 +1038,14 @@ function buildProvisionalToolSummary(
     const parts = toolNames.map((toolName) =>
       describeProvisionalToolCount(
         toolName,
-        calls.filter((c) => c.toolName === toolName).length,
-      ),
+        calls.filter((c) => c.toolName === toolName).length
+      )
     );
     return {
-      label: parts.map((part, i) => (i === 0 ? part : lowerFirst(part))).join(", "),
-      detailLines,
+      label: parts
+        .map((part, i) => (i === 0 ? part : lowerFirst(part)))
+        .join(", "),
+      detailLines
     };
   }
 
@@ -931,8 +1053,10 @@ function buildProvisionalToolSummary(
   if (calls.length === 1) {
     const target = detailLines[0];
     return {
-      label: target ? `${getProvisionalToolVerb(toolName)} ${target}` : getProvisionalToolLabel(toolName),
-      detailLines: [],
+      label: target
+        ? `${getProvisionalToolVerb(toolName)} ${target}`
+        : getProvisionalToolLabel(toolName),
+      detailLines: []
     };
   }
 
@@ -946,11 +1070,13 @@ function buildProvisionalToolSummary(
 function buildToolCallGroups(
   toolCalls: AiToolCall[],
   observations: ObservationChatMessage[] = [],
-  outputOf?: ToolOutputResolver,
+  outputOf?: ToolOutputResolver
 ): ToolCallGroup[] {
   if (toolCalls.length === 0 && observations.length === 0) return [];
 
-  const distinctToolNames = Array.from(new Set(toolCalls.map((tc) => tc.toolName)));
+  const distinctToolNames = Array.from(
+    new Set(toolCalls.map((tc) => tc.toolName))
+  );
   const targets = toolCalls
     .map((tc) => getToolTarget(tc))
     .filter((target): target is string => Boolean(target));
@@ -962,17 +1088,23 @@ function buildToolCallGroups(
 
   if (toolCalls.length === 1) {
     const summary = getToolCallSummary(toolCalls[0], outputOf);
-    labelParts.push(`${summary.verb}${summary.target ? ` ${summary.target}` : ""}`);
+    labelParts.push(
+      `${summary.verb}${summary.target ? ` ${summary.target}` : ""}`
+    );
   } else if (toolCalls.length > 1 && distinctToolNames.length === 1) {
     const summary = getToolCallSummary(toolCalls[0], outputOf);
-    labelParts.push(detailLines.length === 1 && summary.target && observations.length === 0
-      ? `${summary.verb} ${summary.target}`
-      : describeToolCallCount(toolCalls[0].toolName, toolCalls.length));
+    labelParts.push(
+      detailLines.length === 1 && summary.target && observations.length === 0
+        ? `${summary.verb} ${summary.target}`
+        : describeToolCallCount(toolCalls[0].toolName, toolCalls.length)
+    );
   } else if (toolCalls.length > 1 && distinctToolNames.length <= 3) {
-    labelParts.push(...distinctToolNames.map((toolName) => {
-      const count = toolCalls.filter((tc) => tc.toolName === toolName).length;
-      return describeToolCallCount(toolName, count);
-    }));
+    labelParts.push(
+      ...distinctToolNames.map((toolName) => {
+        const count = toolCalls.filter((tc) => tc.toolName === toolName).length;
+        return describeToolCallCount(toolName, count);
+      })
+    );
   } else if (toolCalls.length > 0) {
     labelParts.push(`${toolCalls.length} tool calls`);
   }
@@ -984,22 +1116,24 @@ function buildToolCallGroups(
   const firstToolCall = toolCalls[0];
   const firstObservation = observations[0];
 
-  return [{
-    // Use the first work item id so expansion survives streaming → committed.
-    key: firstToolCall
-      ? `group-${firstToolCall.toolCallId}`
-      : `group-observation-${firstObservation.chatId}-${firstObservation.sequence}`,
-    Icon: firstToolCall
-      ? getToolIcon(firstToolCall.toolName, outputOf?.(firstToolCall))
-      : MagnifyingGlass,
-    label: labelParts
-      .map((part, index) => index === 0 ? part : lowerFirst(part))
-      .join(", "),
-    detailLines,
-    calls: toolCalls,
-    observations,
-    hasError: toolCalls.some((tc) => Boolean(tc.error)),
-  }];
+  return [
+    {
+      // Use the first work item id so expansion survives streaming → committed.
+      key: firstToolCall
+        ? `group-${firstToolCall.toolCallId}`
+        : `group-observation-${firstObservation.chatId}-${firstObservation.sequence}`,
+      Icon: firstToolCall
+        ? getToolIcon(firstToolCall.toolName, outputOf?.(firstToolCall))
+        : MagnifyingGlass,
+      label: labelParts
+        .map((part, index) => (index === 0 ? part : lowerFirst(part)))
+        .join(", "),
+      detailLines,
+      calls: toolCalls,
+      observations,
+      hasError: toolCalls.some((tc) => Boolean(tc.error))
+    }
+  ];
 }
 
 function WorkIcon({ Icon }: { Icon: PhosphorIcon }) {
@@ -1012,20 +1146,29 @@ function WorkIcon({ Icon }: { Icon: PhosphorIcon }) {
 // The plain-text counterpart to the markdown path's token substitution (see
 // buildTokenizedCapsuleMessage): markdown needs tokens because it reflows the text it is given,
 // while text rendered as typed can be cut at the offsets directly.
-function TextWithMentions(
-  { text, mentions }: {
-    text: string;
-    // `length` 0 inserts between characters, for something that was removed from the text.
-    mentions: { key: string; position: number; length: number; node: ReactNode }[];
-  },
-) {
+function TextWithMentions({
+  text,
+  mentions
+}: {
+  text: string;
+  // `length` 0 inserts between characters, for something that was removed from the text.
+  mentions: {
+    key: string;
+    position: number;
+    length: number;
+    node: ReactNode;
+  }[];
+}) {
   const parts: ReactNode[] = [];
   let cursor = 0;
-  for (const mention of [...mentions].toSorted((a, b) => a.position - b.position)) {
+  for (const mention of [...mentions].toSorted(
+    (a, b) => a.position - b.position
+  )) {
     // Anything that would rewind the cursor is skipped: overlapping spans have no meaning, and
     // stored messages predate the validation that now refuses them.
     if (mention.position < cursor || mention.position > text.length) continue;
-    if (mention.position > cursor) parts.push(text.slice(cursor, mention.position));
+    if (mention.position > cursor)
+      parts.push(text.slice(cursor, mention.position));
     parts.push(<Fragment key={mention.key}>{mention.node}</Fragment>);
     cursor = mention.position + mention.length;
   }
@@ -1036,42 +1179,53 @@ function TextWithMentions(
 // Renders a user message that invoked a slash command: their words, with the command shown back
 // where they typed it and any formats they named as chips. What the command expanded into is the
 // agent's context, and isn't shown.
-function SlashCommandMention(
-  { name, args, id, commandPosition, formats, getOverseer }: {
-    name?: string;
-    args: string;
-    id: SlashCommandId;
-    commandPosition?: number;
-    formats?: MessageFormatRef[];
-    getOverseer: OverseerSource;
-  },
-) {
+function SlashCommandMention({
+  name,
+  args,
+  id,
+  commandPosition,
+  formats,
+  getOverseer
+}: {
+  name?: string;
+  args: string;
+  id: SlashCommandId;
+  commandPosition?: number;
+  formats?: MessageFormatRef[];
+  getOverseer: OverseerSource;
+}) {
   const choice = useSlashCommandChoice(getOverseer, name ? id : undefined);
-  const mention = name ? <span className="text-kumo-brand">/{name}</span> : null;
-  const command = choice
-    ? (
-      <Tooltip
-        content={
-          <span className="block max-w-xs">
-            {/* No `block` here: it would outrank the `-webkit-box` that line-clamp needs.
+  const mention = name ? (
+    <span className="text-kumo-brand">/{name}</span>
+  ) : null;
+  const command = choice ? (
+    <Tooltip
+      content={
+        <span className="block max-w-xs">
+          {/* No `block` here: it would outrank the `-webkit-box` that line-clamp needs.
                 An explicit leading is required: the clamp reserves a whole number of lines at
                 the *inherited* line height, so without one the reserved box and the rendered
                 lines disagree and the last line is sliced through the middle. Two lines rather
                 than three keeps the whole tooltip inside its own height budget. */}
-            <span className="line-clamp-2 leading-[18px]">{choice.description}</span>
-            {/* Provider, then whatever identifies the command within it: for a skill that is
-                its collection and path. Same line the picker shows. */}
-            <span className="mt-0.5 block truncate text-kumo-subtle">
-              {[choice.providerLabel, choice.resourceLabel].filter(Boolean).join(" · ")}
-            </span>
+          <span className="line-clamp-2 leading-[18px]">
+            {choice.description}
           </span>
-        }
-        asChild
-      >
-        {mention}
-      </Tooltip>
-    )
-    : mention;
+          {/* Provider, then whatever identifies the command within it: for a skill that is
+                its collection and path. Same line the picker shows. */}
+          <span className="mt-0.5 block truncate text-kumo-subtle">
+            {[choice.providerLabel, choice.resourceLabel]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+        </span>
+      }
+      asChild
+    >
+      {mention}
+    </Tooltip>
+  ) : (
+    mention
+  );
 
   if (!name) return <>{args}</>;
 
@@ -1089,14 +1243,20 @@ function SlashCommandMention(
           key: "command",
           position: at,
           length: 0,
-          node: <>{spaceBefore ? " " : ""}{command}{spaceAfter ? " " : ""}</>,
+          node: (
+            <>
+              {spaceBefore ? " " : ""}
+              {command}
+              {spaceAfter ? " " : ""}
+            </>
+          )
         },
         ...(formats ?? []).map((format, i) => ({
           key: `format-${i}`,
           position: format.position,
           length: format.length,
-          node: <FormatMention format={format} />,
-        })),
+          node: <FormatMention format={format} />
+        }))
       ]}
     />
   );
@@ -1105,7 +1265,9 @@ function SlashCommandMention(
 function CapsuleMention({ capsule }: { capsule: CapsuleSpecifier }) {
   const { authenticatedApi } = useAuthenticatedApi();
   const vendorBranding = useVendorBranding(authenticatedApi);
-  const logo = capsule.vendorId ? vendorBranding.get(capsule.vendorId)?.logoUrl : undefined;
+  const logo = capsule.vendorId
+    ? vendorBranding.get(capsule.vendorId)?.logoUrl
+    : undefined;
   const safeUrl = safeExternalUrl(capsule.description.url);
   const body = (
     <>
@@ -1141,7 +1303,7 @@ function FormatMention({ format }: { format: MessageFormatRef }) {
 }
 
 function getMarkdownComponents(
-  mentionsByToken?: Map<string, Mention>,
+  mentionsByToken?: Map<string, Mention>
 ): Components {
   return {
     table: ({ node: _node, children, ...props }) => (
@@ -1151,12 +1313,16 @@ function getMarkdownComponents(
     ),
     a: ({ node: _node, href, children, ...props }) => {
       if (href?.startsWith(CAPSULE_LINK_PREFIX) && mentionsByToken) {
-        const token = decodeURIComponent(href.slice(CAPSULE_LINK_PREFIX.length));
+        const token = decodeURIComponent(
+          href.slice(CAPSULE_LINK_PREFIX.length)
+        );
         const mention = mentionsByToken.get(token);
         if (mention) {
-          return mention.kind === "capsule"
-              ? <CapsuleMention capsule={mention.capsule} />
-              : <FormatMention format={mention.format} />;
+          return mention.kind === "capsule" ? (
+            <CapsuleMention capsule={mention.capsule} />
+          ) : (
+            <FormatMention format={mention.format} />
+          );
         }
       }
 
@@ -1166,16 +1332,11 @@ function getMarkdownComponents(
       }
 
       return (
-        <a
-          {...props}
-          href={safeHref}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a {...props} href={safeHref} target="_blank" rel="noopener noreferrer">
           {children}
         </a>
       );
-    },
+    }
   };
 }
 
@@ -1185,30 +1346,38 @@ const MARKDOWN_COMPONENTS_NO_CAPSULES = getMarkdownComponents();
 // Exported for unit testing (see ChatInterface.markdown.test.tsx), which verifies that a
 // single newline in a user message survives to the DOM as a literal "\n" so the
 // `whitespace-pre-wrap` wrapper at the user-message render site renders it as a hard break.
-export const MarkdownMessage = memo(function MarkdownMessage(
-  { message, capsules, formats }: {
-    message: string;
-    capsules?: CapsuleSpecifier[];
-    formats?: MessageFormatRef[];
-  },
-): ReactNode {
+export const MarkdownMessage = memo(function MarkdownMessage({
+  message,
+  capsules,
+  formats
+}: {
+  message: string;
+  capsules?: CapsuleSpecifier[];
+  formats?: MessageFormatRef[];
+}): ReactNode {
   const tokenizedMessage = useMemo(
-    () => capsules?.length || formats?.length
-      ? buildTokenizedCapsuleMessage(message, capsules, formats)
-      : null,
-    [capsules, formats, message],
+    () =>
+      capsules?.length || formats?.length
+        ? buildTokenizedCapsuleMessage(message, capsules, formats)
+        : null,
+    [capsules, formats, message]
   );
   const components = useMemo(
-    () => tokenizedMessage
-      ? getMarkdownComponents(tokenizedMessage.mentionsByToken)
-      : MARKDOWN_COMPONENTS_NO_CAPSULES,
-    [tokenizedMessage],
+    () =>
+      tokenizedMessage
+        ? getMarkdownComponents(tokenizedMessage.mentionsByToken)
+        : MARKDOWN_COMPONENTS_NO_CAPSULES,
+    [tokenizedMessage]
   );
   const remarkPlugins = useMemo(
-    () => tokenizedMessage
-      ? [remarkGfm, createCapsuleRemarkPlugin(tokenizedMessage.mentionsByToken)]
-      : REMARK_PLUGINS_NO_CAPSULES,
-    [tokenizedMessage],
+    () =>
+      tokenizedMessage
+        ? [
+            remarkGfm,
+            createCapsuleRemarkPlugin(tokenizedMessage.mentionsByToken)
+          ]
+        : REMARK_PLUGINS_NO_CAPSULES,
+    [tokenizedMessage]
   );
 
   return (
@@ -1230,7 +1399,10 @@ function formatAttachmentSize(size: number | undefined): string | null {
 }
 
 // Build a temporary object URL for inlined attachment bytes, revoking it when no longer needed.
-function useAttachmentObjectUrl(content: Uint8Array | undefined, mimeType: string): string | null {
+function useAttachmentObjectUrl(
+  content: Uint8Array | undefined,
+  mimeType: string
+): string | null {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!content) {
@@ -1239,7 +1411,10 @@ function useAttachmentObjectUrl(content: Uint8Array | undefined, mimeType: strin
     }
 
     const url = URL.createObjectURL(
-      new Blob([content as BlobPart], {type: mimeType || "application/octet-stream"}));
+      new Blob([content as BlobPart], {
+        type: mimeType || "application/octet-stream"
+      })
+    );
     setObjectUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [content, mimeType]);
@@ -1254,17 +1429,17 @@ type AttachmentPreviewModalProps = {
   onDownload?: AttachmentDownloadHandler;
 };
 
-const AttachmentPreviewModal = memo(function AttachmentPreviewModal(
-  {
-    attachment,
-    onClose,
-    onDownload,
-  }: AttachmentPreviewModalProps,
-) {
+const AttachmentPreviewModal = memo(function AttachmentPreviewModal({
+  attachment,
+  onClose,
+  onDownload
+}: AttachmentPreviewModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isImage = (attachment?.mimeType ?? "").startsWith("image/");
   const objectUrl = useAttachmentObjectUrl(
-    isImage ? attachment?.content : undefined, attachment?.mimeType ?? "");
+    isImage ? attachment?.content : undefined,
+    attachment?.mimeType ?? ""
+  );
 
   // Dialog keyboard handling: Escape closes, Tab stays trapped, focus restores on close.
   useEffect(() => {
@@ -1277,7 +1452,8 @@ const AttachmentPreviewModal = memo(function AttachmentPreviewModal(
       }
       if (event.key === "Tab" && containerRef.current) {
         const focusable = containerRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], iframe, [tabindex]:not([tabindex="-1"])');
+          'button, [href], iframe, [tabindex]:not([tabindex="-1"])'
+        );
         if (focusable.length === 0) return;
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
@@ -1309,7 +1485,8 @@ const AttachmentPreviewModal = memo(function AttachmentPreviewModal(
   const modalWidthClass = isImage
     ? "w-[min(1120px,calc(100vw-32px))]"
     : "w-[min(520px,calc(100vw-32px))]";
-  const modalSurfaceClass = "rounded-2xl border border-kumo-line/70 bg-kumo-base";
+  const modalSurfaceClass =
+    "rounded-2xl border border-kumo-line/70 bg-kumo-base";
   const modalPaddingClass = "p-3 sm:p-4";
 
   return (
@@ -1322,7 +1499,10 @@ const AttachmentPreviewModal = memo(function AttachmentPreviewModal(
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div ref={containerRef} className={`relative max-h-[calc(100vh-32px)] ${modalWidthClass} overflow-hidden ${modalSurfaceClass} p-0 shadow-[0_24px_80px_rgba(0,0,0,0.28)]`}>
+      <div
+        ref={containerRef}
+        className={`relative max-h-[calc(100vh-32px)] ${modalWidthClass} overflow-hidden ${modalSurfaceClass} p-0 shadow-[0_24px_80px_rgba(0,0,0,0.28)]`}
+      >
         <button
           type="button"
           onClick={onClose}
@@ -1345,11 +1525,16 @@ const AttachmentPreviewModal = memo(function AttachmentPreviewModal(
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-kumo-line/70 bg-kumo-base text-kumo-subtle">
                   <FileIcon size={26} />
                 </div>
-                <div className="text-ui-md font-medium text-kumo-default">{title}</div>
-                <div className="text-ui-xs leading-5 text-kumo-subtle">
-                  {attachment.mimeType || "Unknown file type"}{sizeLabel ? ` · ${sizeLabel}` : ""}
+                <div className="text-ui-md font-medium text-kumo-default">
+                  {title}
                 </div>
-                <div className="text-ui-xs leading-5 text-kumo-subtle">This file can’t be previewed here.</div>
+                <div className="text-ui-xs leading-5 text-kumo-subtle">
+                  {attachment.mimeType || "Unknown file type"}
+                  {sizeLabel ? ` · ${sizeLabel}` : ""}
+                </div>
+                <div className="text-ui-xs leading-5 text-kumo-subtle">
+                  This file can’t be previewed here.
+                </div>
                 {onDownload && (
                   <button
                     type="button"
@@ -1373,15 +1558,18 @@ type ChatAttachmentThumbnailProps = {
   onPreview: (id: string) => void;
 };
 
-const ChatAttachmentThumbnail = memo(function ChatAttachmentThumbnail(
-  {
-    attachment,
-    onPreview,
-  }: ChatAttachmentThumbnailProps,
-) {
+const ChatAttachmentThumbnail = memo(function ChatAttachmentThumbnail({
+  attachment,
+  onPreview
+}: ChatAttachmentThumbnailProps) {
   const isImage = attachment.mimeType.startsWith("image/");
-  const objectUrl = useAttachmentObjectUrl(isImage ? attachment.content : undefined, attachment.mimeType);
-  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">("loading");
+  const objectUrl = useAttachmentObjectUrl(
+    isImage ? attachment.content : undefined,
+    attachment.mimeType
+  );
+  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">(
+    "loading"
+  );
 
   return (
     <button
@@ -1402,13 +1590,17 @@ const ChatAttachmentThumbnail = memo(function ChatAttachmentThumbnail(
             onError={() => setImageState("error")}
           />
           {imageState !== "loaded" && (
-            <div className="absolute inset-0 grid place-items-center bg-kumo-elevated text-ui-2xs text-kumo-subtle">Loading image…</div>
+            <div className="absolute inset-0 grid place-items-center bg-kumo-elevated text-ui-2xs text-kumo-subtle">
+              Loading image…
+            </div>
           )}
         </>
       ) : (
         <div className="flex h-full w-full min-w-0 items-center justify-center gap-2 p-3 text-ui-xs text-kumo-subtle">
           <FileIcon size={20} className="shrink-0 text-kumo-subtle" />
-          <span className="min-w-0 truncate">{attachment.name ?? "Attached file"}</span>
+          <span className="min-w-0 truncate">
+            {attachment.name ?? "Attached file"}
+          </span>
         </div>
       )}
     </button>
@@ -1420,17 +1612,23 @@ type ChatAttachmentGridProps = {
   onDownload?: AttachmentDownloadHandler;
 };
 
-const ChatAttachmentGrid = memo(function ChatAttachmentGrid(
-  {
-    attachments,
-    onDownload,
-  }: ChatAttachmentGridProps,
-) {
-  const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
-  const previewAttachment = previewAttachmentId === null
-    ? null
-    : attachments.find((attachment) => attachment.id === previewAttachmentId) ?? null;
-  const handlePreview = useCallback((id: string) => setPreviewAttachmentId(id), []);
+const ChatAttachmentGrid = memo(function ChatAttachmentGrid({
+  attachments,
+  onDownload
+}: ChatAttachmentGridProps) {
+  const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(
+    null
+  );
+  const previewAttachment =
+    previewAttachmentId === null
+      ? null
+      : (attachments.find(
+          (attachment) => attachment.id === previewAttachmentId
+        ) ?? null);
+  const handlePreview = useCallback(
+    (id: string) => setPreviewAttachmentId(id),
+    []
+  );
   const handleClose = useCallback(() => setPreviewAttachmentId(null), []);
 
   return (
@@ -1453,9 +1651,11 @@ const ChatAttachmentGrid = memo(function ChatAttachmentGrid(
   );
 });
 
-const ToolCallDetails = memo(function ToolCallDetails(
-  { toolCall: tc }: { toolCall: AiToolCall },
-) {
+const ToolCallDetails = memo(function ToolCallDetails({
+  toolCall: tc
+}: {
+  toolCall: AiToolCall;
+}) {
   return (
     <div className="space-y-2">
       {tc.error && (
@@ -1491,9 +1691,11 @@ const ToolCallDetails = memo(function ToolCallDetails(
   );
 });
 
-const ObservationDetails = memo(function ObservationDetails(
-  { observation }: { observation: ObservationChatMessage },
-) {
+const ObservationDetails = memo(function ObservationDetails({
+  observation
+}: {
+  observation: ObservationChatMessage;
+}) {
   const log = observation.actionLog;
   const safeResourceUrl = safeExternalUrl(log.resourceUrl);
   const metadata = log.resourceTitle;
@@ -1519,7 +1721,9 @@ const ObservationDetails = memo(function ObservationDetails(
                 >
                   {metadata}
                 </a>
-              ) : metadata}
+              ) : (
+                metadata
+              )}
             </p>
           )}
           <div className="mt-1.5 text-ui-xs leading-[18px] text-kumo-subtle">
@@ -1535,7 +1739,7 @@ const NestedToolCallRow = memo(function NestedToolCallRow({
   toolCall: tc,
   open,
   onToggle,
-  outputOf,
+  outputOf
 }: {
   toolCall: AiToolCall;
   open: boolean;
@@ -1584,7 +1788,7 @@ const NestedToolCallRow = memo(function NestedToolCallRow({
 const NestedObservationRow = memo(function NestedObservationRow({
   observation,
   open,
-  onToggle,
+  onToggle
 }: {
   observation: ObservationChatMessage;
   open: boolean;
@@ -1639,7 +1843,7 @@ const RAIL_DOT_CLASS: Record<RailTone, string> = {
   success: "bg-kumo-success/70",
   danger: "bg-kumo-danger/70",
   pending: "bg-current text-kumo-subtle/70 animate-pulse",
-  neutral: "bg-current text-kumo-subtle/70",
+  neutral: "bg-current text-kumo-subtle/70"
 };
 
 // Geometry shared by every rail element. The dot is centred on its step's first text line, which
@@ -1649,7 +1853,7 @@ const RAIL_DOT_CLASS: Record<RailTone, string> = {
 // painted over it. Steps therefore have to be flush against each other for the line to read as
 // continuous, so the vertical rhythm lives in each step's own `pb-2` rather than in a `space-y-*`
 // on the container. Drawing the line only in the gaps instead leaves it short of the next dot.
-const RAIL_LINE = "absolute left-[2.5px] w-px bg-kumo-line/70";
+const RAIL_LINE = "absolute left-[2.5px] w-px bg-kumo-line/50";
 const RAIL_LINE_FROM_DOT = "top-[11px]";
 // Underscores are how an arbitrary value spells the whitespace calc() requires around its operator.
 const RAIL_LINE_TO_DOT = "bottom-[calc(100%_-_17px)]";
@@ -1665,7 +1869,7 @@ const RailNode = memo(function RailNode({
   node,
   isFirst = false,
   isLast = false,
-  children,
+  children
 }: {
   node: RailNodeSpec;
   isFirst?: boolean;
@@ -1675,7 +1879,9 @@ const RailNode = memo(function RailNode({
   const tone = railToneFor(node);
   const status = railStatusLabel(tone);
   return (
-    <div className={`relative flex min-w-0 items-start gap-3 ${isLast ? "" : "pb-2"}`}>
+    <div
+      className={`relative flex min-w-0 items-start gap-3 ${isLast ? "" : "pb-2"}`}
+    >
       <span
         aria-hidden="true"
         className={`${RAIL_LINE} ${isFirst ? RAIL_LINE_FROM_DOT : "top-0"} ${
@@ -1702,14 +1908,16 @@ const RailNode = memo(function RailNode({
  */
 function RailAligned({
   continues = false,
-  children,
+  children
 }: {
   continues?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className={`relative min-w-0 pl-[18px] ${continues ? "pb-2" : ""}`}>
-      {continues && <span aria-hidden="true" className={`${RAIL_LINE} inset-y-0`} />}
+      {continues && (
+        <span aria-hidden="true" className={`${RAIL_LINE} inset-y-0`} />
+      )}
       {children}
     </div>
   );
@@ -1718,7 +1926,7 @@ function RailAligned({
 const ThinkingTraceRow = memo(function ThinkingTraceRow({
   reasoning,
   open,
-  onToggle,
+  onToggle
 }: {
   reasoning: string;
   open: boolean;
@@ -1741,7 +1949,9 @@ const ThinkingTraceRow = memo(function ThinkingTraceRow({
       </button>
       {open && (
         <div className="themed-surface-inset mt-1 min-w-0 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3">
-          <div className={`min-w-0 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}>
+          <div
+            className={`min-w-0 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}
+          >
             <MarkdownMessage message={reasoning} />
           </div>
         </div>
@@ -1761,7 +1971,7 @@ const ToolGroupRow = memo(function ToolGroupRow({
   footerCreatedGadgetTitles,
   footerDisabled = false,
   onFooterRevert,
-  outputOf,
+  outputOf
 }: {
   group: ToolCallGroup;
   open: boolean;
@@ -1775,9 +1985,10 @@ const ToolGroupRow = memo(function ToolGroupRow({
   onFooterRevert?: (sequence: number) => void;
   outputOf?: ToolOutputResolver;
 }) {
-  const footerLabel = footerChangeSequence !== undefined
-    ? getDiscardLabel(footerIsTrailing, footerCreatedGadgetTitles)
-    : null;
+  const footerLabel =
+    footerChangeSequence !== undefined
+      ? getDiscardLabel(footerIsTrailing, footerCreatedGadgetTitles)
+      : null;
   return (
     <div className="group min-w-0">
       <button
@@ -1810,8 +2021,8 @@ const ToolGroupRow = memo(function ToolGroupRow({
           )}
         </span>
       </button>
-      {open && (
-        group.calls.length === 1 && group.observations.length === 0 ? (
+      {open &&
+        (group.calls.length === 1 && group.observations.length === 0 ? (
           <div className="themed-surface-inset ml-8 mt-1 space-y-3 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3">
             <ToolCallDetails toolCall={group.calls[0]} />
           </div>
@@ -1845,31 +2056,33 @@ const ToolGroupRow = memo(function ToolGroupRow({
               );
             })}
           </div>
-        )
-      )}
-      {footerChangeSequence !== undefined && footerTimestamp && footerLabel && onFooterRevert && (
-        <div className="ml-0 mt-0.5 flex items-center gap-1 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100">
-          <Tooltip content={footerLabel} asChild>
-            <button
-              type="button"
-              disabled={footerDisabled}
-              onClick={() => onFooterRevert(footerChangeSequence)}
-              className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label={footerLabel}
-            >
-              <ArrowUUpLeft size={15} />
-            </button>
-          </Tooltip>
-          <Tooltip content={formatFullTimestamp(footerTimestamp)} asChild>
-            <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
-              {footerTimestamp.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          </Tooltip>
-        </div>
-      )}
+        ))}
+      {footerChangeSequence !== undefined &&
+        footerTimestamp &&
+        footerLabel &&
+        onFooterRevert && (
+          <div className="ml-0 mt-0.5 flex items-center gap-1 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100">
+            <Tooltip content={footerLabel} asChild>
+              <button
+                type="button"
+                disabled={footerDisabled}
+                onClick={() => onFooterRevert(footerChangeSequence)}
+                className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={footerLabel}
+              >
+                <ArrowUUpLeft size={15} />
+              </button>
+            </Tooltip>
+            <Tooltip content={formatFullTimestamp(footerTimestamp)} asChild>
+              <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
+                {footerTimestamp.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })}
+              </span>
+            </Tooltip>
+          </div>
+        )}
     </div>
   );
 });
@@ -1899,11 +2112,11 @@ export const ChatInput = ({
   onStop,
   showThinkingTraces = true,
   onToggleThinkingTraces,
-  surface = "docked",
+  surface = "docked"
 }: {
   createCapsuleGatekeeper: (
     accountId: number,
-    url: string,
+    url: string
   ) => Promise<RpcStub<GatekeeperClient<any>> | null>;
   // Returns an overseer stub, used by the attach modal to create gatekeepers. Can be async
   // to support lazy provisional-gadget creation on the Home page.
@@ -1913,7 +2126,7 @@ export const ChatInput = ({
     modelId: string | null,
     capsules?: CapsuleSpecifier[],
     attachments?: ChatAttachmentHandle[],
-    formats?: MessageFormatRef[],
+    formats?: MessageFormatRef[]
   ) => Promise<void> | void;
   isAgentActive: boolean;
   models: AiModelInfo[];
@@ -1959,17 +2172,23 @@ export const ChatInput = ({
   const toasts = useKumoToastManager();
   const [inputValue, setInputValue] = useState("");
   const [capsules, setCapsules] = useState<InputCapsule[]>([]);
-  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<
+    PendingAttachment[]
+  >([]);
   const [isSending, setIsSending] = useState(false);
   const [isAttachmentDragActive, setIsAttachmentDragActive] = useState(false);
-  const [selectedSlashCommand, setSelectedSlashCommand] = useState<SelectedSlashCommand | null>(null);
+  const [selectedSlashCommand, setSelectedSlashCommand] =
+    useState<SelectedSlashCommand | null>(null);
   // The caret the slash command picker parses at. Deliberately updated only when it moves to a
   // different command token (see `syncPickerCaret`): the mirror owns the caret the user sees,
   // so ordinary caret movement doesn't have to re-render the composer.
   const [cursorPosition, setCursorPosition] = useState(0);
-  const pickerCaretRef = useRef<{key: string | null; text: string}>({key: null, text: ""});
+  const pickerCaretRef = useRef<{ key: string | null; text: string }>({
+    key: null,
+    text: ""
+  });
   // Caret position and text the URL overlay was last resolved for, to skip repeated scans.
-  const lastUrlScanRef = useRef({position: -1, text: ""});
+  const lastUrlScanRef = useRef({ position: -1, text: "" });
   const { authenticatedApi } = useAuthenticatedApi();
   const vendorBranding = useVendorBranding(authenticatedApi);
   const selectedSlashCommandRef = useRef(selectedSlashCommand);
@@ -1990,7 +2209,9 @@ export const ChatInput = ({
   const overlayActivateRef = useRef<((index: number) => void) | null>(null);
   // Once the user moves the overlay's selection, the default stops applying.
   const overlayNavigatedRef = useRef(false);
-  const [urlLineOffset, setUrlLineOffset] = useState<number | undefined>(undefined);
+  const [urlLineOffset, setUrlLineOffset] = useState<number | undefined>(
+    undefined
+  );
   const navigateOverlay: Dispatch<SetStateAction<number>> = (index) => {
     overlayNavigatedRef.current = true;
     setOverlayIndex(index);
@@ -2108,8 +2329,12 @@ export const ChatInput = ({
       const line = range.getBoundingClientRect();
       const box = wrapper.getBoundingClientRect();
       // Never below the composer's own bottom edge, in case the line is scrolled out of view.
-      setUrlLineOffset(Math.max(
-          CAPSULE_OVERLAY_GAP, box.bottom - line.top + CAPSULE_OVERLAY_GAP));
+      setUrlLineOffset(
+        Math.max(
+          CAPSULE_OVERLAY_GAP,
+          box.bottom - line.top + CAPSULE_OVERLAY_GAP
+        )
+      );
       return;
     }
     setUrlLineOffset(undefined);
@@ -2122,7 +2347,8 @@ export const ChatInput = ({
   useEffect(() => {
     if (!isBlocked) return;
     mirrorRef.current?.setHoveredToken(null);
-    if (composerTextareaRef.current) composerTextareaRef.current.style.cursor = "";
+    if (composerTextareaRef.current)
+      composerTextareaRef.current.style.cursor = "";
   }, [isBlocked]);
 
   const deleteStagedAttachment = (ref: ChatAttachmentHandle) => {
@@ -2151,98 +2377,168 @@ export const ChatInput = ({
     };
   }, []);
 
-  const uploadPendingAttachment = async (id: string, blob: Blob, mimeType: string, name?: string) => {
+  const uploadPendingAttachment = async (
+    id: string,
+    blob: Blob,
+    mimeType: string,
+    name?: string
+  ) => {
     try {
       const content = new Uint8Array(await blob.arrayBuffer());
-      if (!mountedRef.current || !pendingAttachmentsRef.current.some((attachment) => attachment.id === id)) return;
+      if (
+        !mountedRef.current ||
+        !pendingAttachmentsRef.current.some(
+          (attachment) => attachment.id === id
+        )
+      )
+        return;
       const overseer = await getOverseer();
-      if (!mountedRef.current || !pendingAttachmentsRef.current.some((attachment) => attachment.id === id)) return;
-      const ref = await overseer.uploadChatAttachment({
-        mimeType,
-        content,
-        name,
-      }, selectedModel);
-      if (!mountedRef.current || !pendingAttachmentsRef.current.some((attachment) => attachment.id === id)) {
+      if (
+        !mountedRef.current ||
+        !pendingAttachmentsRef.current.some(
+          (attachment) => attachment.id === id
+        )
+      )
+        return;
+      const ref = await overseer.uploadChatAttachment(
+        {
+          mimeType,
+          content,
+          name
+        },
+        selectedModel
+      );
+      if (
+        !mountedRef.current ||
+        !pendingAttachmentsRef.current.some(
+          (attachment) => attachment.id === id
+        )
+      ) {
         deleteStagedAttachment(ref);
         return;
       }
-      setPendingAttachments((prev) => prev.map((attachment) => attachment.id === id ? { ...attachment, uploadState: "ready", ref } : attachment));
+      setPendingAttachments((prev) =>
+        prev.map((attachment) =>
+          attachment.id === id
+            ? { ...attachment, uploadState: "ready", ref }
+            : attachment
+        )
+      );
     } catch (err: any) {
       console.error("Failed to upload chat attachment:", err);
       if (!mountedRef.current) return;
-      reportIssue('chat.attachment-upload', err)
-      setPendingAttachments((prev) => prev.map((attachment) => attachment.id === id ? {
-        ...attachment,
-        uploadState: "error",
-        error: err?.message || "Upload failed",
-      } : attachment));
-      toasts.add({ title: err?.message || "Failed to upload attachment", variant: "error" });
+      reportIssue("chat.attachment-upload", err);
+      setPendingAttachments((prev) =>
+        prev.map((attachment) =>
+          attachment.id === id
+            ? {
+                ...attachment,
+                uploadState: "error",
+                error: err?.message || "Upload failed"
+              }
+            : attachment
+        )
+      );
+      toasts.add({
+        title: err?.message || "Failed to upload attachment",
+        variant: "error"
+      });
     }
   };
 
   const addFiles = async (files: FileList | File[]) => {
     const attachmentFiles = Array.from(files);
 
-    const initialRoom = MAX_PENDING_ATTACHMENTS - pendingAttachmentsRef.current.length;
+    const initialRoom =
+      MAX_PENDING_ATTACHMENTS - pendingAttachmentsRef.current.length;
     if (initialRoom <= 0) {
-      toasts.add({ title: `You can attach up to ${MAX_PENDING_ATTACHMENTS} attachments`, variant: "error" });
+      toasts.add({
+        title: `You can attach up to ${MAX_PENDING_ATTACHMENTS} attachments`,
+        variant: "error"
+      });
       return;
     }
     const accepted = attachmentFiles.slice(0, initialRoom);
     if (attachmentFiles.length > initialRoom) {
-      const title = initialRoom === 1
-        ? "Only the first attachment was attached"
-        : `Only the first ${initialRoom} attachments were attached`;
+      const title =
+        initialRoom === 1
+          ? "Only the first attachment was attached"
+          : `Only the first ${initialRoom} attachments were attached`;
       toasts.add({ title, variant: "error" });
     }
 
-    const prepared = await Promise.allSettled(accepted.map(async (file) => ({
-      file,
-      ...(await prepareChatAttachment(file)),
-    })));
+    const prepared = await Promise.allSettled(
+      accepted.map(async (file) => ({
+        file,
+        ...(await prepareChatAttachment(file))
+      }))
+    );
     if (!mountedRef.current) return;
 
     for (const result of prepared) {
       if (result.status === "rejected") {
         console.error("Failed to process chat attachment:", result.reason);
-        toasts.add({ title: result.reason?.message || "Failed to process attachment", variant: "error" });
+        toasts.add({
+          title: result.reason?.message || "Failed to process attachment",
+          variant: "error"
+        });
         continue;
       }
 
       const { file, blob, mimeType } = result.value;
       if (pendingAttachmentsRef.current.length >= MAX_PENDING_ATTACHMENTS) {
-        toasts.add({ title: `You can attach up to ${MAX_PENDING_ATTACHMENTS} attachments`, variant: "error" });
+        toasts.add({
+          title: `You can attach up to ${MAX_PENDING_ATTACHMENTS} attachments`,
+          variant: "error"
+        });
         continue;
       }
-      const totalPendingBytes = pendingAttachmentsRef.current.reduce((sum, attachment) => sum + attachment.blob.size, 0);
+      const totalPendingBytes = pendingAttachmentsRef.current.reduce(
+        (sum, attachment) => sum + attachment.blob.size,
+        0
+      );
       if (totalPendingBytes + blob.size > MAX_CHAT_ATTACHMENT_TOTAL_BYTES) {
-        toasts.add({ title: `Attached files must total ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_TOTAL_BYTES)} or less`, variant: "error" });
+        toasts.add({
+          title: `Attached files must total ${formatAttachmentSize(MAX_CHAT_ATTACHMENT_TOTAL_BYTES)} or less`,
+          variant: "error"
+        });
         continue;
       }
       const id = crypto.randomUUID();
-      const previewUrl = mimeType.startsWith("image/") ? URL.createObjectURL(blob) : undefined;
+      const previewUrl = mimeType.startsWith("image/")
+        ? URL.createObjectURL(blob)
+        : undefined;
       const pending: PendingAttachment = {
         id,
         blob,
         mimeType,
         name: file.name || undefined,
         previewUrl,
-        uploadState: "uploading",
+        uploadState: "uploading"
       };
-      pendingAttachmentsRef.current = [...pendingAttachmentsRef.current, pending];
+      pendingAttachmentsRef.current = [
+        ...pendingAttachmentsRef.current,
+        pending
+      ];
       setPendingAttachments((prev) => [...prev, pending]);
       void uploadPendingAttachment(id, blob, mimeType, file.name || undefined);
     }
   };
 
   const removeAttachment = (id: string) => {
-    const attachment = pendingAttachmentsRef.current.find((attachment) => attachment.id === id);
+    const attachment = pendingAttachmentsRef.current.find(
+      (attachment) => attachment.id === id
+    );
     if (attachment) {
       if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
       if (attachment.ref) deleteStagedAttachment(attachment.ref);
     }
-    pendingAttachmentsRef.current = pendingAttachmentsRef.current.filter((attachment) => attachment.id !== id);
-    setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
+    pendingAttachmentsRef.current = pendingAttachmentsRef.current.filter(
+      (attachment) => attachment.id !== id
+    );
+    setPendingAttachments((prev) =>
+      prev.filter((attachment) => attachment.id !== id)
+    );
   };
 
   const hasDraggedFiles = (event: ReactDragEvent): boolean => {
@@ -2259,13 +2555,19 @@ export const ChatInput = ({
   const handleAttachmentDragOver = (event: ReactDragEvent<HTMLDivElement>) => {
     if (!hasDraggedFiles(event)) return;
     event.preventDefault();
-    event.dataTransfer.dropEffect = pendingAttachmentsRef.current.length >= MAX_PENDING_ATTACHMENTS ? "none" : "copy";
+    event.dataTransfer.dropEffect =
+      pendingAttachmentsRef.current.length >= MAX_PENDING_ATTACHMENTS
+        ? "none"
+        : "copy";
     setIsAttachmentDragActive(true);
   };
 
   const handleAttachmentDragLeave = (event: ReactDragEvent<HTMLDivElement>) => {
     if (!hasDraggedFiles(event)) return;
-    attachmentDragDepthRef.current = Math.max(0, attachmentDragDepthRef.current - 1);
+    attachmentDragDepthRef.current = Math.max(
+      0,
+      attachmentDragDepthRef.current - 1
+    );
     if (attachmentDragDepthRef.current === 0) setIsAttachmentDragActive(false);
   };
 
@@ -2282,22 +2584,30 @@ export const ChatInput = ({
   const currentTokenRanges = (): ComposerRange[] => {
     const command = selectedSlashCommandRef.current;
     return [
-      ...capsulesRef.current.map(({start, length}) => ({start, length})),
-      ...(command ? [{start: command.start, length: command.length}] : []),
-      ...formatTokensRef.current.map(({start, length}) => ({start, length})),
+      ...capsulesRef.current.map(({ start, length }) => ({ start, length })),
+      ...(command ? [{ start: command.start, length: command.length }] : []),
+      ...formatTokensRef.current.map(({ start, length }) => ({ start, length }))
     ];
   };
 
-  const capsuleTokenText = (description: ResourceDescription, vendorId?: string) =>
-    (vendorId && vendorBranding.get(vendorId)?.logoUrl ? CAPSULE_LOGO_SLOT : "") + description.title;
+  const capsuleTokenText = (
+    description: ResourceDescription,
+    vendorId?: string
+  ) =>
+    (vendorId && vendorBranding.get(vendorId)?.logoUrl
+      ? CAPSULE_LOGO_SLOT
+      : "") + description.title;
 
   // The picker parses at the caret, but only its token matters, so refresh its copy of the caret
   // when that changes rather than on every movement. Plain caret movement then re-renders nothing.
   const syncPickerCaret = (position: number) => {
     const text = inputValueRef.current;
     const key = slashCommandTokenKey(text, position);
-    if (key !== pickerCaretRef.current.key || text !== pickerCaretRef.current.text) {
-      pickerCaretRef.current = {key, text};
+    if (
+      key !== pickerCaretRef.current.key ||
+      text !== pickerCaretRef.current.text
+    ) {
+      pickerCaretRef.current = { key, text };
       setCursorPosition(position);
     }
   };
@@ -2313,20 +2623,28 @@ export const ChatInput = ({
     const rangeEnd = range.start + range.length;
     const removal = removeComposerToken(inputValueRef.current, range);
     setInputValue(removal.value);
-    setCapsules(previous => previous
-      .filter(capsule => capsule.start !== range.start)
-      .map(capsule => capsule.start >= rangeEnd
-        ? {...capsule, start: capsule.start + removal.delta}
-        : capsule));
-    setFormatTokens(previous => previous
-      .filter(token => token.start !== range.start)
-      .map(token => token.start >= rangeEnd
-        ? {...token, start: token.start + removal.delta}
-        : token));
-    setSelectedSlashCommand(previous => {
+    setCapsules((previous) =>
+      previous
+        .filter((capsule) => capsule.start !== range.start)
+        .map((capsule) =>
+          capsule.start >= rangeEnd
+            ? { ...capsule, start: capsule.start + removal.delta }
+            : capsule
+        )
+    );
+    setFormatTokens((previous) =>
+      previous
+        .filter((token) => token.start !== range.start)
+        .map((token) =>
+          token.start >= rangeEnd
+            ? { ...token, start: token.start + removal.delta }
+            : token
+        )
+    );
+    setSelectedSlashCommand((previous) => {
       if (!previous || previous.start === range.start) return null;
       return previous.start >= rangeEnd
-        ? {...previous, start: previous.start + removal.delta}
+        ? { ...previous, start: previous.start + removal.delta }
         : previous;
     });
     requestAnimationFrame(() => moveCaret(removal.caret));
@@ -2334,25 +2652,39 @@ export const ChatInput = ({
 
   // Hit-tests the pointer against the mirror's token spans, which lay out identically to the
   // textarea's text.
-  const tokenAtPoint = (clientX: number, clientY: number):
-      {start: number; edge: number} | null => {
+  const tokenAtPoint = (
+    clientX: number,
+    clientY: number
+  ): { start: number; edge: number } | null => {
     const mirror = mirrorRef.current?.node;
     // Runs on every pointer move, and `getClientRects()` below forces a layout, so do nothing at
     // all in the common case of a composer with no tokens in it.
-    if (!mirror || (capsulesRef.current.length === 0 && !selectedSlashCommandRef.current
-        && formatTokensRef.current.length === 0)) {
+    if (
+      !mirror ||
+      (capsulesRef.current.length === 0 &&
+        !selectedSlashCommandRef.current &&
+        formatTokensRef.current.length === 0)
+    ) {
       return null;
     }
-    for (const span of mirror.querySelectorAll<HTMLElement>("[data-token-start]")) {
+    for (const span of mirror.querySelectorAll<HTMLElement>(
+      "[data-token-start]"
+    )) {
       // One rect per line the token occupies.
       for (const rect of Array.from(span.getClientRects())) {
-        if (clientX < rect.left || clientX > rect.right ||
-            clientY < rect.top || clientY > rect.bottom) continue;
+        if (
+          clientX < rect.left ||
+          clientX > rect.right ||
+          clientY < rect.top ||
+          clientY > rect.bottom
+        )
+          continue;
         return {
           start: Number(span.dataset.tokenStart),
-          edge: clientX < rect.left + rect.width / 2
-            ? Number(span.dataset.tokenStart)
-            : Number(span.dataset.tokenEnd),
+          edge:
+            clientX < rect.left + rect.width / 2
+              ? Number(span.dataset.tokenStart)
+              : Number(span.dataset.tokenEnd)
         };
       }
     }
@@ -2361,29 +2693,44 @@ export const ChatInput = ({
 
   // Completing a command leaves the `/name` text in place (only its color changes) and parks the
   // caret past it so the next keystroke doesn't grow the token.
-  const applySlashCommandSelection = useCallback((
-      choice: SlashCommandChoice, tokenStart: number, tokenEnd: number) => {
-    const splice = spliceComposerToken(
-        inputValueRef.current, tokenStart, tokenEnd, `/${choice.name}`);
-    setInputValue(splice.value);
-    setCapsules(previous => previous.map(capsule =>
-      capsule.start >= tokenEnd
-        ? {...capsule, start: capsule.start + splice.delta}
-        : capsule));
-    setSelectedSlashCommand({choice, start: splice.start, length: splice.length});
-    requestAnimationFrame(() => {
-      composerTextareaRef.current?.focus();
-      moveCaret(splice.caret);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const applySlashCommandSelection = useCallback(
+    (choice: SlashCommandChoice, tokenStart: number, tokenEnd: number) => {
+      const splice = spliceComposerToken(
+        inputValueRef.current,
+        tokenStart,
+        tokenEnd,
+        `/${choice.name}`
+      );
+      setInputValue(splice.value);
+      setCapsules((previous) =>
+        previous.map((capsule) =>
+          capsule.start >= tokenEnd
+            ? { ...capsule, start: capsule.start + splice.delta }
+            : capsule
+        )
+      );
+      setSelectedSlashCommand({
+        choice,
+        start: splice.start,
+        length: splice.length
+      });
+      requestAnimationFrame(() => {
+        composerTextareaRef.current?.focus();
+        moveCaret(splice.caret);
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    []
+  );
 
   // Keeps the resolved command anchored to its text when text is inserted or removed before it.
   const shiftSelectedSlashCommand = (position: number, delta: number) => {
     if (delta === 0) return;
-    setSelectedSlashCommand(previous => previous && previous.start >= position
-      ? {...previous, start: previous.start + delta}
-      : previous);
+    setSelectedSlashCommand((previous) =>
+      previous && previous.start >= position
+        ? { ...previous, start: previous.start + delta }
+        : previous
+    );
   };
 
   const slashCommandPicker = useSlashCommandPicker({
@@ -2394,25 +2741,42 @@ export const ChatInput = ({
     anchorRef: promptCardRef,
     getOverseer,
     onSelect: applySlashCommandSelection,
-    chatExists: !newChat,
+    chatExists: !newChat
   });
 
   const handleSend = async () => {
     if (sendInFlightRef.current || isSending || isBlocked) return;
     const attachmentsSnapshot = pendingAttachments;
     const readyAttachments = attachmentsSnapshot
-      .filter((attachment) => attachment.uploadState === "ready" && attachment.ref)
+      .filter(
+        (attachment) => attachment.uploadState === "ready" && attachment.ref
+      )
       .map((attachment) => attachment.ref!);
-    const hasUploadingAttachment = attachmentsSnapshot.some((attachment) => attachment.uploadState === "uploading");
-    const hasFailedAttachment = attachmentsSnapshot.some((attachment) => attachment.uploadState === "error");
+    const hasUploadingAttachment = attachmentsSnapshot.some(
+      (attachment) => attachment.uploadState === "uploading"
+    );
+    const hasFailedAttachment = attachmentsSnapshot.some(
+      (attachment) => attachment.uploadState === "error"
+    );
 
-    if (!inputValue.trim() && !selectedSlashCommand && readyAttachments.length === 0) return;
+    if (
+      !inputValue.trim() &&
+      !selectedSlashCommand &&
+      readyAttachments.length === 0
+    )
+      return;
     if (hasUploadingAttachment) {
-      toasts.add({ title: "Please wait for attachment uploads to finish", variant: "error" });
+      toasts.add({
+        title: "Please wait for attachment uploads to finish",
+        variant: "error"
+      });
       return;
     }
     if (hasFailedAttachment) {
-      toasts.add({ title: "Remove failed attachment uploads before sending", variant: "error" });
+      toasts.add({
+        title: "Remove failed attachment uploads before sending",
+        variant: "error"
+      });
       return;
     }
 
@@ -2441,13 +2805,19 @@ export const ChatInput = ({
         // removed, since it exists purely so the mirror has somewhere to paint the icon. Applied
         // back-to-front so earlier offsets stay valid while the text is rewritten.
         let text = messageInput;
-        for (const token of [...formatTokens].toSorted((a, b) => b.start - a.start)) {
-          text = text.slice(0, token.start) + token.format.output.noun +
-              text.slice(token.start + token.length);
+        for (const token of [...formatTokens].toSorted(
+          (a, b) => b.start - a.start
+        )) {
+          text =
+            text.slice(0, token.start) +
+            token.format.output.noun +
+            text.slice(token.start + token.length);
         }
-        inputCapsules = capsules.map(capsule => {
+        inputCapsules = capsules.map((capsule) => {
           const delta = formatShiftBefore(capsule.start);
-          return delta === 0 ? capsule : {...capsule, start: Math.max(0, capsule.start + delta)};
+          return delta === 0
+            ? capsule
+            : { ...capsule, start: Math.max(0, capsule.start + delta) };
         });
         messageInput = text;
       }
@@ -2456,12 +2826,17 @@ export const ChatInput = ({
         // Strip the command out of the *rewritten* text, not out of `inputValue`: the format pass
         // above may already have moved it.
         let stripped = stripSlashCommandToken(messageInput, {
-          start: selectedSlashCommand.start + formatShiftBefore(selectedSlashCommand.start),
-          length: selectedSlashCommand.length,
+          start:
+            selectedSlashCommand.start +
+            formatShiftBefore(selectedSlashCommand.start),
+          length: selectedSlashCommand.length
         });
         messageInput = stripped.args;
         commandPosition = stripped.commandPosition;
-      } else if (messageInput.startsWith("/") && !messageInput.startsWith("//")) {
+      } else if (
+        messageInput.startsWith("/") &&
+        !messageInput.startsWith("//")
+      ) {
         // A leading command that was typed but never resolved: resolve it now or refuse to send.
         // Parsed from the format-rewritten text so a format named later in the line doesn't smuggle
         // its logo slot into the arguments. A format token can't precede the command here: one at
@@ -2476,7 +2851,10 @@ export const ChatInput = ({
           match = await slashCommandPicker.resolveExact(parsed);
         } catch (error) {
           console.error("Failed to resolve slash command:", error);
-          toasts.add({ title: "Couldn't load slash commands", variant: "error" });
+          toasts.add({
+            title: "Couldn't load slash commands",
+            variant: "error"
+          });
           return;
         }
         if (!match) {
@@ -2485,20 +2863,27 @@ export const ChatInput = ({
         }
         slashCommand = match;
         messageInput = parsed.tail;
-        inputCapsules = inputCapsules.flatMap(capsule =>
+        inputCapsules = inputCapsules.flatMap((capsule) =>
           capsule.start >= parsed.tailStart
-            ? [{...capsule, start: capsule.start - parsed.tailStart}]
-            : []);
+            ? [{ ...capsule, start: capsule.start - parsed.tailStart }]
+            : []
+        );
       } else if (messageInput.startsWith("//")) {
         messageInput = messageInput.slice(1);
-        inputCapsules = inputCapsules.map(capsule => ({
+        inputCapsules = inputCapsules.map((capsule) => ({
           ...capsule,
-          start: Math.max(0, capsule.start - 1),
+          start: Math.max(0, capsule.start - 1)
         }));
       }
 
-      if (slashCommand && (inputCapsules.length > 0 || readyAttachments.length > 0)) {
-        toasts.add({ title: "Slash commands cannot include resources or attachments", variant: "error" });
+      if (
+        slashCommand &&
+        (inputCapsules.length > 0 || readyAttachments.length > 0)
+      ) {
+        toasts.add({
+          title: "Slash commands cannot include resources or attachments",
+          variant: "error"
+        });
         return;
       }
       let message: string | SlashCommandRequest = messageInput;
@@ -2509,13 +2894,15 @@ export const ChatInput = ({
         message = {
           id: slashCommand.selection,
           args: messageInput.trim(),
-          ...(commandPosition ? {commandPosition} : {}),
+          ...(commandPosition ? { commandPosition } : {})
         };
       }
       let capsuleSpecifiers: CapsuleSpecifier[] | undefined;
       if (typeof message === "string" && inputCapsules.length > 0) {
         // Build processed message: replace each capsule title with [i] placeholder.
-        const sortedCapsules = [...inputCapsules].toSorted((a, b) => a.start - b.start);
+        const sortedCapsules = [...inputCapsules].toSorted(
+          (a, b) => a.start - b.start
+        );
         let processedMsg = messageInput;
         let cumulativeShift = 0;
         capsuleSpecifiers = [];
@@ -2533,7 +2920,7 @@ export const ChatInput = ({
             length: placeholder.length,
             gatekeeperId: c.gatekeeperId,
             description: c.description,
-            vendorId: c.vendorId,
+            vendorId: c.vendorId
           });
           cumulativeShift += placeholder.length - c.length;
         }
@@ -2543,9 +2930,9 @@ export const ChatInput = ({
       if (typeof message === "string") {
         let leadingWhitespace = message.length - message.trimStart().length;
         if (leadingWhitespace > 0) {
-          capsuleSpecifiers = capsuleSpecifiers?.map(specifier => ({
+          capsuleSpecifiers = capsuleSpecifiers?.map((specifier) => ({
             ...specifier,
-            position: Math.max(0, specifier.position - leadingWhitespace),
+            position: Math.max(0, specifier.position - leadingWhitespace)
           }));
         }
         message = message.trim();
@@ -2554,13 +2941,19 @@ export const ChatInput = ({
       // Positions are resolved against the text as sent, which for a slash command is its
       // arguments: the part the transcript renders as the user's words.
       const formatRefs = locateMessageFormatRefs(
-          typeof message === "string" ? message : message.args,
-          [...formatTokens].toSorted((a, b) => a.start - b.start).map(token => token.format));
+        typeof message === "string" ? message : message.args,
+        [...formatTokens]
+          .toSorted((a, b) => a.start - b.start)
+          .map((token) => token.format)
+      );
 
-      await onSend(message, selectedModel,
-          capsuleSpecifiers?.length ? capsuleSpecifiers : undefined,
-          readyAttachments.length ? readyAttachments : undefined,
-          formatRefs);
+      await onSend(
+        message,
+        selectedModel,
+        capsuleSpecifiers?.length ? capsuleSpecifiers : undefined,
+        readyAttachments.length ? readyAttachments : undefined,
+        formatRefs
+      );
       for (const attachment of attachmentsSnapshot) {
         if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
       }
@@ -2595,7 +2988,10 @@ export const ChatInput = ({
 
     try {
       // Create the capsule gatekeeper.
-      const gk = await createCapsuleGatekeeper(accountId, normalizeResourceUrl(activeUrl.text));
+      const gk = await createCapsuleGatekeeper(
+        accountId,
+        normalizeResourceUrl(activeUrl.text)
+      );
       if (!gk) {
         console.error("Failed to create capsule gatekeeper");
         return;
@@ -2605,28 +3001,34 @@ export const ChatInput = ({
         // Fetch ID and description in parallel (promise pipelining).
         const [id, description] = await Promise.all([
           gk.getId(),
-          gk.describe(),
+          gk.describe()
         ]);
 
         // Snapshot the activeUrl position before any state updates.
         const urlStart = activeUrl.start;
         const urlEnd = activeUrl.end;
         const splice = spliceComposerToken(
-            inputValueRef.current, urlStart, urlEnd, capsuleTokenText(description, vendorId));
+          inputValueRef.current,
+          urlStart,
+          urlEnd,
+          capsuleTokenText(description, vendorId)
+        );
 
         setInputValue(splice.value);
 
         // Adjust positions of existing capsules and add the new one.
         shiftSelectedSlashCommand(urlEnd, splice.delta);
         setCapsules((prev) => [
-          ...prev.map((c) => c.start >= urlEnd ? { ...c, start: c.start + splice.delta } : c),
+          ...prev.map((c) =>
+            c.start >= urlEnd ? { ...c, start: c.start + splice.delta } : c
+          ),
           {
             start: splice.start,
             length: splice.length,
             gatekeeperId: id,
             description,
-            vendorId,
-          },
+            vendorId
+          }
         ]);
 
         // Clear activeUrl so the overlay dismisses.
@@ -2649,7 +3051,7 @@ export const ChatInput = ({
   const handleRefine = (
     newUrl: string,
     placeholderStart: number,
-    placeholderEnd: number,
+    placeholderEnd: number
   ) => {
     if (!activeUrl) return;
 
@@ -2659,7 +3061,7 @@ export const ChatInput = ({
 
     // Replace the old URL text with the new URL (which includes the suffix + placeholders).
     setInputValue(
-      (prev) => prev.slice(0, urlStart) + newUrl + prev.slice(urlEnd),
+      (prev) => prev.slice(0, urlStart) + newUrl + prev.slice(urlEnd)
     );
 
     // Adjust positions of any capsules that come after the URL.
@@ -2667,7 +3069,7 @@ export const ChatInput = ({
     if (lengthDiff !== 0) {
       setCapsules((prev) => {
         const adjusted = prev.map((c) =>
-          c.start >= urlEnd ? { ...c, start: c.start + lengthDiff } : c,
+          c.start >= urlEnd ? { ...c, start: c.start + lengthDiff } : c
         );
         return adjusted;
       });
@@ -2677,7 +3079,7 @@ export const ChatInput = ({
     setActiveUrl({
       text: newUrl,
       start: urlStart,
-      end: urlStart + newUrl.length,
+      end: urlStart + newUrl.length
     });
 
     // Reset overlay index so the first item is selected after the picker re-evaluates.
@@ -2691,7 +3093,7 @@ export const ChatInput = ({
       if (textarea) {
         textarea.setSelectionRange(
           urlStart + placeholderStart,
-          urlStart + placeholderEnd,
+          urlStart + placeholderEnd
         );
         textarea.focus();
       }
@@ -2720,10 +3122,14 @@ export const ChatInput = ({
     insertPos: number,
     id: number,
     description: ResourceDescription,
-    vendorId?: string,
+    vendorId?: string
   ) => {
     const splice = spliceComposerToken(
-        inputValueRef.current, insertPos, insertPos, capsuleTokenText(description, vendorId));
+      inputValueRef.current,
+      insertPos,
+      insertPos,
+      capsuleTokenText(description, vendorId)
+    );
 
     setInputValue(splice.value);
 
@@ -2731,8 +3137,15 @@ export const ChatInput = ({
     shiftSelectedSlashCommand(insertPos, splice.delta);
     setCapsules((prev) => [
       ...prev.map((c) =>
-        c.start >= insertPos ? { ...c, start: c.start + splice.delta } : c),
-      { start: splice.start, length: splice.length, gatekeeperId: id, description, vendorId },
+        c.start >= insertPos ? { ...c, start: c.start + splice.delta } : c
+      ),
+      {
+        start: splice.start,
+        length: splice.length,
+        gatekeeperId: id,
+        description,
+        vendorId
+      }
     ]);
 
     requestAnimationFrame(() => {
@@ -2747,10 +3160,16 @@ export const ChatInput = ({
     try {
       // Fetch everything in parallel (promise pipelining).
       const [id, description, creationSpec] = await Promise.all([
-        gk.getId(), gk.describe(), gk.getCreationSpec(),
+        gk.getId(),
+        gk.describe(),
+        gk.getCreationSpec()
       ]);
-      insertCapsuleAt(attachCursorPosRef.current, id, description,
-          creationSpec.type === "gatekeeper" ? creationSpec.vendorId : undefined);
+      insertCapsuleAt(
+        attachCursorPosRef.current,
+        id,
+        description,
+        creationSpec.type === "gatekeeper" ? creationSpec.vendorId : undefined
+      );
       setAttachModalOpen(false);
     } finally {
       gk[Symbol.dispose]();
@@ -2804,24 +3223,37 @@ export const ChatInput = ({
 
     const isPureInsertion = oldEnd === diffStart;
     const command = selectedSlashCommandRef.current;
-    const commandEdited = command !== null &&
-      diffStart < command.start + command.length && oldEnd > command.start;
+    const commandEdited =
+      command !== null &&
+      diffStart < command.start + command.length &&
+      oldEnd > command.start;
     if (commandEdited) setSelectedSlashCommand(null);
 
     // Typing through a token removes that format. Only tokens the edit touched are dropped; the
     // rest shift.
-    const editedFormats = formatTokensRef.current.filter(token =>
-      diffStart < token.start + token.length && oldEnd > token.start);
+    const editedFormats = formatTokensRef.current.filter(
+      (token) => diffStart < token.start + token.length && oldEnd > token.start
+    );
     if (editedFormats.length > 0) {
-      const dropped = new Set(editedFormats.map(token => token.start));
-      setFormatTokens(previous => previous.filter(token => !dropped.has(token.start)));
+      const dropped = new Set(editedFormats.map((token) => token.start));
+      setFormatTokens((previous) =>
+        previous.filter((token) => !dropped.has(token.start))
+      );
     }
     const survivingFormats = (position: number, delta: number) => {
       if (delta === 0) return;
-      const dropped = new Set(editedFormats.map(token => token.start));
-      setFormatTokens(previous => previous.flatMap(token => dropped.has(token.start)
-        ? []
-        : [token.start >= position ? {...token, start: token.start + delta} : token]));
+      const dropped = new Set(editedFormats.map((token) => token.start));
+      setFormatTokens((previous) =>
+        previous.flatMap((token) =>
+          dropped.has(token.start)
+            ? []
+            : [
+                token.start >= position
+                  ? { ...token, start: token.start + delta }
+                  : token
+              ]
+        )
+      );
     };
 
     if (capsulesRef.current.length === 0) {
@@ -2955,7 +3387,11 @@ export const ChatInput = ({
     // closer edge. Ranged selections are left alone.
     let cursorPos = textarea.selectionStart;
     if (cursorPos === textarea.selectionEnd) {
-      const snapped = snapCaretOutOfRanges(cursorPos, currentTokenRanges(), "nearest");
+      const snapped = snapCaretOutOfRanges(
+        cursorPos,
+        currentTokenRanges(),
+        "nearest"
+      );
       if (snapped !== cursorPos) {
         cursorPos = snapped;
         textarea.setSelectionRange(snapped, snapped);
@@ -2968,7 +3404,7 @@ export const ChatInput = ({
     const text = inputValueRef.current;
     const scanned = lastUrlScanRef.current;
     if (scanned.position === cursorPos && scanned.text === text) return;
-    lastUrlScanRef.current = {position: cursorPos, text};
+    lastUrlScanRef.current = { position: cursorPos, text };
 
     // Find all URL matches in the current text.
     URL_REGEX.lastIndex = 0;
@@ -2981,7 +3417,7 @@ export const ChatInput = ({
       if (cursorPos >= start && cursorPos <= end) {
         // Skip if this region is already a capsule.
         const isInsideCapsule = capsulesRef.current.some(
-          (c) => start >= c.start && end <= c.start + c.length,
+          (c) => start >= c.start && end <= c.start + c.length
         );
         if (isInsideCapsule) break;
 
@@ -2991,7 +3427,7 @@ export const ChatInput = ({
           prev.start === start &&
           prev.end === end
             ? prev
-            : { text: match![0], start, end },
+            : { text: match![0], start, end }
         );
         return;
       }
@@ -3018,20 +3454,33 @@ export const ChatInput = ({
     const value = inputValueRef.current;
     // The menu takes focus, but the textarea keeps its last selection; falling back to the end is
     // right for the case where it was never focused at all.
-    const caret = Math.min(composerTextareaRef.current?.selectionStart ?? value.length, value.length);
+    const caret = Math.min(
+      composerTextareaRef.current?.selectionStart ?? value.length,
+      value.length
+    );
     const at = snapCaretOutOfRanges(caret, currentTokenRanges(), "nearest");
     const splice = spliceComposerToken(
-        value, at, at, (logo ? CAPSULE_LOGO_SLOT : "") + format.output.noun);
+      value,
+      at,
+      at,
+      (logo ? CAPSULE_LOGO_SLOT : "") + format.output.noun
+    );
     setInputValue(splice.value);
-    setCapsules(previous => previous.map(capsule => capsule.start >= at
-      ? {...capsule, start: capsule.start + splice.delta}
-      : capsule));
+    setCapsules((previous) =>
+      previous.map((capsule) =>
+        capsule.start >= at
+          ? { ...capsule, start: capsule.start + splice.delta }
+          : capsule
+      )
+    );
     shiftSelectedSlashCommand(at, splice.delta);
-    setFormatTokens(previous => [
-      ...previous.map(token => token.start >= at
-        ? {...token, start: token.start + splice.delta}
-        : token),
-      {format, logo, start: splice.start, length: splice.length},
+    setFormatTokens((previous) => [
+      ...previous.map((token) =>
+        token.start >= at
+          ? { ...token, start: token.start + splice.delta }
+          : token
+      ),
+      { format, logo, start: splice.start, length: splice.length }
     ]);
     requestAnimationFrame(() => {
       composerTextareaRef.current?.focus();
@@ -3041,28 +3490,39 @@ export const ChatInput = ({
 
   // What the mirror paints as objects rather than text. Memoized because the composer re-renders for
   // plenty of reasons that leave the text alone (attachments, agent activity, menus).
-  const mirrorTokens = useMemo<MirrorToken[]>(() => [
-    ...capsules.map(({start, length, vendorId}) => ({
-      kind: "capsule" as const,
-      start,
-      length,
-      // Painted into the em space the token starts with, so it costs no layout.
-      logo: inputValue.startsWith(CAPSULE_LOGO_SLOT, start)
-        ? cssLogoUrl(vendorId ? vendorBranding.get(vendorId)?.logoUrl : undefined)
-        : undefined,
-    })),
-    ...(selectedSlashCommand ? [{
-      kind: "command" as const,
-      start: selectedSlashCommand.start,
-      length: selectedSlashCommand.length,
-    }] : []),
-    ...formatTokens.map(({start, length, logo}) => ({
-      kind: "capsule" as const,
-      start,
-      length,
-      logo: inputValue.startsWith(CAPSULE_LOGO_SLOT, start) ? cssLogoUrl(logo) : undefined,
-    })),
-  ], [capsules, formatTokens, inputValue, selectedSlashCommand, vendorBranding]);
+  const mirrorTokens = useMemo<MirrorToken[]>(
+    () => [
+      ...capsules.map(({ start, length, vendorId }) => ({
+        kind: "capsule" as const,
+        start,
+        length,
+        // Painted into the em space the token starts with, so it costs no layout.
+        logo: inputValue.startsWith(CAPSULE_LOGO_SLOT, start)
+          ? cssLogoUrl(
+              vendorId ? vendorBranding.get(vendorId)?.logoUrl : undefined
+            )
+          : undefined
+      })),
+      ...(selectedSlashCommand
+        ? [
+            {
+              kind: "command" as const,
+              start: selectedSlashCommand.start,
+              length: selectedSlashCommand.length
+            }
+          ]
+        : []),
+      ...formatTokens.map(({ start, length, logo }) => ({
+        kind: "capsule" as const,
+        start,
+        length,
+        logo: inputValue.startsWith(CAPSULE_LOGO_SLOT, start)
+          ? cssLogoUrl(logo)
+          : undefined
+      }))
+    ],
+    [capsules, formatTokens, inputValue, selectedSlashCommand, vendorBranding]
+  );
 
   // Console log severity is communicated by the dot colour only; the banner
   // chrome stays neutral so a noisy error doesn't paint a red bar above the
@@ -3074,23 +3534,31 @@ export const ChatInput = ({
       : consoleLogSeverity === "warn"
         ? "bg-kumo-warning"
         : "bg-kumo-inactive";
-  const logKind = consoleLogSeverity === "error"
-    ? "error"
-    : consoleLogSeverity === "warn"
-      ? "warning"
-      : "log";
-  const selectedModelLabel = selectedModel == null
-    ? "No agent"
-    : models.find((model) => model.id === selectedModel)?.name ?? selectedModel;
+  const logKind =
+    consoleLogSeverity === "error"
+      ? "error"
+      : consoleLogSeverity === "warn"
+        ? "warning"
+        : "log";
+  const selectedModelLabel =
+    selectedModel == null
+      ? "No agent"
+      : (models.find((model) => model.id === selectedModel)?.name ??
+        selectedModel);
 
   const hasReadyAttachment = pendingAttachments.some(
-    (attachment) => attachment.uploadState === "ready" && attachment.ref,
+    (attachment) => attachment.uploadState === "ready" && attachment.ref
   );
   const hasUnreadyAttachment = pendingAttachments.some(
-    (attachment) => attachment.uploadState !== "ready",
+    (attachment) => attachment.uploadState !== "ready"
   );
-  const canSend = !isSending && !isAgentActive && !isBlocked &&
-    (inputValue.trim().length > 0 || selectedSlashCommand !== null || hasReadyAttachment) &&
+  const canSend =
+    !isSending &&
+    !isAgentActive &&
+    !isBlocked &&
+    (inputValue.trim().length > 0 ||
+      selectedSlashCommand !== null ||
+      hasReadyAttachment) &&
     !hasUnreadyAttachment;
   const canAttachMore = pendingAttachments.length < MAX_PENDING_ATTACHMENTS;
 
@@ -3119,7 +3587,7 @@ export const ChatInput = ({
           >
             <Tooltip
               content={
-                <pre className="m-0 whitespace-pre-wrap text-ui-2xs max-h-[300px] overflow-auto max-w-[500px]">
+                <pre className="m-0 whitespace-pre-wrap text-ui-2xs max-h-75 overflow-auto max-w-125">
                   {consoleLogPreview}
                 </pre>
               }
@@ -3132,7 +3600,9 @@ export const ChatInput = ({
                 onClick={handleAttachLogs}
                 className="flex min-w-0 items-center gap-2 truncate text-left hover:text-kumo-default"
               >
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${logDotClass}`} />
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${logDotClass}`}
+                />
                 <span className="truncate">
                   Send {pendingConsoleLogCount} captured {logKind}
                   {pendingConsoleLogCount !== 1 ? "s" : ""} to chat
@@ -3142,7 +3612,7 @@ export const ChatInput = ({
             <button
               type="button"
               onClick={onDiscardConsoleLogs}
-              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full opacity-60 transition-opacity hover:bg-kumo-tint hover:opacity-100"
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full opacity-60 transition-opacity hover:bg-kumo-tint hover:opacity-100"
               aria-label="Discard captured logs"
             >
               <X size={10} />
@@ -3157,19 +3627,27 @@ export const ChatInput = ({
           only needs a resting edge. */}
       <div
         ref={promptCardRef}
-        className={`${surface === "canvas" ? "themed-prompt-card-canvas-shadow" : "themed-prompt-card-shadow"} relative overflow-visible rounded-2xl border border-kumo-line bg-kumo-control transition-shadow duration-150 ease-out`}
+        className={`relative overflow-visible rounded-2xl border border-kumo-line bg-kumo-control transition-shadow duration-150 ease-out`}
         onDragEnter={handleAttachmentDragEnter}
         onDragOver={handleAttachmentDragOver}
         onDragLeave={handleAttachmentDragLeave}
         onDrop={handleAttachmentDrop}
       >
         {isAttachmentDragActive && (
-          <div className={`themed-inset-outline pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-2xl border-2 border-dashed p-4 backdrop-blur-[1px] transition-[opacity,transform] duration-150 ease-out ${canAttachMore ? "border-kumo-brand/55 bg-kumo-brand/10" : "border-kumo-warning/60 bg-kumo-warning/10"}`}>
-            <div className={`themed-floating-shadow flex items-center gap-2 rounded-full border bg-kumo-base/90 px-3 py-2 text-ui-sm font-medium leading-4 text-kumo-default ${canAttachMore ? "border-kumo-brand/25" : "border-kumo-warning/30"}`}>
-              <span className={`grid h-7 w-7 place-items-center rounded-full ${canAttachMore ? "bg-kumo-brand/12 text-kumo-brand" : "bg-kumo-warning/15 text-kumo-warning"}`}>
+          <div
+            className={`themed-inset-outline pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-2xl border-2 border-dashed p-4 backdrop-blur-[1px] transition-[opacity,transform] duration-150 ease-out ${canAttachMore ? "border-kumo-brand/55 bg-kumo-brand/10" : "border-kumo-warning/60 bg-kumo-warning/10"}`}
+          >
+            <div
+              className={`themed-floating-shadow flex items-center gap-2 rounded-full border bg-kumo-base/90 px-3 py-2 text-ui-sm font-medium leading-4 text-kumo-default ${canAttachMore ? "border-kumo-brand/25" : "border-kumo-warning/30"}`}
+            >
+              <span
+                className={`grid h-7 w-7 place-items-center rounded-full ${canAttachMore ? "bg-kumo-brand/12 text-kumo-brand" : "bg-kumo-warning/15 text-kumo-warning"}`}
+              >
                 <FileIcon size={16} weight="duotone" />
               </span>
-              {canAttachMore ? "Drop files to attach" : "Messages are limited to 5 attachments"}
+              {canAttachMore
+                ? "Drop files to attach"
+                : "Messages are limited to 5 attachments"}
             </div>
           </div>
         )}
@@ -3210,7 +3688,11 @@ export const ChatInput = ({
               role="combobox"
               aria-autocomplete="list"
               aria-expanded={slashCommandPicker.open}
-              aria-controls={slashCommandPicker.open ? slashCommandPicker.listboxId : undefined}
+              aria-controls={
+                slashCommandPicker.open
+                  ? slashCommandPicker.listboxId
+                  : undefined
+              }
               aria-activedescendant={slashCommandPicker.activeDescendant}
               onChange={(e) => {
                 handleInputChange(e.target.value, e.target.selectionStart ?? 0);
@@ -3223,7 +3705,6 @@ export const ChatInput = ({
               onSelect={handleCursorChange}
               onClick={handleCursorChange}
               onKeyUp={handleCursorChange}
-
               onMouseDown={(e) => {
                 if (e.button !== 0) return;
                 const token = tokenAtPoint(e.clientX, e.clientY);
@@ -3275,34 +3756,64 @@ export const ChatInput = ({
                   slashCommandPicker.dismiss();
                   return;
                 }
-                if (slashCommandPicker.open && e.key === "Enter" && !e.shiftKey) {
+                if (
+                  slashCommandPicker.open &&
+                  e.key === "Enter" &&
+                  !e.shiftKey
+                ) {
                   e.preventDefault();
-                  if (slashCommandPicker.selectable && slashCommandPicker.activeChoice) {
+                  if (
+                    slashCommandPicker.selectable &&
+                    slashCommandPicker.activeChoice
+                  ) {
                     slashCommandPicker.select(slashCommandPicker.activeChoice);
                   }
                   return;
                 }
-                if (slashCommandPicker.open && e.key === "Tab" &&
-                    slashCommandPicker.selectable && slashCommandPicker.activeChoice) {
+                if (
+                  slashCommandPicker.open &&
+                  e.key === "Tab" &&
+                  slashCommandPicker.selectable &&
+                  slashCommandPicker.activeChoice
+                ) {
                   e.preventDefault();
                   slashCommandPicker.select(slashCommandPicker.activeChoice);
                   return;
                 }
-                if (slashCommandPicker.open && slashCommandPicker.selectable && slashCommandPicker.choices.length > 0 &&
-                    (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+                if (
+                  slashCommandPicker.open &&
+                  slashCommandPicker.selectable &&
+                  slashCommandPicker.choices.length > 0 &&
+                  (e.key === "ArrowDown" || e.key === "ArrowUp")
+                ) {
                   e.preventDefault();
                   const direction = e.key === "ArrowDown" ? 1 : -1;
-                  slashCommandPicker.setIndex((current) =>
-                    (current + direction + slashCommandPicker.choices.length) % slashCommandPicker.choices.length);
+                  slashCommandPicker.setIndex(
+                    (current) =>
+                      (current +
+                        direction +
+                        slashCommandPicker.choices.length) %
+                      slashCommandPicker.choices.length
+                  );
                   return;
                 }
                 // Delete a whole capsule or command rather than eating into it.
-                if ((e.key === "Backspace" || e.key === "Delete") &&
-                    !e.shiftKey && !e.metaKey && !e.altKey && !e.ctrlKey &&
-                    e.currentTarget.selectionStart === e.currentTarget.selectionEnd) {
+                if (
+                  (e.key === "Backspace" || e.key === "Delete") &&
+                  !e.shiftKey &&
+                  !e.metaKey &&
+                  !e.altKey &&
+                  !e.ctrlKey &&
+                  e.currentTarget.selectionStart ===
+                    e.currentTarget.selectionEnd
+                ) {
                   const caret = e.currentTarget.selectionStart;
-                  const range = currentTokenRanges().find(({start, length}) =>
-                    e.key === "Backspace" ? caret === start + length : caret === start);
+                  const range = currentTokenRanges().find(
+                    ({ start, length }) =>
+                      e.key === "Backspace"
+                        ? caret === start + length
+                        : caret === start
+                  );
                   if (range) {
                     e.preventDefault();
                     removeTokenAt(range);
@@ -3310,13 +3821,22 @@ export const ChatInput = ({
                   }
                 }
                 // Step over a whole capsule or command rather than through its characters.
-                if ((e.key === "ArrowLeft" || e.key === "ArrowRight") &&
-                    !e.shiftKey && !e.metaKey && !e.altKey && !e.ctrlKey &&
-                    e.currentTarget.selectionStart === e.currentTarget.selectionEnd) {
+                if (
+                  (e.key === "ArrowLeft" || e.key === "ArrowRight") &&
+                  !e.shiftKey &&
+                  !e.metaKey &&
+                  !e.altKey &&
+                  !e.ctrlKey &&
+                  e.currentTarget.selectionStart ===
+                    e.currentTarget.selectionEnd
+                ) {
                   const direction = e.key === "ArrowRight" ? 1 : -1;
                   const target = e.currentTarget.selectionStart + direction;
                   const snapped = snapCaretOutOfRanges(
-                      target, currentTokenRanges(), direction > 0 ? "right" : "left");
+                    target,
+                    currentTokenRanges(),
+                    direction > 0 ? "right" : "left"
+                  );
                   if (snapped !== target) {
                     e.preventDefault();
                     moveCaret(snapped);
@@ -3337,7 +3857,7 @@ export const ChatInput = ({
                     overlayIndex,
                     navigateOverlay,
                     overlayItemsRef,
-                    overlayActivateRef,
+                    overlayActivateRef
                   );
                 }
               }}
@@ -3357,17 +3877,28 @@ export const ChatInput = ({
         {pendingAttachments.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 px-3 pb-2 pt-1">
             {pendingAttachments.map((attachment) => (
-              <div key={attachment.id} className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-kumo-line/70 bg-kumo-elevated">
+              <div
+                key={attachment.id}
+                className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-kumo-line/70 bg-kumo-elevated"
+              >
                 {attachment.previewUrl ? (
-                  <img src={attachment.previewUrl} alt={attachment.name ?? "Attached file"} className="h-full w-full object-cover" />
+                  <img
+                    src={attachment.previewUrl}
+                    alt={attachment.name ?? "Attached file"}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <FileIcon size={22} className="text-kumo-subtle" />
                 )}
                 {attachment.uploadState === "uploading" && (
-                  <div className="absolute inset-0 grid place-items-center rounded-lg bg-black/35 text-ui-2xs text-white">Uploading</div>
+                  <div className="absolute inset-0 grid place-items-center rounded-lg bg-black/35 text-ui-2xs text-white">
+                    Uploading
+                  </div>
                 )}
                 {attachment.uploadState === "error" && (
-                  <div className="absolute inset-0 grid place-items-center rounded-lg bg-kumo-danger/80 px-1 text-center text-ui-2xs leading-3 text-white">Failed</div>
+                  <div className="absolute inset-0 grid place-items-center rounded-lg bg-kumo-danger/80 px-1 text-center text-ui-2xs leading-3 text-white">
+                    Failed
+                  </div>
                 )}
                 <button
                   type="button"
@@ -3397,11 +3928,16 @@ export const ChatInput = ({
                   </button>
                 }
               />
-              <DropdownMenu.Content collisionPadding={16} className="themed-floating-shadow-lg !z-[1100] !min-w-[170px] rounded-2xl border border-kumo-line/70 bg-kumo-base p-1">
+              <DropdownMenu.Content
+                collisionPadding={16}
+                className="themed-floating-shadow-lg !z-[1100] !min-w-[170px] rounded-2xl border border-kumo-line/70 bg-kumo-base p-1"
+              >
                 {/* The deployment's standard formats. Picking one drops its name into the message at
                     the caret; the agent is told what to build from it. */}
                 {canChooseFormat && (
-                  <ComposerFormatMenuItems onSelect={(format) => void chooseFormat(format)} />
+                  <ComposerFormatMenuItems
+                    onSelect={(format) => void chooseFormat(format)}
+                  />
                 )}
                 {onToggleThinkingTraces && (
                   <DropdownMenu.Item
@@ -3433,100 +3969,114 @@ export const ChatInput = ({
               className="inline-flex h-8 flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-ui-sm leading-none text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-subtle focus-visible:bg-kumo-tint focus-visible:text-kumo-subtle focus-visible:outline-none active:scale-[0.97]"
             >
               <Plug size={15} className="flex-shrink-0" />
-              <span className={`leading-none ${styles.attachLabelText}`}>{attachLabel ?? "Add resource"}</span>
+              <span className={`leading-none ${styles.attachLabelText}`}>
+                {attachLabel ?? "Add resource"}
+              </span>
             </button>
           </div>
 
           {/* Right actions */}
           <div className="ml-auto flex min-w-0 flex-shrink items-center gap-1.5">
-              <DropdownMenu>
-                <DropdownMenu.Trigger
-                  render={
-                    <button
-                      type="button"
-                      className="group inline-flex h-8 min-w-0 max-w-[180px] cursor-pointer items-center gap-1.5 rounded-lg px-2 text-ui-sm leading-5 text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-default focus-visible:bg-kumo-tint focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.97] data-[popup-open]:bg-kumo-tint data-[popup-open]:text-kumo-default"
-                      aria-label="Select model"
+            <DropdownMenu>
+              <DropdownMenu.Trigger
+                render={
+                  <button
+                    type="button"
+                    className="group inline-flex h-8 min-w-0 max-w-[180px] cursor-pointer items-center gap-1.5 rounded-lg px-2 text-ui-sm leading-5 text-kumo-subtle transition-[background-color,color,transform] duration-150 ease-out hover:bg-kumo-tint hover:text-kumo-default focus-visible:bg-kumo-tint focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.97] data-[popup-open]:bg-kumo-tint data-[popup-open]:text-kumo-default"
+                    aria-label="Select model"
+                  >
+                    <span className="min-w-0 truncate">
+                      {selectedModelLabel}
+                    </span>
+                    <CaretDown
+                      size={12}
+                      weight="bold"
+                      className="flex-shrink-0 text-kumo-subtle transition-transform duration-150 ease-out group-data-[popup-open]:rotate-180"
+                    />
+                  </button>
+                }
+              />
+              <DropdownMenu.Content className="themed-floating-shadow-lg !z-[1100] !min-w-[190px] rounded-2xl border border-kumo-line/70 bg-kumo-base p-1">
+                {models.map((model) => {
+                  const active = selectedModel === model.id;
+                  return (
+                    <DropdownMenu.Item
+                      key={model.id}
+                      onClick={() => onModelChange(model.id)}
+                      className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                     >
-                      <span className="min-w-0 truncate">{selectedModelLabel}</span>
-                      <CaretDown
-                        size={12}
-                        weight="bold"
-                        className="flex-shrink-0 text-kumo-subtle transition-transform duration-150 ease-out group-data-[popup-open]:rotate-180"
-                      />
-                    </button>
-                  }
-                />
-                <DropdownMenu.Content className="themed-floating-shadow-lg !z-[1100] !min-w-[190px] rounded-2xl border border-kumo-line/70 bg-kumo-base p-1">
-                  {models.map((model) => {
-                    const active = selectedModel === model.id;
-                    return (
-                      <DropdownMenu.Item
-                        key={model.id}
-                        onClick={() => onModelChange(model.id)}
-                        className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
-                      >
-                        <span className="min-w-0 flex-1 truncate">{model.name}</span>
-                        {gatewayLabel(model.gateway) && (
-                          <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs uppercase text-kumo-subtle">
-                            {gatewayLabel(model.gateway)}
-                          </span>
-                        )}
-                        {active && (
-                          <Check size={12} weight="bold" className="ml-3 flex-shrink-0 text-kumo-subtle" />
-                        )}
-                      </DropdownMenu.Item>
-                    );
-                  })}
-                  <div className="my-1 border-t border-kumo-line/70" />
-                  <DropdownMenu.Item
-                    onClick={() => onModelChange(null)}
-                    className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
-                  >
-                    <span className="min-w-0 flex-1 truncate">No agent</span>
-                    {selectedModel == null && (
-                      <Check size={12} weight="bold" className="ml-3 flex-shrink-0 text-kumo-subtle" />
-                    )}
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu>
-              {isAgentActive && onStop ? (
-                <WorkshopIconButton
-                  onClick={onStop}
-                  tone="primary"
-                  className="!h-8 !w-8"
-                  aria-label="Stop agent"
+                      <span className="min-w-0 flex-1 truncate">
+                        {model.name}
+                      </span>
+                      {gatewayLabel(model.gateway) && (
+                        <span className="ml-1.5 shrink-0 rounded-full bg-kumo-tint px-1.5 py-0.5 text-ui-2xs uppercase text-kumo-subtle">
+                          {gatewayLabel(model.gateway)}
+                        </span>
+                      )}
+                      {active && (
+                        <Check
+                          size={12}
+                          weight="bold"
+                          className="ml-3 flex-shrink-0 text-kumo-subtle"
+                        />
+                      )}
+                    </DropdownMenu.Item>
+                  );
+                })}
+                <div className="my-1 border-t border-kumo-line/70" />
+                <DropdownMenu.Item
+                  onClick={() => onModelChange(null)}
+                  className="!h-auto rounded-xl !px-2 !py-1.5 text-ui-xs font-normal text-kumo-subtle transition-colors data-highlighted:bg-kumo-tint/70 data-highlighted:text-kumo-default"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <rect x="5" y="5" width="14" height="14" rx="2" />
-                  </svg>
-                </WorkshopIconButton>
-              ) : (
-                <WorkshopIconButton
-                  onClick={submitMessage}
-                  disabled={!canSend}
-                  tone="primary"
-                  className="!h-8 !w-8 disabled:cursor-not-allowed disabled:opacity-30"
-                  aria-label="Send message"
+                  <span className="min-w-0 flex-1 truncate">No agent</span>
+                  {selectedModel == null && (
+                    <Check
+                      size={12}
+                      weight="bold"
+                      className="ml-3 flex-shrink-0 text-kumo-subtle"
+                    />
+                  )}
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+            {isAgentActive && onStop ? (
+              <WorkshopIconButton
+                onClick={onStop}
+                tone="primary"
+                className="!h-8 !w-8"
+                aria-label="Stop agent"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
                 >
-                  {/* Arrow-up icon */}
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <line x1="12" y1="19" x2="12" y2="5" />
-                    <polyline points="5 12 12 5 19 12" />
-                  </svg>
-                </WorkshopIconButton>
-              )}
+                  <rect x="5" y="5" width="14" height="14" rx="2" />
+                </svg>
+              </WorkshopIconButton>
+            ) : (
+              <WorkshopIconButton
+                onClick={submitMessage}
+                disabled={!canSend}
+                tone="primary"
+                className="!h-8 !w-8 disabled:cursor-not-allowed disabled:opacity-30"
+                aria-label="Send message"
+              >
+                {/* Arrow-up icon */}
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
+                </svg>
+              </WorkshopIconButton>
+            )}
           </div>
         </div>
       </div>
@@ -3584,7 +4134,7 @@ type ChatDisplayEntry =
       type: "message";
       key: string;
       message: AiChatMessage;
-      slashCommand?: Extract<AiChatMessage, {type: "slashCommand"}>;
+      slashCommand?: Extract<AiChatMessage, { type: "slashCommand" }>;
       toolCalls?: AiToolCall[];
       toolCallGroups?: ToolCallGroup[];
       lastMessageSequence?: number;
@@ -3604,7 +4154,9 @@ type ChatDisplayEntry =
       message: ChangeChatMessage;
     };
 
-function isObservationActionMessage(msg: AiChatMessage): msg is ObservationChatMessage {
+function isObservationActionMessage(
+  msg: AiChatMessage
+): msg is ObservationChatMessage {
   return msg.type === "action" && msg.actionLog?.type === "observation";
 }
 
@@ -3616,7 +4168,9 @@ type WorkMessageParts = {
   lastWorkTimestamp: Date;
 };
 
-function isAssistantMessageWithoutVisibleText(msg: AiChatMessage): msg is Extract<AiChatMessage, { type: "message" }> {
+function isAssistantMessageWithoutVisibleText(
+  msg: AiChatMessage
+): msg is Extract<AiChatMessage, { type: "message" }> {
   return (
     msg.type === "message" &&
     msg.author.type !== "user" &&
@@ -3627,7 +4181,10 @@ function isAssistantMessageWithoutVisibleText(msg: AiChatMessage): msg is Extrac
 
 // Tool-only turns can leave behind empty assistant messages. Don't render them as transcript rows.
 function isEmptyAssistantMessage(msg: AiChatMessage): boolean {
-  return isAssistantMessageWithoutVisibleText(msg) && (!msg.toolCalls || msg.toolCalls.length === 0);
+  return (
+    isAssistantMessageWithoutVisibleText(msg) &&
+    (!msg.toolCalls || msg.toolCalls.length === 0)
+  );
 }
 
 // Assistant messages with tool calls but no text are displayed as work rows.
@@ -3638,7 +4195,7 @@ function getWorkOnlyMessageParts(msg: AiChatMessage): WorkMessageParts | null {
       observations: [msg],
       lastAgentMessageSequence: null,
       lastWorkSequence: msg.sequence,
-      lastWorkTimestamp: msg.timestamp,
+      lastWorkTimestamp: msg.timestamp
     };
   }
 
@@ -3652,7 +4209,7 @@ function getWorkOnlyMessageParts(msg: AiChatMessage): WorkMessageParts | null {
       observations: [],
       lastAgentMessageSequence: msg.sequence,
       lastWorkSequence: msg.sequence,
-      lastWorkTimestamp: msg.timestamp,
+      lastWorkTimestamp: msg.timestamp
     };
   }
 
@@ -3680,7 +4237,7 @@ function describeCreatedGadgetDeletion(titles: string[] | undefined): string {
 // Label for the per-turn discard-changes button.
 function getDiscardLabel(
   isTrailing: boolean | undefined,
-  createdGadgetTitles?: string[],
+  createdGadgetTitles?: string[]
 ): string {
   const base = isTrailing
     ? "Discard changes from this response"
@@ -3690,7 +4247,7 @@ function getDiscardLabel(
 
 function getSavedEditsDiscardLabel(
   isTrailing: boolean | undefined,
-  createdGadgetTitles?: string[],
+  createdGadgetTitles?: string[]
 ): string {
   const base = isTrailing
     ? "Discard saved edits"
@@ -3703,7 +4260,7 @@ function DiscardPendingChangesPopover({
   disabled,
   isDiscarding,
   onOpenChange,
-  onConfirm,
+  onConfirm
 }: {
   open: boolean;
   disabled: boolean;
@@ -3736,11 +4293,19 @@ function DiscardPendingChangesPopover({
             Discard all pending changes?
           </Popover.Title>
           <p className="mt-0.5 text-ui-xs text-kumo-subtle">
-            Return to the last accepted version. Any gadgets created by these changes will be
-            permanently deleted. Pending changes can&apos;t be restored.
+            Return to the last accepted version. Any gadgets created by these
+            changes will be permanently deleted. Pending changes can&apos;t be
+            restored.
           </p>
           <p className="mt-2 border-t border-kumo-line pt-2 text-ui-2xs text-kumo-subtle">
-            Use the <ArrowUUpLeft size={12} className="mx-0.5 inline-block align-[-2px]" aria-hidden="true" /><span className="sr-only">undo arrow</span> under any agent response to discard from that turn onward.
+            Use the{" "}
+            <ArrowUUpLeft
+              size={12}
+              className="mx-0.5 inline-block align-[-2px]"
+              aria-hidden="true"
+            />
+            <span className="sr-only">undo arrow</span> under any agent response
+            to discard from that turn onward.
           </p>
         </div>
         <div className="flex items-center justify-end gap-0.5 border-t border-kumo-line px-2 py-1.5">
@@ -3770,8 +4335,12 @@ function DiscardPendingChangesPopover({
 // message so one turn reads as one tool/resource run.
 function transcriptToolCalls(toolCalls: AiToolCall[]): AiToolCall[] {
   // Successful creations render as cards; failed calls retain their error summary.
-  return toolCalls.filter((tc) =>
-    tc.toolName !== "createGadget" || tc.output === undefined || Boolean(tc.error));
+  return toolCalls.filter(
+    (tc) =>
+      tc.toolName !== "createGadget" ||
+      tc.output === undefined ||
+      Boolean(tc.error)
+  );
 }
 
 export function buildChatDisplayEntries(
@@ -3779,7 +4348,7 @@ export function buildChatDisplayEntries(
   changeStatus: ReadonlyMap<number, "pending" | "merged" | "reverted">,
   // Loaded compaction boundaries, oldest first.
   boundaries: readonly CompactionBoundary[] = [],
-  outputOf?: ToolOutputResolver,
+  outputOf?: ToolOutputResolver
 ): ChatDisplayEntry[] {
   const result: ChatDisplayEntry[] = [];
   let lastAgentAuthorId: string | null = null;
@@ -3792,8 +4361,13 @@ export function buildChatDisplayEntries(
   const requestFor = new Map<number, number>();
   boundaries.forEach((boundary, index) => {
     const until = boundaries[index + 1]?.to ?? Infinity;
-    const request = messages.find(msg => msg.sequence >= boundary.to && msg.sequence < until &&
-        msg.type === "slashCommand" && msg.request.id.builtin === true);
+    const request = messages.find(
+      (msg) =>
+        msg.sequence >= boundary.to &&
+        msg.sequence < until &&
+        msg.type === "slashCommand" &&
+        msg.request.id.builtin === true
+    );
     if (request) requestFor.set(boundary.to, request.sequence);
   });
 
@@ -3803,19 +4377,33 @@ export function buildChatDisplayEntries(
 
   let nextBoundary = 0;
   const maybePushBoundaries = (sequence: number) => {
-    while (nextBoundary < boundaries.length && boundaries[nextBoundary].to <= sequence) {
+    while (
+      nextBoundary < boundaries.length &&
+      boundaries[nextBoundary].to <= sequence
+    ) {
       const boundary = boundaries[nextBoundary++];
       rowsAtCut.set(boundary.to, result.length);
       // Announced at a request further down, so all that belongs here is the line showing where the
       // messages the agent still holds verbatim begin -- revealed only while the summary is open.
-      result.push(requestFor.has(boundary.to)
-        ? {type: "compactionCut", key: `cut-${boundary.to}`, boundary}
-        : {type: "compactionBoundary", key: `compacted-${boundary.to}`, boundary});
+      result.push(
+        requestFor.has(boundary.to)
+          ? { type: "compactionCut", key: `cut-${boundary.to}`, boundary }
+          : {
+              type: "compactionBoundary",
+              key: `compacted-${boundary.to}`,
+              boundary
+            }
+      );
     }
   };
 
   const maybePushModelChange = (msg: AiChatMessage) => {
-    if (msg.type !== "message" || msg.author.type !== "agent" || isEmptyAssistantMessage(msg)) return;
+    if (
+      msg.type !== "message" ||
+      msg.author.type !== "agent" ||
+      isEmptyAssistantMessage(msg)
+    )
+      return;
     if (lastAgentAuthorId === null) {
       lastAgentAuthorId = msg.author.id;
       return;
@@ -3826,11 +4414,13 @@ export function buildChatDisplayEntries(
       type: "modelChange",
       key: `model-${msg.chatId}-${msg.sequence}`,
       author: msg.author,
-      sequence: msg.sequence,
+      sequence: msg.sequence
     });
   };
 
-  const isVisibleSavedChangesMessage = (msg: AiChatMessage): msg is ChangeChatMessage =>
+  const isVisibleSavedChangesMessage = (
+    msg: AiChatMessage
+  ): msg is ChangeChatMessage =>
     msg.type === "changes" &&
     msg.author.type === "user" &&
     (changeStatus.get(msg.sequence) ?? "pending") === "pending";
@@ -3845,7 +4435,9 @@ export function buildChatDisplayEntries(
       // no provider reply. What it leaves behind is its boundary, announced here. A request that
       // compacted nothing has no boundary and so shows nothing, which is what happened.
       if (msg.request.id.builtin === true) {
-        const announced = boundaries.find(({to}) => requestFor.get(to) === msg.sequence);
+        const announced = boundaries.find(
+          ({ to }) => requestFor.get(to) === msg.sequence
+        );
         if (announced) {
           // Everything between the cut and here survived: the tail the agent kept reading verbatim.
           // The cut's own row does not count towards it.
@@ -3855,19 +4447,22 @@ export function buildChatDisplayEntries(
             key: `compacted-${announced.to}`,
             boundary: announced,
             requestedBy: msg.author,
-            keptRows: atCut === undefined ? 0 : result.length - atCut - 1,
+            keptRows: atCut === undefined ? 0 : result.length - atCut - 1
           });
         }
         i++;
         continue;
       }
       let next = messages[i + 1];
-      if (next?.type === "message" && next.generatedBySlashCommandSequence === msg.sequence) {
+      if (
+        next?.type === "message" &&
+        next.generatedBySlashCommandSequence === msg.sequence
+      ) {
         result.push({
           type: "message",
           key: `slash-${msg.chatId}-${msg.sequence}`,
           message: next,
-          slashCommand: msg,
+          slashCommand: msg
         });
         i += 2;
       } else {
@@ -3875,7 +4470,7 @@ export function buildChatDisplayEntries(
           type: "message",
           key: `slash-${msg.chatId}-${msg.sequence}`,
           message: msg,
-          slashCommand: msg,
+          slashCommand: msg
         });
         i++;
       }
@@ -3887,7 +4482,7 @@ export function buildChatDisplayEntries(
         result.push({
           type: "savedChanges",
           key: `saved-changes-${msg.chatId}-${msg.sequence}`,
-          message: msg,
+          message: msg
         });
       }
       i++;
@@ -3906,7 +4501,7 @@ export function buildChatDisplayEntries(
         observations: [...initialWorkParts.observations],
         lastAgentMessageSequence: initialWorkParts.lastAgentMessageSequence,
         lastWorkSequence: initialWorkParts.lastWorkSequence,
-        lastWorkTimestamp: initialWorkParts.lastWorkTimestamp,
+        lastWorkTimestamp: initialWorkParts.lastWorkTimestamp
       };
       let j = i + 1;
       while (j < messages.length) {
@@ -3930,10 +4525,11 @@ export function buildChatDisplayEntries(
         toolCallGroups: buildToolCallGroups(
           transcriptToolCalls(workParts.toolCalls),
           workParts.observations,
-          outputOf,
+          outputOf
         ),
-        lastMessageSequence: workParts.lastAgentMessageSequence ?? workParts.lastWorkSequence,
-        lastMessageTimestamp: workParts.lastWorkTimestamp,
+        lastMessageSequence:
+          workParts.lastAgentMessageSequence ?? workParts.lastWorkSequence,
+        lastMessageTimestamp: workParts.lastWorkTimestamp
       });
 
       i = j;
@@ -3946,7 +4542,7 @@ export function buildChatDisplayEntries(
         observations: [],
         lastAgentMessageSequence: msg.sequence,
         lastWorkSequence: msg.sequence,
-        lastWorkTimestamp: msg.timestamp,
+        lastWorkTimestamp: msg.timestamp
       };
       let j = i + 1;
       while (j < messages.length) {
@@ -3971,9 +4567,10 @@ export function buildChatDisplayEntries(
           toolCallGroups: buildToolCallGroups(
             transcriptToolCalls(workParts.toolCalls),
             workParts.observations,
-            outputOf,
+            outputOf
           ),
-          lastMessageSequence: workParts.lastAgentMessageSequence ?? msg.sequence,
+          lastMessageSequence:
+            workParts.lastAgentMessageSequence ?? msg.sequence
         });
         i = j;
         continue;
@@ -3983,7 +4580,7 @@ export function buildChatDisplayEntries(
     result.push({
       type: "message",
       key: `msg-${msg.chatId}-${msg.sequence}`,
-      message: msg,
+      message: msg
     });
     i++;
   }
@@ -4015,7 +4612,8 @@ function isUserMessageEntry(entry: ChatDisplayEntry): boolean {
   return (
     entry.type === "message" &&
     (entry.message.type === "slashCommand" ||
-      (entry.message.type === "message" && entry.message.author.type === "user"))
+      (entry.message.type === "message" &&
+        entry.message.author.type === "user"))
   );
 }
 
@@ -4025,8 +4623,12 @@ const EARLIER_PAGE_PREFETCH_PX = 600;
 
 function isPureWorkRowEntry(entry: ChatDisplayEntry): boolean {
   if (entry.type === "workRun") return true;
-  if (entry.type === "modelChange" || entry.type === "compactionBoundary" ||
-      entry.type === "compactionCut") return false;
+  if (
+    entry.type === "modelChange" ||
+    entry.type === "compactionBoundary" ||
+    entry.type === "compactionCut"
+  )
+    return false;
   const m = entry.message;
   return (
     m.type === "action" ||
@@ -4059,7 +4661,7 @@ function entryStartsWithWorkRow(entry: ChatDisplayEntry): boolean {
 
 function rhythmTopClass(
   prev: ChatDisplayEntry | null,
-  curr: ChatDisplayEntry,
+  curr: ChatDisplayEntry
 ): string {
   if (!prev) return "";
   if (curr.type === "modelChange") return "mt-4";
@@ -4072,7 +4674,7 @@ function rhythmTopClass(
 export function computeMessageStates(
   messages: AiChatMessage[],
   // Compaction boundary bounding the oldest loaded page, if the chat has one.
-  compacted?: CompactionBoundary,
+  compacted?: CompactionBoundary
 ): MessageState {
   const changeStatus = new Map<number, "pending" | "merged" | "reverted">();
   const mergeTimestamps = new Map<number, Date>();
@@ -4093,7 +4695,10 @@ export function computeMessageStates(
     compacted?.proposedChanges !== undefined &&
     (messages.length === 0 || messages[0].sequence >= compacted.to)
   ) {
-    updates.push({ sequence: compacted.to - 1, update: compacted.proposedChanges });
+    updates.push({
+      sequence: compacted.to - 1,
+      update: compacted.proposedChanges
+    });
   }
 
   for (let msg of messages) {
@@ -4132,11 +4737,13 @@ export function computeMessageStates(
     changeStatus,
     mergeTimestamps,
     revertTimestamps,
-    activeChanges: updates,
+    activeChanges: updates
   };
 }
 
-function inferSelectedModelFromMessages(messages: AiChatMessage[]): string | null {
+function inferSelectedModelFromMessages(
+  messages: AiChatMessage[]
+): string | null {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
 
@@ -4157,7 +4764,7 @@ function inferSelectedModelFromMessages(messages: AiChatMessage[]): string | nul
 
 function fallbackToStoredModelSelection(
   modelId: string | null,
-  availableModels: AiChatAuthorInfo[],
+  availableModels: AiChatAuthorInfo[]
 ): string | null {
   if (modelId !== null || availableModels.length > 0) {
     return modelId;
@@ -4171,16 +4778,19 @@ interface ChatInterfaceProps {
   selectedChatId: number | null;
   onNavigateToChat: (
     chatId: number | null,
-    options?: { replace?: boolean },
+    options?: { replace?: boolean }
   ) => void;
   onProposedChangesChange?: (proposedChanges: Uint8Array | undefined) => void;
   onDraftProposedChangesChange?: (
-    updates: StreamingProposedChanges | undefined,
+    updates: StreamingProposedChanges | undefined
   ) => void;
   onStreamingProposedChangesChange?: (
-    updates: StreamingProposedChanges | undefined,
+    updates: StreamingProposedChanges | undefined
   ) => void;
-  onStreamingActiveFileChange?: (chatId: number, file: ActiveFileTarget | null | undefined) => void;
+  onStreamingActiveFileChange?: (
+    chatId: number,
+    file: ActiveFileTarget | null | undefined
+  ) => void;
   pendingConsoleLogCount: number;
   consoleLogPreview: string;
   consoleLogSeverity: "error" | "warn" | "info";
@@ -4196,7 +4806,9 @@ interface ChatInterfaceProps {
   onSidebarResize?: (width: number) => void;
   renderExtraTab?: () => React.ReactNode;
   onHasAnyCodeChange?: (hasAnyCode: boolean) => void;
-  onSelectedChatHasProposedChangesChange?: (hasProposedChanges: boolean) => void;
+  onSelectedChatHasProposedChangesChange?: (
+    hasProposedChanges: boolean
+  ) => void;
   constrainChatWidth?: boolean;
   onOpenGadget: (gadgetId: WorkpieceId) => void;
 
@@ -4212,13 +4824,13 @@ const CHAT_TIME_BUCKET_LABELS: Record<ChatTimeBucket, string> = {
   today: "Today",
   yesterday: "Yesterday",
   thisWeek: "Earlier this week",
-  earlier: "Earlier",
+  earlier: "Earlier"
 };
 const CHAT_TIME_BUCKET_ORDER: ChatTimeBucket[] = [
   "today",
   "yesterday",
   "thisWeek",
-  "earlier",
+  "earlier"
 ];
 
 function startOfDay(d: Date): Date {
@@ -4229,7 +4841,7 @@ function startOfDay(d: Date): Date {
 
 function getChatTimeBucket(date: Date, now: Date): ChatTimeBucket {
   const diffDays = Math.round(
-    (startOfDay(now).getTime() - startOfDay(date).getTime()) / 86_400_000,
+    (startOfDay(now).getTime() - startOfDay(date).getTime()) / 86_400_000
   );
   if (diffDays <= 0) return "today";
   if (diffDays === 1) return "yesterday";
@@ -4240,8 +4852,15 @@ function getChatTimeBucket(date: Date, now: Date): ChatTimeBucket {
 // Format a chat's lastActive for display in a row, given its bucket. Buckets
 // own the "date" half of the label (via the section header), so rows only show
 // what the header doesn't.
-function formatChatRowTime(date: Date, bucket: ChatTimeBucket, now: Date): string {
-  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function formatChatRowTime(
+  date: Date,
+  bucket: ChatTimeBucket,
+  now: Date
+): string {
+  const time = date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
   if (bucket === "today" || bucket === "yesterday") {
     return time;
   }
@@ -4254,7 +4873,7 @@ function formatChatRowTime(date: Date, bucket: ChatTimeBucket, now: Date): strin
     [],
     sameYear
       ? { month: "short", day: "numeric" }
-      : { month: "short", day: "numeric", year: "numeric" },
+      : { month: "short", day: "numeric", year: "numeric" }
   );
 }
 
@@ -4268,7 +4887,10 @@ interface ChatCache {
   // Compaction boundaries seen so far for each chat, oldest first. Every loaded page contributes
   // one, so a thread compacted several times shows a marker at each cut.
   compacted: Map<number, CompactionBoundary[]>;
-  actionMessages: Map<number, Map<string, { chatId: number; sequence: number }>>;
+  actionMessages: Map<
+    number,
+    Map<string, { chatId: number; sequence: number }>
+  >;
   lastMessageTimestamp: Date | null;
 }
 
@@ -4304,7 +4926,7 @@ function createProvisionalChatState(): ProvisionalChatState {
     toolCalls: [],
     toolCallsById: new Map(),
     codeUpdates: [],
-    activeEditingFile: undefined,
+    activeEditingFile: undefined
   };
 }
 
@@ -4337,7 +4959,7 @@ function isProvisionalChatStateEmpty(state: ProvisionalChatState) {
 function getOrCreateProvisionalToolCall(
   state: ProvisionalChatState,
   toolCallId: string,
-  toolName: AiToolCall["toolName"] | null,
+  toolName: AiToolCall["toolName"] | null
 ) {
   let toolCall = state.toolCallsById.get(toolCallId);
   if (toolCall) {
@@ -4352,7 +4974,7 @@ function getOrCreateProvisionalToolCall(
     toolName,
     code: "",
     output: "",
-    finished: false,
+    finished: false
   };
   state.toolCallsById.set(toolCallId, toolCall);
   state.toolCalls.push(toolCall);
@@ -4383,7 +5005,7 @@ function ChatInterface({
   onSelectedChatHasProposedChangesChange,
   constrainChatWidth,
   onOpenGadget,
-  outputOfWorkpiece,
+  outputOfWorkpiece
 }: ChatInterfaceProps) {
   // Persistent cache that survives reconnects
   const toasts = useKumoToastManager();
@@ -4394,7 +5016,7 @@ function ChatInterface({
     messages: new Map(),
     compacted: new Map(),
     actionMessages: new Map(),
-    lastMessageTimestamp: null,
+    lastMessageTimestamp: null
   });
   const provisionalRef = useRef<Map<number, ProvisionalChatState>>(new Map());
   const draftRef = useRef<Map<number, DraftChatState>>(new Map());
@@ -4432,22 +5054,24 @@ function ChatInterface({
     chatId: number;
   } | null>(null);
   const [discardingChangesChatIds, setDiscardingChangesChatIds] = useState(
-    () => new Set<number>(),
+    () => new Set<number>()
   );
 
   const [expandedToolCalls, setExpandedToolCalls] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
-  const [showThinkingTraces, setShowThinkingTraces] = useState(
-    () => getStoredShowThinkingTraces(),
+  const [showThinkingTraces, setShowThinkingTraces] = useState(() =>
+    getStoredShowThinkingTraces()
   );
   const [expandedActions, setExpandedActions] = useState<Set<number>>(
-    new Set(),
+    new Set()
   );
   const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set());
-  const [expandedCompactions, setExpandedCompactions] = useState<Set<number>>(new Set());
+  const [expandedCompactions, setExpandedCompactions] = useState<Set<number>>(
+    new Set()
+  );
   const [processingActions, setProcessingActions] = useState<Set<number>>(
-    new Set(),
+    new Set()
   );
   // Connection-request (agent requestConnection) accept flow. When set, the GatekeeperModal opens
   // pre-seeded with the agent's vendor/resource; on creation we finalize acceptConnectionRequest.
@@ -4462,12 +5086,10 @@ function ChatInterface({
   // `connectionAccept`.
   const connectionAcceptRef = useRef<typeof connectionAccept>(null);
   connectionAcceptRef.current = connectionAccept;
-  const [processingConnections, setProcessingConnections] = useState<Set<string>>(
-    new Set(),
-  );
-  const [availableModels, setAvailableModels] = useState<AiModelInfo[]>(
-    [],
-  );
+  const [processingConnections, setProcessingConnections] = useState<
+    Set<string>
+  >(new Set());
+  const [availableModels, setAvailableModels] = useState<AiModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [sidebarActiveTab, setSidebarActiveTab] = useState<
     "chat" | "connections"
@@ -4489,7 +5111,7 @@ function ChatInterface({
       e.currentTarget.setPointerCapture(e.pointerId);
       setIsSidebarResizing(true);
     },
-    [],
+    []
   );
   const handleSidebarPointerMove = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -4497,7 +5119,7 @@ function ChatInterface({
       const newWidth = Math.max(200, Math.min(500, e.clientX));
       onSidebarResize?.(newWidth);
     },
-    [onSidebarResize],
+    [onSidebarResize]
   );
   const handleSidebarPointerUp = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -4506,7 +5128,7 @@ function ChatInterface({
       }
       setIsSidebarResizing(false);
     },
-    [],
+    []
   );
 
   const indexActionMessage = (msg: AiChatMessage) => {
@@ -4518,7 +5140,7 @@ function ChatInterface({
     }
     locations.set(`${msg.chatId}:${msg.sequence}`, {
       chatId: msg.chatId,
-      sequence: msg.sequence,
+      sequence: msg.sequence
     });
   };
 
@@ -4527,7 +5149,8 @@ function ChatInterface({
       for (const [key, location] of locations) {
         if (location.chatId === chatId) locations.delete(key);
       }
-      if (locations.size === 0) cacheRef.current.actionMessages.delete(actionId);
+      if (locations.size === 0)
+        cacheRef.current.actionMessages.delete(actionId);
     }
   };
 
@@ -4549,9 +5172,13 @@ function ChatInterface({
 
     if (page.compacted) {
       let boundaries = cacheRef.current.compacted.get(chatId) ?? [];
-      cacheRef.current.compacted.set(chatId, [
-        ...boundaries.filter(({to}) => to !== page.compacted!.to), page.compacted,
-      ].toSorted((a, b) => a.to - b.to));
+      cacheRef.current.compacted.set(
+        chatId,
+        [
+          ...boundaries.filter(({ to }) => to !== page.compacted!.to),
+          page.compacted
+        ].toSorted((a, b) => a.to - b.to)
+      );
     }
   };
 
@@ -4569,7 +5196,7 @@ function ChatInterface({
         cacheHistoryPage(chatId, await overseer.getChatHistory(chatId));
         forceUpdate();
       } catch (err) {
-        reportIssue("chat.compaction-boundary-refresh", err, {handled: true});
+        reportIssue("chat.compaction-boundary-refresh", err, { handled: true });
       }
     })();
   };
@@ -4622,51 +5249,48 @@ function ChatInterface({
 
   // Get sorted list of chats from cache
   const chatList = useMemo(
-    () => Array.from(cacheRef.current.chats.values()).sort(
-      (a, b) => b.lastActive.getTime() - a.lastActive.getTime(),
-    ),
-    [chatListVersion],
+    () =>
+      Array.from(cacheRef.current.chats.values()).sort(
+        (a, b) => b.lastActive.getTime() - a.lastActive.getTime()
+      ),
+    [chatListVersion]
   );
-  const {
-    visibleChatList,
-    chatListNow,
-    bucketedVisibleChats,
-    chatListScopes,
-  } = useMemo(() => {
-    const directCount = chatList.filter((chat) => !chat.spawnerName).length;
-    const agentCount = chatList.length - directCount;
-    const visible = chatList.filter((chat) => {
-      if (chatListScope === "direct") return !chat.spawnerName;
-      if (chatListScope === "agents") return Boolean(chat.spawnerName);
-      return true;
-    });
-    const now = new Date();
-    const buckets = new Map<ChatTimeBucket, AiChatMetadata[]>();
-    for (const chat of visible) {
-      const bucket = getChatTimeBucket(chat.lastActive, now);
-      let arr = buckets.get(bucket);
-      if (!arr) {
-        arr = [];
-        buckets.set(bucket, arr);
+  const { visibleChatList, chatListNow, bucketedVisibleChats, chatListScopes } =
+    useMemo(() => {
+      const directCount = chatList.filter((chat) => !chat.spawnerName).length;
+      const agentCount = chatList.length - directCount;
+      const visible = chatList.filter((chat) => {
+        if (chatListScope === "direct") return !chat.spawnerName;
+        if (chatListScope === "agents") return Boolean(chat.spawnerName);
+        return true;
+      });
+      const now = new Date();
+      const buckets = new Map<ChatTimeBucket, AiChatMetadata[]>();
+      for (const chat of visible) {
+        const bucket = getChatTimeBucket(chat.lastActive, now);
+        let arr = buckets.get(bucket);
+        if (!arr) {
+          arr = [];
+          buckets.set(bucket, arr);
+        }
+        arr.push(chat);
       }
-      arr.push(chat);
-    }
 
-    return {
-      visibleChatList: visible,
-      chatListNow: now,
-      bucketedVisibleChats: CHAT_TIME_BUCKET_ORDER.flatMap((bucket) => {
-        const items = buckets.get(bucket);
-        if (!items || items.length === 0) return [];
-        return [{ bucket, items }];
-      }),
-      chatListScopes: [
-        { value: "all" as const, count: chatList.length },
-        { value: "direct" as const, count: directCount },
-        { value: "agents" as const, count: agentCount },
-      ],
-    };
-  }, [chatList, chatListScope]);
+      return {
+        visibleChatList: visible,
+        chatListNow: now,
+        bucketedVisibleChats: CHAT_TIME_BUCKET_ORDER.flatMap((bucket) => {
+          const items = buckets.get(bucket);
+          if (!items || items.length === 0) return [];
+          return [{ bucket, items }];
+        }),
+        chatListScopes: [
+          { value: "all" as const, count: chatList.length },
+          { value: "direct" as const, count: directCount },
+          { value: "agents" as const, count: agentCount }
+        ]
+      };
+    }, [chatList, chatListScope]);
 
   // Notify parent when chat list changes. Gated on chatListReady so that we
   // don't report 0 from the empty initial cache before listChats() has completed.
@@ -4682,7 +5306,7 @@ function ChatInterface({
   // Notify parent when any chat has proposed changes (code written but not merged).
   const onHasAnyCodeChangeRef = useRef(onHasAnyCodeChange);
   onHasAnyCodeChangeRef.current = onHasAnyCodeChange;
-  const anyHasProposedChanges = chatList.some(c => c.hasProposedChanges);
+  const anyHasProposedChanges = chatList.some((c) => c.hasProposedChanges);
   useEffect(() => {
     if (chatListReady) {
       onHasAnyCodeChangeRef.current?.(anyHasProposedChanges);
@@ -4706,7 +5330,7 @@ function ChatInterface({
   const currentMessages = useMemo(() => {
     if (selectedChatId === null) return [];
     return (cacheRef.current.messages.get(selectedChatId) || []).filter(
-      (msg) => msg !== undefined,
+      (msg) => msg !== undefined
     );
   }, [selectedChatId, updateCounter]);
   const currentCompactions = useMemo(() => {
@@ -4716,32 +5340,35 @@ function ChatInterface({
   const messageStates = useMemo(
     // The oldest boundary is the one whose proposed changes no loaded message accounts for.
     () => computeMessageStates(currentMessages, currentCompactions[0]),
-    [currentMessages, currentCompactions],
+    [currentMessages, currentCompactions]
   );
   // A pending agent connection request blocks the composer: the user must accept ("Set up") or deny
   // it before continuing the conversation.
   const hasPendingConnectionRequest = useMemo(
-    () => currentMessages.some(
-      (msg) => msg.type === "connectionRequest" && msg.state === "pending",
-    ),
-    [currentMessages],
+    () =>
+      currentMessages.some(
+        (msg) => msg.type === "connectionRequest" && msg.state === "pending"
+      ),
+    [currentMessages]
   );
   // A pending awaitDecision action also blocks the composer: the agent turn is suspended until the
   // user approves or rejects it, so (like a connection request) further input must wait.
   const hasPendingAwaitedAction = useMemo(
-    () => currentMessages.some(
-      (msg) => msg.type === "action" &&
-        msg.actionLog?.type === "action" &&
-        msg.actionLog.state === "pending" &&
-        msg.actionLog.description.awaitDecision === true,
-    ),
-    [currentMessages],
+    () =>
+      currentMessages.some(
+        (msg) =>
+          msg.type === "action" &&
+          msg.actionLog?.type === "action" &&
+          msg.actionLog.state === "pending" &&
+          msg.actionLog.description.awaitDecision === true
+      ),
+    [currentMessages]
   );
   // A gadget's stamped format, looked up by the id a finished createGadget call reports, so the
   // transcript can say "Created Doc" with the Doc icon.
   const resolveToolOutput = useCallback(
     (tc: AiToolCall) => resolveToolCallOutput(tc, outputOfWorkpiece),
-    [outputOfWorkpiece],
+    [outputOfWorkpiece]
   );
 
   const displayEntries = useMemo(
@@ -4750,15 +5377,19 @@ function ChatInterface({
       // checkpoints get their own compact row so the discard action is attached to the
       // edit that actually created it.
       buildChatDisplayEntries(
-          currentMessages, messageStates.changeStatus, currentCompactions, resolveToolOutput),
-    [currentMessages, messageStates, currentCompactions, resolveToolOutput],
+        currentMessages,
+        messageStates.changeStatus,
+        currentCompactions,
+        resolveToolOutput
+      ),
+    [currentMessages, messageStates, currentCompactions, resolveToolOutput]
   );
 
   // Where each entry's rail joins its neighbours. An entry that continues the rail swaps its top
   // margin for RAIL_BRIDGE padding, so the gap sits inside its box where the line can cross it.
   const entryRailLinks = useMemo(() => {
     const out: { fromPrev: boolean; toNext: boolean }[] = Array.from({
-      length: displayEntries.length,
+      length: displayEntries.length
     });
     for (let i = 0; i < displayEntries.length; i++) {
       const onRail = isRailEntry(displayEntries[i]);
@@ -4767,7 +5398,7 @@ function ChatInterface({
         toNext:
           onRail &&
           i + 1 < displayEntries.length &&
-          isRailEntry(displayEntries[i + 1]),
+          isRailEntry(displayEntries[i + 1])
       };
     }
     return out;
@@ -4778,7 +5409,10 @@ function ChatInterface({
     for (let i = 0; i < displayEntries.length; i++) {
       out[i] = entryRailLinks[i].fromPrev
         ? RAIL_BRIDGE
-        : rhythmTopClass(i > 0 ? displayEntries[i - 1] : null, displayEntries[i]);
+        : rhythmTopClass(
+            i > 0 ? displayEntries[i - 1] : null,
+            displayEntries[i]
+          );
     }
     return out;
   }, [displayEntries, entryRailLinks]);
@@ -4797,7 +5431,8 @@ function ChatInterface({
     return sawSelf;
   }, [currentMessages, currentUser]);
 
-  const lastMessageSequence = currentMessages[currentMessages.length - 1]?.sequence;
+  const lastMessageSequence =
+    currentMessages[currentMessages.length - 1]?.sequence;
 
   // Auto-open the out-of-credits modal once when the latest message is a usage-limit error.
   const lastMessage = currentMessages[currentMessages.length - 1];
@@ -4819,41 +5454,60 @@ function ChatInterface({
 
   // Download a committed chat attachment. Image bytes are already inlined on the message; other
   // attachments are fetched on demand over the authenticated RPC connection.
-  const downloadChatAttachment = useCallback(async (chatId: number, attachment: ChatAttachmentRef) => {
-    try {
-      let bytes = attachment.content;
-      const mimeType = attachment.mimeType;
-      const name = attachment.name;
-      if (!bytes) {
-        bytes = await overseer.getChatAttachmentContent(chatId, attachment.id);
-      }
-      const url = URL.createObjectURL(
-        new Blob([bytes as BlobPart], {type: mimeType || "application/octet-stream"}));
+  const downloadChatAttachment = useCallback(
+    async (chatId: number, attachment: ChatAttachmentRef) => {
       try {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = name ?? "attachment";
-        a.click();
-      } finally {
-        setTimeout(() => URL.revokeObjectURL(url), 0);
+        let bytes = attachment.content;
+        const mimeType = attachment.mimeType;
+        const name = attachment.name;
+        if (!bytes) {
+          bytes = await overseer.getChatAttachmentContent(
+            chatId,
+            attachment.id
+          );
+        }
+        const url = URL.createObjectURL(
+          new Blob([bytes as BlobPart], {
+            type: mimeType || "application/octet-stream"
+          })
+        );
+        try {
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = name ?? "attachment";
+          a.click();
+        } finally {
+          setTimeout(() => URL.revokeObjectURL(url), 0);
+        }
+      } catch (err: any) {
+        console.error("Failed to download chat attachment:", err);
+        toasts.add({
+          title: err?.message || "Failed to download attachment",
+          variant: "error"
+        });
       }
-    } catch (err: any) {
-      console.error("Failed to download chat attachment:", err);
-      toasts.add({ title: err?.message || "Failed to download attachment", variant: "error" });
-    }
-  }, [overseer, toasts]);
+    },
+    [overseer, toasts]
+  );
 
-  const onSelectedChatHasProposedChangesChangeRef = useRef(onSelectedChatHasProposedChangesChange);
-  onSelectedChatHasProposedChangesChangeRef.current = onSelectedChatHasProposedChangesChange;
+  const onSelectedChatHasProposedChangesChangeRef = useRef(
+    onSelectedChatHasProposedChangesChange
+  );
+  onSelectedChatHasProposedChangesChangeRef.current =
+    onSelectedChatHasProposedChangesChange;
   useEffect(() => {
     if (selectedChatId !== null && currentChatMetadata === undefined) {
       return;
     }
 
     onSelectedChatHasProposedChangesChangeRef.current?.(
-      currentChatMetadata?.hasProposedChanges === true,
+      currentChatMetadata?.hasProposedChanges === true
     );
-  }, [currentChatMetadata?.hasProposedChanges, currentChatMetadata, selectedChatId]);
+  }, [
+    currentChatMetadata?.hasProposedChanges,
+    currentChatMetadata,
+    selectedChatId
+  ]);
 
   const currentProvisionalState =
     selectedChatId !== null
@@ -4861,7 +5515,9 @@ function ChatInterface({
       : null;
 
   const currentDraftState =
-    selectedChatId !== null ? (draftRef.current.get(selectedChatId) ?? null) : null;
+    selectedChatId !== null
+      ? (draftRef.current.get(selectedChatId) ?? null)
+      : null;
   const currentDraftChangesCount = currentDraftState?.entries.length ?? 0;
 
   const provisionalToolCalls = currentProvisionalState?.toolCalls ?? [];
@@ -4878,9 +5534,14 @@ function ChatInterface({
     }
     return {
       updates: currentDraftState.entries.map((entry) => entry.update),
-      count: currentDraftChangesCount,
+      count: currentDraftChangesCount
     };
-  }, [currentDraftChangesCount, currentDraftState, draftChangesVersion, selectedChatId]);
+  }, [
+    currentDraftChangesCount,
+    currentDraftState,
+    draftChangesVersion,
+    selectedChatId
+  ]);
   const currentStreamingState = useMemo(():
     | StreamingProposedChanges
     | undefined => {
@@ -4889,7 +5550,7 @@ function ChatInterface({
     }
     return {
       updates: currentStreamingChanges,
-      count: currentStreamingChangesCount,
+      count: currentStreamingChangesCount
     };
   }, [selectedChatId, currentStreamingChanges, currentStreamingChangesCount]);
 
@@ -4908,14 +5569,22 @@ function ChatInterface({
   // Notify parent when agent active state changes
   const onAgentActiveChangeRef = useRef(onAgentActiveChange);
   onAgentActiveChangeRef.current = onAgentActiveChange;
-  const previousAgentStateRef = useRef({chatId: selectedChatId, active: isAgentActive});
+  const previousAgentStateRef = useRef({
+    chatId: selectedChatId,
+    active: isAgentActive
+  });
   useEffect(() => {
     let previous = previousAgentStateRef.current;
-    if (selectedChatId !== null &&
-        (selectedChatId !== previous.chatId || isAgentActive !== previous.active)) {
+    if (
+      selectedChatId !== null &&
+      (selectedChatId !== previous.chatId || isAgentActive !== previous.active)
+    ) {
       onAgentActiveChangeRef.current?.(selectedChatId, isAgentActive);
     }
-    previousAgentStateRef.current = {chatId: selectedChatId, active: isAgentActive};
+    previousAgentStateRef.current = {
+      chatId: selectedChatId,
+      active: isAgentActive
+    };
   }, [isAgentActive, selectedChatId]);
 
   // Loads the page before the oldest message on screen. Held in a ref because the scroll handler is
@@ -4960,7 +5629,7 @@ function ChatInterface({
     hasVisibleProvisionalContent,
     currentStreamingChangesCount,
     isAgentActive,
-    scrollMessagesToBottom,
+    scrollMessagesToBottom
   ]);
 
   // Always scroll to bottom and close transient chat UI when switching chats.
@@ -4993,8 +5662,8 @@ function ChatInterface({
         setSelectedModel(
           fallbackToStoredModelSelection(
             inferSelectedModelFromMessages(currentMessages),
-            availableModels,
-          ),
+            availableModels
+          )
         );
       }
     }
@@ -5019,14 +5688,14 @@ function ChatInterface({
     const messages =
       selectedChatId !== null
         ? (cacheRef.current.messages.get(selectedChatId) || []).filter(
-            (msg) => msg !== undefined,
+            (msg) => msg !== undefined
           )
         : [];
     const { activeChanges } = computeMessageStates(
       messages,
       selectedChatId !== null
         ? cacheRef.current.compacted.get(selectedChatId)?.[0]
-        : undefined,
+        : undefined
     );
 
     if (activeChanges.length === 0) {
@@ -5052,7 +5721,7 @@ function ChatInterface({
     currentChatMetadata?.hasProposedChanges,
     proposedChangesVersion,
     selectedChatId,
-    onProposedChangesChange,
+    onProposedChangesChange
   ]);
 
   useEffect(() => {
@@ -5067,7 +5736,10 @@ function ChatInterface({
   onStreamingActiveFileChangeRef.current = onStreamingActiveFileChange;
   useEffect(() => {
     if (selectedChatId !== null) {
-      onStreamingActiveFileChangeRef.current?.(selectedChatId, currentStreamingActiveFile);
+      onStreamingActiveFileChangeRef.current?.(
+        selectedChatId,
+        currentStreamingActiveFile
+      );
     }
   }, [currentStreamingActiveFile, selectedChatId]);
 
@@ -5106,8 +5778,11 @@ function ChatInterface({
       // claiming history that is whole again.
       let boundaries = cacheRef.current.compacted.get(chat.id);
       if (boundaries !== undefined) {
-        let live = boundaries.filter(({to}) => to <= (chat.compactedTo ?? -1));
-        if (live.length < boundaries.length) cacheRef.current.compacted.set(chat.id, live);
+        let live = boundaries.filter(
+          ({ to }) => to <= (chat.compactedTo ?? -1)
+        );
+        if (live.length < boundaries.length)
+          cacheRef.current.compacted.set(chat.id, live);
       }
 
       // A compaction that lands while the chat is open publishes a boundary the client only gets
@@ -5115,9 +5790,14 @@ function ChatInterface({
       // already loaded makes this idempotent: paging back adds boundaries rather than replacing
       // them, so an extra fetch can neither miss a compaction nor undo an expansion. Rolling the
       // last boundary away needs the same fetch, since the history it used to hide is live again.
-      if (cacheRef.current.messages.has(chat.id) && (chat.compactedTo === undefined
+      if (
+        cacheRef.current.messages.has(chat.id) &&
+        (chat.compactedTo === undefined
           ? prevChat?.compactedTo !== undefined
-          : !cacheRef.current.compacted.get(chat.id)?.some(({to}) => to === chat.compactedTo))) {
+          : !cacheRef.current.compacted
+              .get(chat.id)
+              ?.some(({ to }) => to === chat.compactedTo))
+      ) {
         refreshBoundaryRef.current(chat.id);
       }
 
@@ -5149,11 +5829,11 @@ function ChatInterface({
       chatId: number,
       timestamp: Date,
       author: AiChatAuthorInfo,
-      update: Uint8Array,
+      update: Uint8Array
     ) {
       let draft = getOrCreateDraftChatState(draftRef.current, chatId);
       let existingIndex = draft.entries.findIndex(
-        (entry) => entry.timestamp.getTime() === timestamp.getTime(),
+        (entry) => entry.timestamp.getTime() === timestamp.getTime()
       );
 
       if (existingIndex >= 0) {
@@ -5161,7 +5841,7 @@ function ChatInterface({
       } else {
         draft.entries.push({ timestamp, author, update });
         draft.entries.sort(
-          (left, right) => left.timestamp.getTime() - right.timestamp.getTime(),
+          (left, right) => left.timestamp.getTime() - right.timestamp.getTime()
         );
       }
 
@@ -5248,7 +5928,8 @@ function ChatInterface({
           provisional.compacting = false;
           if (event.nothingToCompact) {
             toastsRef.current.add({
-              title: "Nothing to compact — there are no earlier messages to summarize.",
+              title:
+                "Nothing to compact — there are no earlier messages to summarize."
             });
           }
           break;
@@ -5262,7 +5943,7 @@ function ChatInterface({
           getOrCreateProvisionalToolCall(
             provisional,
             event.toolCallId,
-            event.toolName,
+            event.toolName
           );
           break;
         }
@@ -5270,7 +5951,7 @@ function ChatInterface({
           const toolCall = getOrCreateProvisionalToolCall(
             provisional,
             event.toolCallId,
-            null,
+            null
           );
           toolCall.code += event.delta;
           break;
@@ -5279,7 +5960,7 @@ function ChatInterface({
           const toolCall = getOrCreateProvisionalToolCall(
             provisional,
             event.toolCallId,
-            null,
+            null
           );
           toolCall.output += event.delta;
           break;
@@ -5288,7 +5969,7 @@ function ChatInterface({
           const toolCall = getOrCreateProvisionalToolCall(
             provisional,
             event.toolCallId,
-            null,
+            null
           );
           toolCall.finished = true;
           break;
@@ -5298,14 +5979,17 @@ function ChatInterface({
           // Also tell the editor straight away. The effect above only runs on re-render, which is
           // too late for the tab to follow the very first file of a turn.
           if (chatId === selectedChatIdRef.current) {
-            onStreamingActiveFileChangeRef.current?.(chatId, event.file ?? null);
+            onStreamingActiveFileChangeRef.current?.(
+              chatId,
+              event.file ?? null
+            );
           }
           break;
         case "toolCallOutputFormat": {
           const toolCall = getOrCreateProvisionalToolCall(
             provisional,
             event.toolCallId,
-            null,
+            null
           );
           toolCall.outputFormat = event.output;
           break;
@@ -5315,7 +5999,7 @@ function ChatInterface({
           const toolCall = getOrCreateProvisionalToolCall(
             provisional,
             event.toolCallId,
-            null,
+            null
           );
           toolCall.target = event.file.filename;
           break;
@@ -5353,7 +6037,7 @@ function ChatInterface({
         // Pass the subscriber instance (which is now a proper class instance)
         const subscription = overseer.subscribeToChat(
           subscriberRef.current,
-          startAfter,
+          startAfter
         );
 
         subscriptionRef.current = subscription;
@@ -5365,7 +6049,7 @@ function ChatInterface({
           // This is safe because subscription will catch any new activity
           const [chats, models] = await Promise.all([
             overseer.listChats(),
-            overseer.listModels(),
+            overseer.listModels()
           ]);
 
           chats.forEach((chat) => {
@@ -5382,7 +6066,7 @@ function ChatInterface({
         }
       } catch (err) {
         console.error("Failed to subscribe to chats:", err);
-        reportIssue('chat.subscription-load', err)
+        reportIssue("chat.subscription-load", err);
         toasts.add({ title: "Unable to load conversations", variant: "error" });
       }
     };
@@ -5419,7 +6103,6 @@ function ChatInterface({
     setIsEditingTitle(false);
     setSidebarActiveTab("chat");
   }, [selectedChatId]);
-
 
   // Load chat history when selectedChatId changes to a non-null value
   useEffect(() => {
@@ -5476,16 +6159,21 @@ function ChatInterface({
   // Sequence of the oldest message loaded, or undefined once the thread's start is loaded. Paging
   // asks for what precedes it, so the control disappears exactly when there is nothing earlier.
   const oldestLoadedSequence = currentMessages[0]?.sequence;
-  const hasEarlierMessages = oldestLoadedSequence !== undefined && oldestLoadedSequence > 0;
+  const hasEarlierMessages =
+    oldestLoadedSequence !== undefined && oldestLoadedSequence > 0;
 
   // Load the page before the oldest message on screen. Those messages are all older than anything
   // the subscription delivers, so lastMessageTimestamp is left alone.
   const handleShowEarlierMessages = async () => {
-    if (selectedChatId === null || !hasEarlierMessages || isLoadingEarlier) return;
+    if (selectedChatId === null || !hasEarlierMessages || isLoadingEarlier)
+      return;
 
     setIsLoadingEarlier(true);
     try {
-      const page = await overseer.getChatHistory(selectedChatId, oldestLoadedSequence);
+      const page = await overseer.getChatHistory(
+        selectedChatId,
+        oldestLoadedSequence
+      );
       prependAnchorRef.current = messagesContainerRef.current?.scrollHeight;
       cacheHistoryPage(selectedChatId, page);
 
@@ -5494,13 +6182,18 @@ function ChatInterface({
       forceUpdate();
     } catch (err) {
       console.error("Failed to load earlier messages:", err);
-      toasts.add({ title: "Failed to load earlier messages", variant: "error" });
+      toasts.add({
+        title: "Failed to load earlier messages",
+        variant: "error"
+      });
     } finally {
       setIsLoadingEarlier(false);
     }
   };
 
-  loadEarlierRef.current = () => { void handleShowEarlierMessages(); };
+  loadEarlierRef.current = () => {
+    void handleShowEarlierMessages();
+  };
 
   // Handle sending a message (always called from ChatInput with explicit messageText)
   const handleSend = async (
@@ -5508,9 +6201,12 @@ function ChatInterface({
     modelId?: string | null,
     capsules?: CapsuleSpecifier[],
     attachments?: ChatAttachmentHandle[],
-    formats?: MessageFormatRef[],
+    formats?: MessageFormatRef[]
   ) => {
-    const message = typeof messageText === "string" ? messageText.trim() : messageText ?? "";
+    const message =
+      typeof messageText === "string"
+        ? messageText.trim()
+        : (messageText ?? "");
     if (!message && (!attachments || attachments.length === 0)) return;
 
     // Use provided modelId or fall back to selectedModel
@@ -5520,7 +6216,12 @@ function ChatInterface({
       if (selectedChatId === null) {
         // Create a new chat (with optional capsules).
         const newChatId = await overseer.newChat(
-            message, model, capsules, attachments, formats);
+          message,
+          model,
+          capsules,
+          attachments,
+          formats
+        );
         onNavigateToChatRef.current(newChatId);
       } else {
         // Send message to existing chat.
@@ -5530,7 +6231,7 @@ function ChatInterface({
           model,
           capsules || undefined,
           attachments || undefined,
-          formats,
+          formats
         );
       }
     } catch (err) {
@@ -5546,14 +6247,22 @@ function ChatInterface({
     modelId?: string | null,
     capsules?: CapsuleSpecifier[],
     attachments?: ChatAttachmentHandle[],
-    formats?: MessageFormatRef[],
+    formats?: MessageFormatRef[]
   ) => {
-    const message = typeof messageText === "string" ? messageText.trim() : messageText ?? "";
+    const message =
+      typeof messageText === "string"
+        ? messageText.trim()
+        : (messageText ?? "");
     if (!message && (!attachments || attachments.length === 0)) return;
     const model = modelId !== undefined ? modelId : selectedModel;
     try {
       const newChatId = await overseer.newChat(
-          message, model, capsules, attachments, formats);
+        message,
+        model,
+        capsules,
+        attachments,
+        formats
+      );
       onNavigateToChatRef.current(newChatId);
     } catch (err) {
       console.error("Failed to create new chat:", err);
@@ -5594,13 +6303,16 @@ function ChatInterface({
       if (chat) {
         cacheRef.current.chats.set(selectedChatId, {
           ...chat,
-          title: titleInput.trim(),
+          title: titleInput.trim()
         });
         forceUpdate();
       }
 
       setIsEditingTitle(false);
-      toasts.add({ title: "Chat title updated successfully", variant: "success" });
+      toasts.add({
+        title: "Chat title updated successfully",
+        variant: "success"
+      });
     } catch (err) {
       console.error("Failed to update chat title:", err);
       toasts.add({ title: "Failed to update chat title", variant: "error" });
@@ -5664,12 +6376,15 @@ function ChatInterface({
       if (existing) {
         cacheRef.current.chats.set(chatId, {
           ...existing,
-          title: trimmed,
+          title: trimmed
         });
         bumpChatListVersion();
         forceUpdate();
       }
-      toasts.add({ title: "Chat title updated successfully", variant: "success" });
+      toasts.add({
+        title: "Chat title updated successfully",
+        variant: "success"
+      });
     } catch (err) {
       console.error("Failed to update chat title:", err);
       toasts.add({ title: "Failed to update chat title", variant: "error" });
@@ -5679,7 +6394,7 @@ function ChatInterface({
   // Handle merging changes up to a specific sequence number
   const handleMergeChanges = async (
     mergeThrough: number | null,
-    options?: { includeDraft?: boolean },
+    options?: { includeDraft?: boolean }
   ) => {
     if (selectedChatId === null) return;
 
@@ -5722,7 +6437,9 @@ function ChatInterface({
     if (!discardChangesTarget) return;
 
     const target = discardChangesTarget;
-    setDiscardingChangesChatIds((chatIds) => new Set(chatIds).add(target.chatId));
+    setDiscardingChangesChatIds((chatIds) =>
+      new Set(chatIds).add(target.chatId)
+    );
     try {
       // Rewind durable checkpoints first. If discarding the live editor draft then fails, the user
       // still retains those edits rather than losing both layers after a partial operation.
@@ -5733,12 +6450,15 @@ function ChatInterface({
         forceUpdate();
       }
       setDiscardChangesTarget((current) =>
-        current?.chatId === target.chatId ? null : current,
+        current?.chatId === target.chatId ? null : current
       );
       toasts.add({ title: "Pending changes discarded", variant: "success" });
     } catch (err) {
       console.error("Failed to discard pending changes:", err);
-      toasts.add({ title: "Failed to discard pending changes", variant: "error" });
+      toasts.add({
+        title: "Failed to discard pending changes",
+        variant: "error"
+      });
     } finally {
       setDiscardingChangesChatIds((chatIds) => {
         const next = new Set(chatIds);
@@ -5748,7 +6468,9 @@ function ChatInterface({
     }
   };
 
-  const applyActionLogUpdateToCachedMessages = (record: ActionLogEntry): boolean => {
+  const applyActionLogUpdateToCachedMessages = (
+    record: ActionLogEntry
+  ): boolean => {
     let changed = false;
     const locations = cacheRef.current.actionMessages.get(record.id);
     if (!locations) return false;
@@ -5771,7 +6493,10 @@ function ChatInterface({
     return changed;
   };
 
-  const applyOptimisticActionState = (actionId: number, state: "approved" | "rejected"): boolean => {
+  const applyOptimisticActionState = (
+    actionId: number,
+    state: "approved" | "rejected"
+  ): boolean => {
     let changed = false;
     const locations = cacheRef.current.actionMessages.get(actionId);
     if (!locations) return false;
@@ -5779,7 +6504,11 @@ function ChatInterface({
     for (const [key, location] of locations) {
       const messages = cacheRef.current.messages.get(location.chatId);
       const msg = messages?.[location.sequence];
-      if (msg?.type !== "action" || msg.actionId !== actionId || !msg.actionLog) {
+      if (
+        msg?.type !== "action" ||
+        msg.actionId !== actionId ||
+        !msg.actionLog
+      ) {
         locations.delete(key);
         continue;
       }
@@ -5787,7 +6516,7 @@ function ChatInterface({
       const nextMessages = [...messages!];
       nextMessages[location.sequence] = {
         ...msg,
-        actionLog: { ...msg.actionLog, state, appliedAt: new Date() },
+        actionLog: { ...msg.actionLog, state, appliedAt: new Date() }
       };
       cacheRef.current.messages.set(location.chatId, nextMessages);
       changed = true;
@@ -5797,7 +6526,10 @@ function ChatInterface({
     return changed;
   };
 
-  const applyOptimisticHookEnabled = (actionId: number, enabled: boolean): boolean => {
+  const applyOptimisticHookEnabled = (
+    actionId: number,
+    enabled: boolean
+  ): boolean => {
     let changed = false;
     const locations = cacheRef.current.actionMessages.get(actionId);
     if (!locations) return false;
@@ -5805,7 +6537,11 @@ function ChatInterface({
     for (const [key, location] of locations) {
       const messages = cacheRef.current.messages.get(location.chatId);
       const msg = messages?.[location.sequence];
-      if (msg?.type !== "action" || msg.actionId !== actionId || msg.actionLog?.type !== "bindHook") {
+      if (
+        msg?.type !== "action" ||
+        msg.actionId !== actionId ||
+        msg.actionLog?.type !== "bindHook"
+      ) {
         locations.delete(key);
         continue;
       }
@@ -5813,7 +6549,7 @@ function ChatInterface({
       const nextMessages = [...messages!];
       nextMessages[location.sequence] = {
         ...msg,
-        actionLog: { ...msg.actionLog, enabled },
+        actionLog: { ...msg.actionLog, enabled }
       };
       cacheRef.current.messages.set(location.chatId, nextMessages);
       changed = true;
@@ -5824,36 +6560,53 @@ function ChatInterface({
   };
 
   // Handle reverting changes from a specific sequence number onward
-  const handleRevertChanges = useCallback(async (revertFrom: number) => {
-    if (selectedChatId === null) return;
+  const handleRevertChanges = useCallback(
+    async (revertFrom: number) => {
+      if (selectedChatId === null) return;
 
-    try {
-      await overseer.revertChanges(selectedChatId, revertFrom);
-      toasts.add({ title: "Draft rewound", variant: "success" });
-    } catch (err) {
-      console.error("Failed to rewind draft:", err);
-      toasts.add({ title: "Failed to rewind draft", variant: "error" });
-    }
-  }, [overseer, selectedChatId, toasts]);
+      try {
+        await overseer.revertChanges(selectedChatId, revertFrom);
+        toasts.add({ title: "Draft rewound", variant: "success" });
+      } catch (err) {
+        console.error("Failed to rewind draft:", err);
+        toasts.add({ title: "Failed to rewind draft", variant: "error" });
+      }
+    },
+    [overseer, selectedChatId, toasts]
+  );
 
   // Pending "always approve this type" confirmation, opened from a pending action card.
-  const [autoApproveConfirm, setAutoApproveConfirm] = useState<
-    { actionId: number; gatekeeperId: number; resourceTitle: string;
-      actionKind: ActionKind; actionLabel: string } | null
-  >(null);
+  const [autoApproveConfirm, setAutoApproveConfirm] = useState<{
+    actionId: number;
+    gatekeeperId: number;
+    resourceTitle: string;
+    actionKind: ActionKind;
+    actionLabel: string;
+  } | null>(null);
 
   // Enable auto-approval of an action tag on its connection (gated by the confirm dialog). The
   // server applies the now-eligible pending action(s) via its drain, and the action state flips to
   // "approved" through the actions subscription -- so we don't optimistically mutate it here.
-  const { alwaysApproveTag, isTagAutoApproved } =
-    useAlwaysApproveTag(overseer, setProcessingActions, onAutoApproveChange);
+  const { alwaysApproveTag, isTagAutoApproved } = useAlwaysApproveTag(
+    overseer,
+    setProcessingActions,
+    onAutoApproveChange
+  );
 
-  const resolveAction = useResolveAction(overseer, setProcessingActions, (actionId, state) => {
-    if (applyOptimisticActionState(actionId, state)) forceUpdate();
-  });
+  const resolveAction = useResolveAction(
+    overseer,
+    setProcessingActions,
+    (actionId, state) => {
+      if (applyOptimisticActionState(actionId, state)) forceUpdate();
+    }
+  );
 
   // Handle enabling/disabling a bound hook from the chat thread.
-  const handleToggleHook = async (actionId: number, hookId: number, enabled: boolean) => {
+  const handleToggleHook = async (
+    actionId: number,
+    hookId: number,
+    enabled: boolean
+  ) => {
     setProcessingActions((prev) => new Set(prev).add(actionId));
     if (applyOptimisticHookEnabled(actionId, enabled)) forceUpdate();
     try {
@@ -5864,7 +6617,10 @@ function ChatInterface({
       }
     } catch (err) {
       console.error("Failed to toggle hook:", err);
-      toasts.add({ title: `Failed to ${enabled ? "enable" : "disable"} hook`, variant: "error" });
+      toasts.add({
+        title: `Failed to ${enabled ? "enable" : "disable"} hook`,
+        variant: "error"
+      });
       // Revert the optimistic update.
       if (applyOptimisticHookEnabled(actionId, !enabled)) forceUpdate();
     } finally {
@@ -5877,12 +6633,14 @@ function ChatInterface({
   };
 
   // Open the gatekeeper modal pre-seeded with the agent's requested vendor/resource.
-  const handleAcceptConnection = (msg: AiChatMessage & { type: "connectionRequest" }) => {
+  const handleAcceptConnection = (
+    msg: AiChatMessage & { type: "connectionRequest" }
+  ) => {
     setConnectionAccept({
       requestId: msg.requestId,
       vendorId: msg.vendorId,
       resourceUrl: msg.resourceUrl,
-      resourceUrlPattern: msg.resourceUrlPattern,
+      resourceUrlPattern: msg.resourceUrlPattern
     });
   };
 
@@ -5890,7 +6648,9 @@ function ChatInterface({
   // The gatekeeper is bound into no gadget; finalizing the request surfaces it to the agent as a
   // binding in the chat's env, under the name the agent chose when it made the request (the agent
   // wires it into a gadget itself if that gadget's code needs it).
-  const handleConnectionCreated = async (gk: RpcStub<GatekeeperClient<any>>) => {
+  const handleConnectionCreated = async (
+    gk: RpcStub<GatekeeperClient<any>>
+  ) => {
     const accept = connectionAcceptRef.current;
     if (!accept) {
       gk[Symbol.dispose]();
@@ -5900,7 +6660,7 @@ function ChatInterface({
     try {
       const id = await gk.getId();
       await overseer.acceptConnectionRequest(accept.requestId, {
-        gatekeeperId: id,
+        gatekeeperId: id
       });
       setConnectionAccept(null);
     } catch (err) {
@@ -5969,13 +6729,13 @@ function ChatInterface({
     });
   };
 
-
   // Compaction summaries are collapsed by default: the marker answers where the cut fell, and the
   // summary is there for anyone who wants to see what the model was left with.
   const toggleCompactionSummary = (to: number) => {
     setExpandedCompactions((prev) => {
       const next = new Set(prev);
-      if (next.has(to)) next.delete(to); else next.add(to);
+      if (next.has(to)) next.delete(to);
+      else next.add(to);
       return next;
     });
   };
@@ -5995,10 +6755,7 @@ function ChatInterface({
 
   // Handle retrying the agent after an error
   const handleRetry = async () => {
-    if (
-      selectedChatId === null ||
-      selectedModel === null
-    ) {
+    if (selectedChatId === null || selectedModel === null) {
       return;
     }
 
@@ -6010,30 +6767,30 @@ function ChatInterface({
     }
   };
 
-  const handleCopyMessage = useCallback(async (message: string) => {
-    const ok = await copyToClipboard(message);
-    toasts.add({
-      title: ok ? "Copied message" : "Unable to copy message",
-      variant: ok ? "success" : "error",
-    });
-  }, [toasts]);
-
-  const lastDurablePendingChange = useMemo(
-    () => {
-      for (let i = currentMessages.length - 1; i >= 0; i--) {
-        const msg = currentMessages[i];
-        if (
-          msg.type === "changes" &&
-          messageStates.changeStatus.get(msg.sequence) === "pending"
-        ) {
-          return msg;
-        }
-      }
-
-      return null;
+  const handleCopyMessage = useCallback(
+    async (message: string) => {
+      const ok = await copyToClipboard(message);
+      toasts.add({
+        title: ok ? "Copied message" : "Unable to copy message",
+        variant: ok ? "success" : "error"
+      });
     },
-    [currentMessages, messageStates],
+    [toasts]
   );
+
+  const lastDurablePendingChange = useMemo(() => {
+    for (let i = currentMessages.length - 1; i >= 0; i--) {
+      const msg = currentMessages[i];
+      if (
+        msg.type === "changes" &&
+        messageStates.changeStatus.get(msg.sequence) === "pending"
+      ) {
+        return msg;
+      }
+    }
+
+    return null;
+  }, [currentMessages, messageStates]);
 
   // Track the last visible agent message in each completed turn. This keeps hover actions like
   // copy/timestamp on the final response instead of repeating them for every streamed step.
@@ -6125,13 +6882,21 @@ function ChatInterface({
         (messageStates.changeStatus.get(m.sequence) ?? "pending") === "pending"
       ) {
         const createdTitles = (m.createdGadgets ?? []).map((g) => g.title);
-        pendingTurnChanges = pendingTurnChanges === null
-          ? { revertFrom: m.sequence, through: m.sequence, createdGadgetTitles: createdTitles }
-          : {
-              revertFrom: pendingTurnChanges.revertFrom,
-              through: m.sequence,
-              createdGadgetTitles: [...pendingTurnChanges.createdGadgetTitles, ...createdTitles],
-            };
+        pendingTurnChanges =
+          pendingTurnChanges === null
+            ? {
+                revertFrom: m.sequence,
+                through: m.sequence,
+                createdGadgetTitles: createdTitles
+              }
+            : {
+                revertFrom: pendingTurnChanges.revertFrom,
+                through: m.sequence,
+                createdGadgetTitles: [
+                  ...pendingTurnChanges.createdGadgetTitles,
+                  ...createdTitles
+                ]
+              };
         attachPendingTurnChanges();
       }
     }
@@ -6168,7 +6933,11 @@ function ChatInterface({
     };
 
     for (const m of currentMessages) {
-      if (m.type === "slashCommand" || m.type === "merge" || m.type === "revert") {
+      if (
+        m.type === "slashCommand" ||
+        m.type === "merge" ||
+        m.type === "revert"
+      ) {
         resetTurn();
         continue;
       }
@@ -6204,8 +6973,8 @@ function ChatInterface({
           gadgetId,
           title,
           isPending: status === "pending",
-          output: outputOfWorkpiece(gadgetId),
-        })),
+          output: outputOfWorkpiece(gadgetId)
+        }))
       ];
       attachCreations();
     }
@@ -6214,7 +6983,7 @@ function ChatInterface({
   }, [currentMessages, messageStates, outputOfWorkpiece]);
 
   const renderConnectionRequestCard = (
-    msg: AiChatMessage & { type: "connectionRequest" },
+    msg: AiChatMessage & { type: "connectionRequest" }
   ) => {
     const isPending = msg.state === "pending";
     const isAccepted = msg.state === "accepted";
@@ -6251,9 +7020,7 @@ function ChatInterface({
                 )}
               </div>
               {msg.reason && (
-                <p className="mt-1 text-ui-sm text-kumo-subtle">
-                  {msg.reason}
-                </p>
+                <p className="mt-1 text-ui-sm text-kumo-subtle">{msg.reason}</p>
               )}
             </div>
             {isPending && (
@@ -6323,7 +7090,9 @@ function ChatInterface({
                   </span>
                 </div>
                 {log.description.description && (
-                  <div className={`mt-1 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}>
+                  <div
+                    className={`mt-1 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}
+                  >
                     <MarkdownMessage message={log.description.description} />
                   </div>
                 )}
@@ -6352,7 +7121,9 @@ function ChatInterface({
                   <HookToggle
                     enabled={log.enabled}
                     disabled={isProc}
-                    onToggle={(enabled) => handleToggleHook(msg.actionId, log.hookId!, enabled)}
+                    onToggle={(enabled) =>
+                      handleToggleHook(msg.actionId, log.hookId!, enabled)
+                    }
                   />
                 </div>
               )}
@@ -6378,7 +7149,9 @@ function ChatInterface({
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex min-w-0 items-center gap-2">
-                <span className="min-w-0 truncate">{log.description.title}</span>
+                <span className="min-w-0 truncate">
+                  {log.description.title}
+                </span>
                 <CaretRight
                   size={13}
                   weight="bold"
@@ -6412,43 +7185,44 @@ function ChatInterface({
     // decision. Resolved actions are history, and collapse so a long thread stays scannable.
     const showDescription = isPending || open;
     const metadata = log.resourceTitle;
-    const stateLabel = isApproved
-      ? "Approved"
-      : isRejected
-        ? "Denied"
-        : null;
-    const stateLabelCls = isRejected
-      ? "text-kumo-danger"
-      : "text-kumo-subtle";
+    const stateLabel = isApproved ? "Approved" : isRejected ? "Denied" : null;
+    const stateLabelCls = isRejected ? "text-kumo-danger" : "text-kumo-subtle";
     // Auto-approval target: offer "Always approve this type" only when enabling a rule would
     // actually apply this action -- a tagged action on a connection that the gatekeeper marked
     // auto-approvable. (A non-auto-approvable action stays a manual gate even with a rule; an
     // auto-approvable action with an existing rule wouldn't still be pending.)
     const autoApproveTarget =
-      log.gatekeeperId !== undefined && log.description.actionKind !== undefined &&
+      log.gatekeeperId !== undefined &&
+      log.description.actionKind !== undefined &&
       log.description.autoApprovable === true
         ? {
             actionId: msg.actionId,
             gatekeeperId: log.gatekeeperId,
             resourceTitle: log.resourceTitle,
             actionKind: log.description.actionKind,
-            actionLabel: log.description.title,
+            actionLabel: log.description.title
           }
         : undefined;
 
     const actionControls = isPending ? (
       <>
         {autoApproveTarget &&
-          !isTagAutoApproved(autoApproveTarget.gatekeeperId, autoApproveTarget.actionKind.tag) && (
-          <Tooltip content="Always approve this type of action on this connection, without future prompts." asChild>
-            <span className="flex">
-              <AlwaysApproveButton
-                onClick={() => setAutoApproveConfirm(autoApproveTarget)}
-                disabled={isProc}
-              />
-            </span>
-          </Tooltip>
-        )}
+          !isTagAutoApproved(
+            autoApproveTarget.gatekeeperId,
+            autoApproveTarget.actionKind.tag
+          ) && (
+            <Tooltip
+              content="Always approve this type of action on this connection, without future prompts."
+              asChild
+            >
+              <span className="flex">
+                <AlwaysApproveButton
+                  onClick={() => setAutoApproveConfirm(autoApproveTarget)}
+                  disabled={isProc}
+                />
+              </span>
+            </Tooltip>
+          )}
         <ResolveButton
           tone="deny"
           onClick={() => void resolveAction(msg.actionId, "deny")}
@@ -6495,7 +7269,10 @@ function ChatInterface({
         <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
           <div className="rounded-2xl border border-kumo-brand/40 bg-kumo-brand/10 px-4 py-3">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-kumo-tint text-kumo-brand" aria-hidden="true">
+              <span
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-kumo-tint text-kumo-brand"
+                aria-hidden="true"
+              >
                 <ShieldCheck size={20} weight="fill" />
               </span>
               <div className="min-w-0 flex-1">
@@ -6505,7 +7282,9 @@ function ChatInterface({
                   </span>
                   {resourceMeta}
                 </div>
-                <div className={`chat-panel mt-1 max-h-[200px] overflow-y-auto pr-1 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}>
+                <div
+                  className={`chat-panel mt-1 max-h-[200px] overflow-y-auto pr-1 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}
+                >
                   <MarkdownMessage message={log.description.description} />
                 </div>
               </div>
@@ -6519,7 +7298,10 @@ function ChatInterface({
     }
 
     const titleIcon = (
-      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center" aria-hidden="true">
+      <span
+        className="flex h-5 w-5 flex-shrink-0 items-center justify-center"
+        aria-hidden="true"
+      >
         {isPending ? (
           <span className="h-1.5 w-1.5 rounded-full bg-kumo-brand" />
         ) : (
@@ -6538,7 +7320,9 @@ function ChatInterface({
                 {log.description.title}
               </span>
             </div>
-            <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">{actionControls}</div>
+            <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">
+              {actionControls}
+            </div>
           </div>
         ) : (
           <button
@@ -6551,7 +7335,9 @@ function ChatInterface({
             <span className="flex min-w-0 flex-1 items-center gap-2">
               <span className="min-w-0 truncate">{log.description.title}</span>
               {stateLabel && (
-                <span className={`flex-shrink-0 text-ui-xs font-medium ${stateLabelCls}`}>
+                <span
+                  className={`flex-shrink-0 text-ui-xs font-medium ${stateLabelCls}`}
+                >
                   {stateLabel}
                 </span>
               )}
@@ -6565,7 +7351,9 @@ function ChatInterface({
         )}
         {showDescription && (
           <div className="themed-surface-inset ml-8 mt-1 space-y-1.5 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3 text-ui-sm text-kumo-subtle">
-            <div className={`chat-panel max-h-[200px] overflow-y-auto pr-1 ${styles.markdownContent}`}>
+            <div
+              className={`chat-panel max-h-[200px] overflow-y-auto pr-1 ${styles.markdownContent}`}
+            >
               <MarkdownMessage message={log.description.description} />
             </div>
             {resourceMeta}
@@ -6611,7 +7399,9 @@ function ChatInterface({
                   <span className="mr-2 inline-flex h-3 w-3 items-center justify-center text-kumo-default">
                     {active ? <Check size={11} weight="bold" /> : null}
                   </span>
-                  <span className="flex-1">{CHAT_LIST_SCOPE_LABELS[scope.value]}</span>
+                  <span className="flex-1">
+                    {CHAT_LIST_SCOPE_LABELS[scope.value]}
+                  </span>
                   <span className="ml-3 font-mono text-ui-2xs text-kumo-subtle">
                     {scope.count}
                   </span>
@@ -6638,7 +7428,8 @@ function ChatInterface({
               // the all-empty case is handled by the outer chatList.length check.
               <div className="py-8 text-center">
                 <p className="text-ui-sm text-kumo-subtle">
-                  No conversations started by {chatListScope === "agents" ? "agents" : "people"} yet
+                  No conversations started by{" "}
+                  {chatListScope === "agents" ? "agents" : "people"} yet
                 </p>
                 <button
                   type="button"
@@ -6656,123 +7447,158 @@ function ChatInterface({
                       {CHAT_TIME_BUCKET_LABELS[bucket]}
                     </p>
                     {items.map((chat) => (
-              <div key={chat.id} className="relative">
-                {(() => {
-                  const isRenaming = renamingChatId === chat.id;
-                  return (
-                  <div
-                    onClick={isRenaming ? undefined : () => onNavigateToChat(chat.id)}
-                    className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-[background-color] duration-150 ease-out ${
-                      isRenaming
-                        ? "cursor-default bg-kumo-base ring-1 ring-kumo-ring/40"
-                        : sidebarMode && chat.id === selectedChatId
-                          ? "cursor-pointer bg-kumo-recessed"
-                          : "cursor-pointer hover:bg-kumo-tint"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex min-w-0 items-center gap-2">
-                        {isRenaming ? (
-                          <input
-                            type="text"
-                            value={renamingInput}
-                            onChange={(e) => setRenamingInput(e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleSaveListRename(chat.id);
-                              } else if (e.key === "Escape") {
-                                e.preventDefault();
-                                cancelListRename();
+                      <div key={chat.id} className="relative">
+                        {(() => {
+                          const isRenaming = renamingChatId === chat.id;
+                          return (
+                            <div
+                              onClick={
+                                isRenaming
+                                  ? undefined
+                                  : () => onNavigateToChat(chat.id)
                               }
-                            }}
-                            onBlur={() => handleSaveListRename(chat.id)}
-                            autoFocus
-                            spellCheck={false}
-                            autoCapitalize="off"
-                            autoCorrect="off"
-                            aria-label={`Rename ${chat.title}`}
-                            className="min-w-0 flex-1 bg-transparent text-ui-md font-medium text-kumo-default outline-none placeholder:text-kumo-placeholder"
-                          />
-                        ) : (
-                          <span className="truncate text-ui-md font-medium text-kumo-default">
-                            {chat.title}
-                          </span>
-                        )}
-                        {!isRenaming && chat.activeAgent ? (
-                          <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs text-kumo-brand">
-                            <span className="h-1.5 w-1.5 rounded-full bg-kumo-brand animate-pulse" />
-                            Working
-                          </span>
-                        ) : !isRenaming && chat.hasProposedChanges ? (
-                          <Tooltip content="This conversation has pending changes" asChild>
-                            <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs text-kumo-warning">
-                              <span className="h-1.5 w-1.5 rounded-full bg-kumo-warning" />
-                              Pending changes
-                            </span>
-                          </Tooltip>
-                        ) : null}
-                      </div>
-                      <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-xs text-kumo-subtle">
-                        {chat.spawnerName && (
-                          <>
-                            <span className="truncate">Agent · {chat.spawnerName}</span>
-                            <span className="flex-shrink-0" aria-hidden="true">·</span>
-                          </>
-                        )}
-                        <span className="flex-shrink-0">
-                          {formatChatRowTime(chat.lastActive, bucket, chatListNow)}
-                        </span>
-                        {chat.totalCost != null && (
-                          <>
-                            <span className="flex-shrink-0" aria-hidden="true">·</span>
-                            <span className="flex-shrink-0 font-mono">
-                              ${chat.totalCost.toFixed(4)}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {!isRenaming && (
-                      <DropdownMenu>
-                        <DropdownMenu.Trigger
-                          render={
-                            <WorkshopIconButton
-                              aria-label={`Actions for ${chat.title}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="!h-7 !w-7 flex-shrink-0 text-kumo-subtle opacity-0 focus:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100"
+                              className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-[background-color] duration-150 ease-out ${
+                                isRenaming
+                                  ? "cursor-default bg-kumo-base ring-1 ring-kumo-ring/40"
+                                  : sidebarMode && chat.id === selectedChatId
+                                    ? "cursor-pointer bg-kumo-recessed"
+                                    : "cursor-pointer hover:bg-kumo-tint"
+                              }`}
                             >
-                              <DotsThreeVertical size={14} />
-                            </WorkshopIconButton>
-                          }
-                        />
-                        <DropdownMenu.Content
-                          onClick={(event) => event.stopPropagation()}
-                          className="themed-floating-shadow !z-[1100] !min-w-[144px] rounded-lg border border-kumo-line bg-kumo-base p-1"
-                        >
-                          <DropdownMenu.Item
-                            icon={<Pencil size={12} className="mr-2" />}
-                            onClick={() => startListRename(chat.id, chat.title)}
-                            className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
-                          >
-                            Rename
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Item
-                            icon={<Trash size={12} className="mr-2" />}
-                            variant="danger"
-                            onClick={() => handleDeleteChat(chat.id, chat.title)}
-                            className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs transition-colors data-highlighted:bg-kumo-danger-tint"
-                          >
-                            Delete
-                          </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                  );
-                })()}
-              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  {isRenaming ? (
+                                    <input
+                                      type="text"
+                                      value={renamingInput}
+                                      onChange={(e) =>
+                                        setRenamingInput(e.target.value)
+                                      }
+                                      onClick={(e) => e.stopPropagation()}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          handleSaveListRename(chat.id);
+                                        } else if (e.key === "Escape") {
+                                          e.preventDefault();
+                                          cancelListRename();
+                                        }
+                                      }}
+                                      onBlur={() =>
+                                        handleSaveListRename(chat.id)
+                                      }
+                                      autoFocus
+                                      spellCheck={false}
+                                      autoCapitalize="off"
+                                      autoCorrect="off"
+                                      aria-label={`Rename ${chat.title}`}
+                                      className="min-w-0 flex-1 bg-transparent text-ui-md font-medium text-kumo-default outline-none placeholder:text-kumo-placeholder"
+                                    />
+                                  ) : (
+                                    <span className="truncate text-ui-md font-medium text-kumo-default">
+                                      {chat.title}
+                                    </span>
+                                  )}
+                                  {!isRenaming && chat.activeAgent ? (
+                                    <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs text-kumo-brand">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-kumo-brand animate-pulse" />
+                                      Working
+                                    </span>
+                                  ) : !isRenaming && chat.hasProposedChanges ? (
+                                    <Tooltip
+                                      content="This conversation has pending changes"
+                                      asChild
+                                    >
+                                      <span className="inline-flex flex-shrink-0 cursor-pointer items-center gap-1 text-ui-2xs text-kumo-warning">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-kumo-warning" />
+                                        Pending changes
+                                      </span>
+                                    </Tooltip>
+                                  ) : null}
+                                </div>
+                                <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-xs text-kumo-subtle">
+                                  {chat.spawnerName && (
+                                    <>
+                                      <span className="truncate">
+                                        Agent · {chat.spawnerName}
+                                      </span>
+                                      <span
+                                        className="flex-shrink-0"
+                                        aria-hidden="true"
+                                      >
+                                        ·
+                                      </span>
+                                    </>
+                                  )}
+                                  <span className="flex-shrink-0">
+                                    {formatChatRowTime(
+                                      chat.lastActive,
+                                      bucket,
+                                      chatListNow
+                                    )}
+                                  </span>
+                                  {chat.totalCost != null && (
+                                    <>
+                                      <span
+                                        className="flex-shrink-0"
+                                        aria-hidden="true"
+                                      >
+                                        ·
+                                      </span>
+                                      <span className="flex-shrink-0 font-mono">
+                                        ${chat.totalCost.toFixed(4)}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              {!isRenaming && (
+                                <DropdownMenu>
+                                  <DropdownMenu.Trigger
+                                    render={
+                                      <WorkshopIconButton
+                                        aria-label={`Actions for ${chat.title}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="!h-7 !w-7 flex-shrink-0 text-kumo-subtle opacity-0 focus:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100"
+                                      >
+                                        <DotsThreeVertical size={14} />
+                                      </WorkshopIconButton>
+                                    }
+                                  />
+                                  <DropdownMenu.Content
+                                    onClick={(event) => event.stopPropagation()}
+                                    className="themed-floating-shadow !z-[1100] !min-w-[144px] rounded-lg border border-kumo-line bg-kumo-base p-1"
+                                  >
+                                    <DropdownMenu.Item
+                                      icon={
+                                        <Pencil size={12} className="mr-2" />
+                                      }
+                                      onClick={() =>
+                                        startListRename(chat.id, chat.title)
+                                      }
+                                      className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
+                                    >
+                                      Rename
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item
+                                      icon={
+                                        <Trash size={12} className="mr-2" />
+                                      }
+                                      variant="danger"
+                                      onClick={() =>
+                                        handleDeleteChat(chat.id, chat.title)
+                                      }
+                                      className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs transition-colors data-highlighted:bg-kumo-danger-tint"
+                                    >
+                                      Delete
+                                    </DropdownMenu.Item>
+                                  </DropdownMenu.Content>
+                                </DropdownMenu>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     ))}
                   </section>
                 ))}
@@ -6786,7 +7612,11 @@ function ChatInterface({
           horizontal padding, so the wrapper just adds the top divider; no
           extra p-4 (which would shrink the input vs. the in-chat composer). */}
       <div className="flex-shrink-0 border-t border-kumo-line">
-        <div className={useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""}>
+        <div
+          className={
+            useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""
+          }
+        >
           <ChatInput
             createCapsuleGatekeeper={(accountId, url) =>
               overseer.newGatekeeper(accountId, url)
@@ -6972,27 +7802,42 @@ function ChatInterface({
                       const entryTopClass = entryTopClasses[entryIndex] ?? "";
                       const railLink = entryRailLinks[entryIndex] ?? {
                         fromPrev: false,
-                        toNext: false,
+                        toNext: false
                       };
                       if (entry.type === "compactionCut") {
                         // Only meaningful alongside the summary it belongs to, which is announced
                         // further down; on its own it would be a line with nothing to explain it.
-                        if (!expandedCompactions.has(entry.boundary.to)) return null;
+                        if (!expandedCompactions.has(entry.boundary.to))
+                          return null;
                         return (
-                          <div key={entry.key} className={`${entryTopClass} mb-4 max-w-[860px]`}>
-                            <div className="flex items-center gap-3" role="separator">
-                              <span className="h-px flex-1 bg-kumo-line/60" aria-hidden="true" />
+                          <div
+                            key={entry.key}
+                            className={`${entryTopClass} mb-4 max-w-[860px]`}
+                          >
+                            <div
+                              className="flex items-center gap-3"
+                              role="separator"
+                            >
+                              <span
+                                className="h-px flex-1 bg-kumo-line/60"
+                                aria-hidden="true"
+                              />
                               <span className="flex-shrink-0 text-ui-2xs text-kumo-subtle uppercase">
                                 Kept in full from here
                               </span>
-                              <span className="h-px flex-1 bg-kumo-line/60" aria-hidden="true" />
+                              <span
+                                className="h-px flex-1 bg-kumo-line/60"
+                                aria-hidden="true"
+                              />
                             </div>
                           </div>
                         );
                       }
 
                       if (entry.type === "compactionBoundary") {
-                        const expanded = expandedCompactions.has(entry.boundary.to);
+                        const expanded = expandedCompactions.has(
+                          entry.boundary.to
+                        );
                         const kept = entry.keptRows;
                         const summary = (
                           <div className="themed-surface-inset mt-3 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3.5">
@@ -7000,14 +7845,19 @@ function ChatInterface({
                               // Says what the agent traded away and what it still has, since the
                               // marker sits at the request rather than at the cut it describes.
                               <p className="mb-3 text-ui-xs text-kumo-subtle">
-                                The agent reads this in place of everything earlier in the chat.{" "}
+                                The agent reads this in place of everything
+                                earlier in the chat.{" "}
                                 {kept === 0
                                   ? "Nothing after it was kept."
                                   : `The ${kept === 1 ? "message" : `${kept} messages`} after the cut ${kept === 1 ? "was" : "were"} kept in full.`}
                               </p>
                             )}
-                            <div className={`min-w-0 text-ui-sm ${styles.markdownContent}`}>
-                              <MarkdownMessage message={entry.boundary.summary} />
+                            <div
+                              className={`min-w-0 text-ui-sm ${styles.markdownContent}`}
+                            >
+                              <MarkdownMessage
+                                message={entry.boundary.summary}
+                              />
                             </div>
                           </div>
                         );
@@ -7017,14 +7867,22 @@ function ChatInterface({
                         // this is opened.
                         if (entry.requestedBy) {
                           return (
-                            <div key={entry.key} className={`${entryTopClass} max-w-[860px] py-1`}>
+                            <div
+                              key={entry.key}
+                              className={`${entryTopClass} max-w-[860px] py-1`}
+                            >
                               <button
                                 type="button"
-                                onClick={() => toggleCompactionSummary(entry.boundary.to)}
+                                onClick={() =>
+                                  toggleCompactionSummary(entry.boundary.to)
+                                }
                                 aria-expanded={expanded}
                                 className="inline-flex cursor-pointer items-center gap-3 rounded-md px-1.5 text-ui-md text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                               >
-                                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
+                                <span
+                                  className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                  aria-hidden="true"
+                                >
                                   <Brain size={16} />
                                 </span>
                                 <span className="font-medium">
@@ -7042,12 +7900,24 @@ function ChatInterface({
                         }
 
                         return (
-                          <div key={entry.key} className={`${entryTopClass} mb-4 max-w-[860px]`}>
-                            <div className="flex items-center gap-3" role="separator" aria-label="Context compacted">
-                              <span className="h-px flex-1 bg-kumo-line" aria-hidden="true" />
+                          <div
+                            key={entry.key}
+                            className={`${entryTopClass} mb-4 max-w-[860px]`}
+                          >
+                            <div
+                              className="flex items-center gap-3"
+                              role="separator"
+                              aria-label="Context compacted"
+                            >
+                              <span
+                                className="h-px flex-1 bg-kumo-line"
+                                aria-hidden="true"
+                              />
                               <button
                                 type="button"
-                                onClick={() => toggleCompactionSummary(entry.boundary.to)}
+                                onClick={() =>
+                                  toggleCompactionSummary(entry.boundary.to)
+                                }
                                 aria-expanded={expanded}
                                 className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-ui-2xs text-kumo-subtle uppercase transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                               >
@@ -7059,7 +7929,10 @@ function ChatInterface({
                                   className={`transition-transform duration-150 ease-out ${expanded ? "rotate-90" : ""}`}
                                 />
                               </button>
-                              <span className="h-px flex-1 bg-kumo-line" aria-hidden="true" />
+                              <span
+                                className="h-px flex-1 bg-kumo-line"
+                                aria-hidden="true"
+                              />
                             </div>
                             {expanded && summary}
                           </div>
@@ -7068,9 +7941,15 @@ function ChatInterface({
 
                       if (entry.type === "modelChange") {
                         return (
-                          <div key={entry.key} className={`${entryTopClass} max-w-[860px] py-1 text-ui-md text-kumo-subtle`}>
+                          <div
+                            key={entry.key}
+                            className={`${entryTopClass} max-w-[860px] py-1 text-ui-md text-kumo-subtle`}
+                          >
                             <div className="flex items-center gap-3 px-1.5 py-1">
-                              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
+                              <span
+                                className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                aria-hidden="true"
+                              >
                                 <Swap size={16} />
                               </span>
                               <span className="min-w-0 truncate">
@@ -7082,24 +7961,37 @@ function ChatInterface({
                       }
 
                       if (entry.type === "savedChanges") {
-                        const isOwnChange = entry.message.author.id === currentUser?.id;
-                        const actor = isOwnChange ? "You" : entry.message.author.name;
+                        const isOwnChange =
+                          entry.message.author.id === currentUser?.id;
+                        const actor = isOwnChange
+                          ? "You"
+                          : entry.message.author.name;
                         // A user-authored creation is recorded as a "changes" message carrying
                         // createdGadgets over a no-op update, so label it as a creation rather
                         // than as saved edits.
-                        const createdGadgets = entry.message.createdGadgets ?? [];
-                        const label = createdGadgets.length > 0
-                          ? `${actor} created ${createdGadgets.length === 1 ? "gadget" : "gadgets"} ${
-                              createdGadgets.map((g) => `“${g.title}”`).join(", ")}`
-                          : `${actor} saved edits`;
+                        const createdGadgets =
+                          entry.message.createdGadgets ?? [];
+                        const label =
+                          createdGadgets.length > 0
+                            ? `${actor} created ${createdGadgets.length === 1 ? "gadget" : "gadgets"} ${createdGadgets
+                                .map((g) => `“${g.title}”`)
+                                .join(", ")}`
+                            : `${actor} saved edits`;
                         const discardLabel = getSavedEditsDiscardLabel(
-                          entry.message.sequence === lastDurablePendingChange?.sequence,
-                          createdGadgets.map((g) => g.title),
+                          entry.message.sequence ===
+                            lastDurablePendingChange?.sequence,
+                          createdGadgets.map((g) => g.title)
                         );
                         return (
-                          <div key={entry.key} className={`${entryTopClass} group/savedChanges max-w-[860px] py-1 text-ui-md text-kumo-subtle`}>
+                          <div
+                            key={entry.key}
+                            className={`${entryTopClass} group/savedChanges max-w-[860px] py-1 text-ui-md text-kumo-subtle`}
+                          >
                             <div className="flex items-center gap-3 px-1.5 py-1">
-                              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
+                              <span
+                                className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                aria-hidden="true"
+                              >
                                 <PencilSimple size={15} />
                               </span>
                               <span className="min-w-0 truncate font-medium">
@@ -7110,19 +8002,31 @@ function ChatInterface({
                                   <button
                                     type="button"
                                     disabled={isAgentActive}
-                                    onClick={() => handleRevertChanges(entry.message.sequence)}
+                                    onClick={() =>
+                                      handleRevertChanges(
+                                        entry.message.sequence
+                                      )
+                                    }
                                     className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
                                     aria-label={discardLabel}
                                   >
                                     <ArrowUUpLeft size={15} />
                                   </button>
                                 </Tooltip>
-                                <Tooltip content={formatFullTimestamp(entry.message.timestamp)} asChild>
+                                <Tooltip
+                                  content={formatFullTimestamp(
+                                    entry.message.timestamp
+                                  )}
+                                  asChild
+                                >
                                   <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
-                                    {entry.message.timestamp.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
+                                    {entry.message.timestamp.toLocaleTimeString(
+                                      [],
+                                      {
+                                        hour: "2-digit",
+                                        minute: "2-digit"
+                                      }
+                                    )}
                                   </span>
                                 </Tooltip>
                               </div>
@@ -7133,27 +8037,45 @@ function ChatInterface({
 
                       if (entry.type === "workRun") {
                         const pendingChange =
-                          pendingChangeByTurnItemSeq.get(entry.lastMessageSequence) ?? null;
+                          pendingChangeByTurnItemSeq.get(
+                            entry.lastMessageSequence
+                          ) ?? null;
                         const createdGadgets =
-                          createdGadgetsByTurnItemSeq.get(entry.lastMessageSequence) ?? [];
+                          createdGadgetsByTurnItemSeq.get(
+                            entry.lastMessageSequence
+                          ) ?? [];
                         const showFooterOnGroupIndex = pendingChange
                           ? entry.toolCallGroups.length - 1
                           : -1;
                         // The rail runs through every step this run produced, so the connector
                         // stops at the last one whether that is a tool group or a created gadget.
                         const lastRailIndex =
-                          entry.toolCallGroups.length + createdGadgets.length - 1;
+                          entry.toolCallGroups.length +
+                          createdGadgets.length -
+                          1;
                         return (
-                          <div key={entry.key} className={`${entryTopClass} relative min-w-0 w-full max-w-[860px]`}>
+                          <div
+                            key={entry.key}
+                            className={`${entryTopClass} relative min-w-0 w-full max-w-[860px]`}
+                          >
                             {railLink.fromPrev && (
-                              <span aria-hidden="true" className={RAIL_BRIDGE_LINE} />
+                              <span
+                                aria-hidden="true"
+                                className={RAIL_BRIDGE_LINE}
+                              />
                             )}
                             {entry.toolCallGroups.map((group, groupIndex) => (
                               <RailNode
                                 key={group.key}
-                                node={{ type: "toolGroup", hasError: group.hasError }}
+                                node={{
+                                  type: "toolGroup",
+                                  hasError: group.hasError
+                                }}
                                 isFirst={groupIndex === 0 && !railLink.fromPrev}
-                                isLast={groupIndex === lastRailIndex && !railLink.toNext}
+                                isLast={
+                                  groupIndex === lastRailIndex &&
+                                  !railLink.toNext
+                                }
                               >
                                 <ToolGroupRow
                                   outputOf={resolveToolOutput}
@@ -7172,7 +8094,8 @@ function ChatInterface({
                                       : undefined
                                   }
                                   footerIsTrailing={
-                                    pendingChange?.through === lastDurablePendingChange?.sequence
+                                    pendingChange?.through ===
+                                    lastDurablePendingChange?.sequence
                                   }
                                   footerCreatedGadgetTitles={
                                     groupIndex === showFooterOnGroupIndex
@@ -7189,12 +8112,12 @@ function ChatInterface({
                                 key={created.gadgetId}
                                 node={{ type: "text" }}
                                 isFirst={
-                                  entry.toolCallGroups.length + createdIndex === 0 &&
-                                  !railLink.fromPrev
+                                  entry.toolCallGroups.length + createdIndex ===
+                                    0 && !railLink.fromPrev
                                 }
                                 isLast={
-                                  entry.toolCallGroups.length + createdIndex === lastRailIndex &&
-                                  !railLink.toNext
+                                  entry.toolCallGroups.length + createdIndex ===
+                                    lastRailIndex && !railLink.toNext
                                 }
                               >
                                 <CreatedGadgetChatCard
@@ -7210,672 +8133,917 @@ function ChatInterface({
                       const msg = entry.message;
 
                       return (
-                        <div key={entry.key} className={`${entryTopClass} relative`}>
-                        {railLink.fromPrev && (
-                          <span aria-hidden="true" className={RAIL_BRIDGE_LINE} />
-                        )}
-                        {/* ── user / AI text message ── */}
-                        {msg.type === "slashCommand" && (
-                          <div className="group/message relative flex flex-col items-end">
-                            <div className="themed-user-bubble-shadow w-fit max-w-[min(680px,78%)] rounded-[24px] rounded-br-lg border border-transparent bg-kumo-bubble-user px-4 py-2.5 text-ui-md leading-[22px] text-kumo-default">
-                              <span className="whitespace-pre-wrap">
-                                <SlashCommandMention
-                                  name={msg.skillName}
-                                  args={msg.request.args}
-                                  id={msg.request.id}
-                                  commandPosition={msg.request.commandPosition}
-                                  getOverseer={getOverseer}
-                                />
-                              </span>
-                            </div>
-                            <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
-                              {!(hideOwnUserName && msg.author.id === currentUser?.id) && (
-                                <span className="font-medium">{msg.author.name}</span>
-                              )}
-                              <Tooltip content={formatFullTimestamp(msg.timestamp)} asChild>
-                                <span className="font-mono">
-                                  {msg.timestamp.toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </span>
-                              </Tooltip>
-                            </div>
-                          </div>
-                        )}
-                        {msg.type === "message" && (
-                          msg.author.type === "user" ? (
+                        <div
+                          key={entry.key}
+                          className={`${entryTopClass} relative`}
+                        >
+                          {railLink.fromPrev && (
+                            <span
+                              aria-hidden="true"
+                              className={RAIL_BRIDGE_LINE}
+                            />
+                          )}
+                          {/* ── user / AI text message ── */}
+                          {msg.type === "slashCommand" && (
                             <div className="group/message relative flex flex-col items-end">
-                              <div className={`themed-user-bubble-shadow w-fit max-w-[min(680px,78%)] rounded-[24px] rounded-br-lg border border-transparent bg-kumo-bubble-user px-4 py-2.5 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
-                                {msg.attachments && msg.attachments.length > 0 && (
-                                  <ChatAttachmentGrid
-                                    attachments={msg.attachments}
-                                    onDownload={(attachment) => { void downloadChatAttachment(msg.chatId, attachment); }}
+                              <div className="themed-user-bubble-shadow w-fit max-w-[min(680px,78%)] rounded-[24px] rounded-br-lg border border-transparent bg-kumo-bubble-user px-4 py-2.5 text-ui-md leading-[22px] text-kumo-default">
+                                <span className="whitespace-pre-wrap">
+                                  <SlashCommandMention
+                                    name={msg.skillName}
+                                    args={msg.request.args}
+                                    id={msg.request.id}
+                                    commandPosition={
+                                      msg.request.commandPosition
+                                    }
+                                    getOverseer={getOverseer}
                                   />
-                                )}
-                                {entry.slashCommand ? (
-                                  // What the command expanded into is the agent's context, not
-                                  // something to re-read here.
-                                  <div className="whitespace-pre-wrap">
-                                    <SlashCommandMention
-                                      name={entry.slashCommand.skillName}
-                                      args={entry.slashCommand.request.args}
-                                      id={entry.slashCommand.request.id}
-                                      commandPosition={entry.slashCommand.request.commandPosition}
-                                      formats={msg.formats}
-                                      getOverseer={getOverseer}
-                                    />
-                                  </div>
-                                ) : msg.message.trim() && (
-                                  // pre-wrap renders users' single newlines as hard breaks.
-                                  <div className="whitespace-pre-wrap">
-                                    <MarkdownMessage
-                                      message={msg.message}
-                                      capsules={msg.capsules}
-                                      formats={msg.formats}
-                                    />
-                                  </div>
-                                )}
+                                </span>
                               </div>
                               <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
-                                {/* hideOwnUserName implies currentUser is non-null (see memo). */}
-                                {!(hideOwnUserName && msg.author.id === currentUser?.id) && (
-                                  <span className="font-medium">{msg.author.name}</span>
+                                {!(
+                                  hideOwnUserName &&
+                                  msg.author.id === currentUser?.id
+                                ) && (
+                                  <span className="font-medium">
+                                    {msg.author.name}
+                                  </span>
                                 )}
-                                <Tooltip content={formatFullTimestamp(msg.timestamp)} asChild>
+                                <Tooltip
+                                  content={formatFullTimestamp(msg.timestamp)}
+                                  asChild
+                                >
                                   <span className="font-mono">
                                     {msg.timestamp.toLocaleTimeString([], {
                                       hour: "2-digit",
-                                      minute: "2-digit",
+                                      minute: "2-digit"
                                     })}
                                   </span>
                                 </Tooltip>
                               </div>
                             </div>
-                          ) : (() => {
-                            const messageToolGroups = entry.toolCallGroups;
-                            const hasMessageText = msg.message.trim().length > 0;
-                            const showReasoning = showThinkingTraces && !!msg.reasoning;
-                            const actionMessageSeq = entry.lastMessageSequence ?? msg.sequence;
-                            const pendingChange = pendingChangeByTurnItemSeq.get(
-                              actionMessageSeq,
-                            ) ?? null;
-                            const createdGadgets =
-                              createdGadgetsByTurnItemSeq.get(actionMessageSeq) ?? [];
-                            const attachActionsToToolGroups =
-                              !hasMessageText &&
-                              !!pendingChange &&
-                              !!messageToolGroups &&
-                              messageToolGroups.length > 0;
-                            const showActions =
-                              completedAgentTurnMessageSeqs.has(actionMessageSeq) &&
-                              (hasMessageText || (!!pendingChange && !attachActionsToToolGroups));
-                            const keepActionsVisible =
-                              actionMessageSeq === latestCompletedAgentTurnMessageSeq;
-                            const showFooterOnGroupIndex = attachActionsToToolGroups && pendingChange && messageToolGroups
-                              ? messageToolGroups.length - 1
-                              : -1;
-                            // Rail node order matches the DOM: reasoning, prose, created gadgets,
-                            // then the tool groups this message invoked.
-                            const reasoningNodeCount = showReasoning ? 1 : 0;
-                            const textNodeCount = hasMessageText ? 1 : 0;
-                            const firstGadgetRailIndex = reasoningNodeCount + textNodeCount;
-                            const firstGroupRailIndex =
-                              firstGadgetRailIndex + createdGadgets.length;
-                            const lastRailIndex =
-                              firstGroupRailIndex + (messageToolGroups?.length ?? 0) - 1;
-                            const reasoningKey = `reasoning-${msg.chatId}-${msg.sequence}`;
-                            return (
-                          <div className="min-w-0 w-full max-w-[860px]">
-                            <div className="group/agentMessage relative">
-                              {showReasoning && (
-                                <RailNode
-                                  node={{ type: "thinking" }}
-                                  isFirst={!railLink.fromPrev}
-                                  isLast={lastRailIndex === 0 && !railLink.toNext}
+                          )}
+                          {msg.type === "message" &&
+                            (msg.author.type === "user" ? (
+                              <div className="group/message relative flex flex-col items-end">
+                                <div
+                                  className={`themed-user-bubble-shadow w-fit max-w-[min(680px,78%)] rounded-[24px] rounded-br-lg border border-transparent bg-kumo-bubble-user px-4 py-2.5 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}
                                 >
-                                  <ThinkingTraceRow
-                                    reasoning={msg.reasoning!}
-                                    open={expandedToolCalls.has(reasoningKey)}
-                                    onToggle={() => toggleToolCallExpansion(reasoningKey)}
-                                  />
-                                </RailNode>
-                              )}
-
-                              {hasMessageText && (
-                                <RailNode
-                                  node={{ type: "text" }}
-                                  isFirst={reasoningNodeCount === 0 && !railLink.fromPrev}
-                                  isLast={
-                                    reasoningNodeCount === lastRailIndex && !railLink.toNext
-                                  }
-                                >
-                                  <div className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
-                                    <MarkdownMessage
-                                      message={msg.message}
-                                      capsules={msg.capsules}
-                                      formats={msg.formats}
-                                    />
-                                  </div>
-                                </RailNode>
-                              )}
-
-                              {showActions && (
-                                <RailAligned continues={firstGadgetRailIndex <= lastRailIndex}>
-                                <div className={`mt-0.5 flex items-center gap-1 transition-opacity duration-150 ease-out ${
-                                  keepActionsVisible
-                                    ? "opacity-100"
-                                    : "opacity-0 group-hover/agentMessage:opacity-100 group-focus-within/agentMessage:opacity-100"
-                                }`}>
-                                  {hasMessageText && (
-                                    <Tooltip content="Copy message" asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCopyMessage(msg.message)}
-                                        className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96]"
-                                        aria-label="Copy message"
-                                      >
-                                        <Copy size={15} />
-                                      </button>
-                                    </Tooltip>
+                                  {msg.attachments &&
+                                    msg.attachments.length > 0 && (
+                                      <ChatAttachmentGrid
+                                        attachments={msg.attachments}
+                                        onDownload={(attachment) => {
+                                          void downloadChatAttachment(
+                                            msg.chatId,
+                                            attachment
+                                          );
+                                        }}
+                                      />
+                                    )}
+                                  {entry.slashCommand ? (
+                                    // What the command expanded into is the agent's context, not
+                                    // something to re-read here.
+                                    <div className="whitespace-pre-wrap">
+                                      <SlashCommandMention
+                                        name={entry.slashCommand.skillName}
+                                        args={entry.slashCommand.request.args}
+                                        id={entry.slashCommand.request.id}
+                                        commandPosition={
+                                          entry.slashCommand.request
+                                            .commandPosition
+                                        }
+                                        formats={msg.formats}
+                                        getOverseer={getOverseer}
+                                      />
+                                    </div>
+                                  ) : (
+                                    msg.message.trim() && (
+                                      // pre-wrap renders users' single newlines as hard breaks.
+                                      <div className="whitespace-pre-wrap">
+                                        <MarkdownMessage
+                                          message={msg.message}
+                                          capsules={msg.capsules}
+                                          formats={msg.formats}
+                                        />
+                                      </div>
+                                    )
                                   )}
-                                  {pendingChange && (() => {
-                                    const label = getDiscardLabel(
-                                      pendingChange.through === lastDurablePendingChange?.sequence,
-                                      pendingChange.createdGadgetTitles,
-                                    );
-                                    return (
-                                    <Tooltip content={label} asChild>
-                                      <button
-                                        type="button"
-                                        disabled={isAgentActive}
-                                        onClick={() => handleRevertChanges(pendingChange.revertFrom)}
-                                        className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
-                                        aria-label={label}
-                                      >
-                                        <ArrowUUpLeft size={15} />
-                                      </button>
-                                    </Tooltip>
-                                    );
-                                  })()}
-                                  <Tooltip content={formatFullTimestamp(msg.timestamp)} asChild>
-                                    <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
+                                </div>
+                                <div className="mt-0.5 flex items-center justify-end gap-2 pr-1 text-ui-2xs text-kumo-subtle opacity-0 transition-opacity duration-150 ease-out group-hover/message:opacity-100 group-focus-within/message:opacity-100">
+                                  {/* hideOwnUserName implies currentUser is non-null (see memo). */}
+                                  {!(
+                                    hideOwnUserName &&
+                                    msg.author.id === currentUser?.id
+                                  ) && (
+                                    <span className="font-medium">
+                                      {msg.author.name}
+                                    </span>
+                                  )}
+                                  <Tooltip
+                                    content={formatFullTimestamp(msg.timestamp)}
+                                    asChild
+                                  >
+                                    <span className="font-mono">
                                       {msg.timestamp.toLocaleTimeString([], {
                                         hour: "2-digit",
-                                        minute: "2-digit",
+                                        minute: "2-digit"
                                       })}
                                     </span>
                                   </Tooltip>
                                 </div>
-                                </RailAligned>
-                              )}
-                            </div>
+                              </div>
+                            ) : (
+                              (() => {
+                                const messageToolGroups = entry.toolCallGroups;
+                                const hasMessageText =
+                                  msg.message.trim().length > 0;
+                                const showReasoning =
+                                  showThinkingTraces && !!msg.reasoning;
+                                const actionMessageSeq =
+                                  entry.lastMessageSequence ?? msg.sequence;
+                                const pendingChange =
+                                  pendingChangeByTurnItemSeq.get(
+                                    actionMessageSeq
+                                  ) ?? null;
+                                const createdGadgets =
+                                  createdGadgetsByTurnItemSeq.get(
+                                    actionMessageSeq
+                                  ) ?? [];
+                                const attachActionsToToolGroups =
+                                  !hasMessageText &&
+                                  !!pendingChange &&
+                                  !!messageToolGroups &&
+                                  messageToolGroups.length > 0;
+                                const showActions =
+                                  completedAgentTurnMessageSeqs.has(
+                                    actionMessageSeq
+                                  ) &&
+                                  (hasMessageText ||
+                                    (!!pendingChange &&
+                                      !attachActionsToToolGroups));
+                                const keepActionsVisible =
+                                  actionMessageSeq ===
+                                  latestCompletedAgentTurnMessageSeq;
+                                const showFooterOnGroupIndex =
+                                  attachActionsToToolGroups &&
+                                  pendingChange &&
+                                  messageToolGroups
+                                    ? messageToolGroups.length - 1
+                                    : -1;
+                                // Rail node order matches the DOM: reasoning, prose, created gadgets,
+                                // then the tool groups this message invoked.
+                                const reasoningNodeCount = showReasoning
+                                  ? 1
+                                  : 0;
+                                const textNodeCount = hasMessageText ? 1 : 0;
+                                const firstGadgetRailIndex =
+                                  reasoningNodeCount + textNodeCount;
+                                const firstGroupRailIndex =
+                                  firstGadgetRailIndex + createdGadgets.length;
+                                const lastRailIndex =
+                                  firstGroupRailIndex +
+                                  (messageToolGroups?.length ?? 0) -
+                                  1;
+                                const reasoningKey = `reasoning-${msg.chatId}-${msg.sequence}`;
+                                return (
+                                  <div className="min-w-0 w-full max-w-[860px]">
+                                    <div className="group/agentMessage relative">
+                                      {showReasoning && (
+                                        <RailNode
+                                          node={{ type: "thinking" }}
+                                          isFirst={!railLink.fromPrev}
+                                          isLast={
+                                            lastRailIndex === 0 &&
+                                            !railLink.toNext
+                                          }
+                                        >
+                                          <ThinkingTraceRow
+                                            reasoning={msg.reasoning!}
+                                            open={expandedToolCalls.has(
+                                              reasoningKey
+                                            )}
+                                            onToggle={() =>
+                                              toggleToolCallExpansion(
+                                                reasoningKey
+                                              )
+                                            }
+                                          />
+                                        </RailNode>
+                                      )}
 
-                            {createdGadgets.map((created, createdIndex) => (
-                              <RailNode
-                                key={created.gadgetId}
-                                node={{ type: "text" }}
-                                isFirst={
-                                  firstGadgetRailIndex + createdIndex === 0 && !railLink.fromPrev
-                                }
-                                isLast={
-                                  firstGadgetRailIndex + createdIndex === lastRailIndex &&
-                                  !railLink.toNext
-                                }
-                              >
-                                <CreatedGadgetChatCard
-                                  gadget={created}
-                                  onOpen={() => onOpenGadget(created.gadgetId)}
-                                />
-                              </RailNode>
+                                      {hasMessageText && (
+                                        <RailNode
+                                          node={{ type: "text" }}
+                                          isFirst={
+                                            reasoningNodeCount === 0 &&
+                                            !railLink.fromPrev
+                                          }
+                                          isLast={
+                                            reasoningNodeCount ===
+                                              lastRailIndex && !railLink.toNext
+                                          }
+                                        >
+                                          <div
+                                            className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}
+                                          >
+                                            <MarkdownMessage
+                                              message={msg.message}
+                                              capsules={msg.capsules}
+                                              formats={msg.formats}
+                                            />
+                                          </div>
+                                        </RailNode>
+                                      )}
+
+                                      {showActions && (
+                                        <RailAligned
+                                          continues={
+                                            firstGadgetRailIndex <=
+                                            lastRailIndex
+                                          }
+                                        >
+                                          <div
+                                            className={`mt-0.5 flex items-center gap-1 transition-opacity duration-150 ease-out ${
+                                              keepActionsVisible
+                                                ? "opacity-100"
+                                                : "opacity-0 group-hover/agentMessage:opacity-100 group-focus-within/agentMessage:opacity-100"
+                                            }`}
+                                          >
+                                            {hasMessageText && (
+                                              <Tooltip
+                                                content="Copy message"
+                                                asChild
+                                              >
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    handleCopyMessage(
+                                                      msg.message
+                                                    )
+                                                  }
+                                                  className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96]"
+                                                  aria-label="Copy message"
+                                                >
+                                                  <Copy size={15} />
+                                                </button>
+                                              </Tooltip>
+                                            )}
+                                            {pendingChange &&
+                                              (() => {
+                                                const label = getDiscardLabel(
+                                                  pendingChange.through ===
+                                                    lastDurablePendingChange?.sequence,
+                                                  pendingChange.createdGadgetTitles
+                                                );
+                                                return (
+                                                  <Tooltip
+                                                    content={label}
+                                                    asChild
+                                                  >
+                                                    <button
+                                                      type="button"
+                                                      disabled={isAgentActive}
+                                                      onClick={() =>
+                                                        handleRevertChanges(
+                                                          pendingChange.revertFrom
+                                                        )
+                                                      }
+                                                      className="flex cursor-pointer items-center rounded-md p-1 text-kumo-subtle transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40"
+                                                      aria-label={label}
+                                                    >
+                                                      <ArrowUUpLeft size={15} />
+                                                    </button>
+                                                  </Tooltip>
+                                                );
+                                              })()}
+                                            <Tooltip
+                                              content={formatFullTimestamp(
+                                                msg.timestamp
+                                              )}
+                                              asChild
+                                            >
+                                              <span className="px-1 font-mono text-ui-2xs text-kumo-subtle">
+                                                {msg.timestamp.toLocaleTimeString(
+                                                  [],
+                                                  {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit"
+                                                  }
+                                                )}
+                                              </span>
+                                            </Tooltip>
+                                          </div>
+                                        </RailAligned>
+                                      )}
+                                    </div>
+
+                                    {createdGadgets.map(
+                                      (created, createdIndex) => (
+                                        <RailNode
+                                          key={created.gadgetId}
+                                          node={{ type: "text" }}
+                                          isFirst={
+                                            firstGadgetRailIndex +
+                                              createdIndex ===
+                                              0 && !railLink.fromPrev
+                                          }
+                                          isLast={
+                                            firstGadgetRailIndex +
+                                              createdIndex ===
+                                              lastRailIndex && !railLink.toNext
+                                          }
+                                        >
+                                          <CreatedGadgetChatCard
+                                            gadget={created}
+                                            onOpen={() =>
+                                              onOpenGadget(created.gadgetId)
+                                            }
+                                          />
+                                        </RailNode>
+                                      )
+                                    )}
+
+                                    {messageToolGroups &&
+                                      messageToolGroups.length > 0 && (
+                                        <div>
+                                          {messageToolGroups.map(
+                                            (group, groupIndex) => (
+                                              <RailNode
+                                                key={group.key}
+                                                node={{
+                                                  type: "toolGroup",
+                                                  hasError: group.hasError
+                                                }}
+                                                isFirst={
+                                                  firstGroupRailIndex +
+                                                    groupIndex ===
+                                                    0 && !railLink.fromPrev
+                                                }
+                                                isLast={
+                                                  firstGroupRailIndex +
+                                                    groupIndex ===
+                                                    lastRailIndex &&
+                                                  !railLink.toNext
+                                                }
+                                              >
+                                                <ToolGroupRow
+                                                  outputOf={resolveToolOutput}
+                                                  group={group}
+                                                  open={expandedToolCalls.has(
+                                                    group.key
+                                                  )}
+                                                  expandedKeys={
+                                                    expandedToolCalls
+                                                  }
+                                                  onToggle={
+                                                    toggleToolCallExpansion
+                                                  }
+                                                  footerChangeSequence={
+                                                    groupIndex ===
+                                                    showFooterOnGroupIndex
+                                                      ? pendingChange?.revertFrom
+                                                      : undefined
+                                                  }
+                                                  footerTimestamp={
+                                                    groupIndex ===
+                                                    showFooterOnGroupIndex
+                                                      ? msg.timestamp
+                                                      : undefined
+                                                  }
+                                                  footerIsTrailing={
+                                                    pendingChange?.through ===
+                                                    lastDurablePendingChange?.sequence
+                                                  }
+                                                  footerCreatedGadgetTitles={
+                                                    groupIndex ===
+                                                    showFooterOnGroupIndex
+                                                      ? pendingChange?.createdGadgetTitles
+                                                      : undefined
+                                                  }
+                                                  footerDisabled={isAgentActive}
+                                                  onFooterRevert={
+                                                    handleRevertChanges
+                                                  }
+                                                />
+                                              </RailNode>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
+                                  </div>
+                                );
+                              })()
                             ))}
 
-                            {messageToolGroups && messageToolGroups.length > 0 && (
-                              <div>
-                                {messageToolGroups.map((group, groupIndex) => (
-                                  <RailNode
-                                    key={group.key}
-                                    node={{ type: "toolGroup", hasError: group.hasError }}
-                                    isFirst={
-                                      firstGroupRailIndex + groupIndex === 0 && !railLink.fromPrev
+                          {(msg.type === "merge" || msg.type === "revert") &&
+                            (() => {
+                              const isMerge = msg.type === "merge";
+                              const ts = isMerge
+                                ? messageStates.mergeTimestamps.get(
+                                    msg.sequence
+                                  )
+                                : messageStates.revertTimestamps.get(
+                                    msg.sequence
+                                  );
+                              return (
+                                <div className="max-w-[860px] py-1 text-ui-md text-kumo-subtle">
+                                  <Tooltip
+                                    content={
+                                      isMerge
+                                        ? `Accepted draft changes${ts ? ` through ${formatFullTimestamp(ts)}` : ""}.`
+                                        : `Returned to the gadget state before the prompt sent ${ts ? `at ${ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "earlier"}.`
                                     }
-                                    isLast={
-                                      firstGroupRailIndex + groupIndex === lastRailIndex &&
-                                      !railLink.toNext
-                                    }
+                                    asChild
                                   >
-                                    <ToolGroupRow
-                                      outputOf={resolveToolOutput}
-                                      group={group}
-                                      open={expandedToolCalls.has(group.key)}
-                                      expandedKeys={expandedToolCalls}
-                                      onToggle={toggleToolCallExpansion}
-                                      footerChangeSequence={
-                                        groupIndex === showFooterOnGroupIndex
-                                          ? pendingChange?.revertFrom
-                                          : undefined
-                                      }
-                                      footerTimestamp={
-                                        groupIndex === showFooterOnGroupIndex
-                                          ? msg.timestamp
-                                          : undefined
-                                      }
-                                      footerIsTrailing={
-                                        pendingChange?.through === lastDurablePendingChange?.sequence
-                                      }
-                                      footerCreatedGadgetTitles={
-                                        groupIndex === showFooterOnGroupIndex
-                                          ? pendingChange?.createdGadgetTitles
-                                          : undefined
-                                      }
-                                      footerDisabled={isAgentActive}
-                                      onFooterRevert={handleRevertChanges}
-                                    />
-                                  </RailNode>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                            );
-                          })()
-                        )}
-
-                        {(msg.type === "merge" || msg.type === "revert") &&
-                          (() => {
-                            const isMerge = msg.type === "merge";
-                            const ts = isMerge
-                              ? messageStates.mergeTimestamps.get(msg.sequence)
-                              : messageStates.revertTimestamps.get(
-                                  msg.sequence,
-                                );
-                            return (
-                              <div className="max-w-[860px] py-1 text-ui-md text-kumo-subtle">
-                                <Tooltip
-                                  content={
-                                    isMerge
-                                      ? `Accepted draft changes${ts ? ` through ${formatFullTimestamp(ts)}` : ""}.`
-                                      : `Returned to the gadget state before the prompt sent ${ts ? `at ${ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "earlier"}.`
-                                  }
-                                  asChild
-                                >
-                                  <span className="inline-flex items-center gap-3 px-1.5">
-                                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
-                                      {isMerge ? <Check size={16} /> : <ArrowUUpLeft size={16} />}
-                                    </span>
-                                    <span className="font-medium">
-                                      {msg.author.name}{" "}
-                                      {isMerge
-                                        ? "accepted changes"
-                                        : "discarded changes"}
-                                    </span>
-                                  </span>
-                                </Tooltip>
-                              </div>
-                            );
-                          })()}
-
-                        {msg.type === "action" && renderActionCard(msg)}
-
-                        {msg.type === "connectionRequest" && renderConnectionRequestCard(msg)}
-
-                        {msg.type === "useGadget" && (
-                          <div className="max-w-[860px] text-ui-md text-kumo-subtle">
-                            <Tooltip content={`Used the gadget at ${formatFullTimestamp(msg.timestamp)}`} asChild>
-                              <span className="inline-flex items-center gap-3 px-1.5 py-1">
-                                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
-                                  <Plug size={16} />
-                                </span>
-                                <span>Used the gadget</span>
-                              </span>
-                            </Tooltip>
-                          </div>
-                        )}
-
-                        {msg.type === "error" &&
-                          (() => {
-                            const key = `${msg.chatId}-${msg.sequence}`;
-                            const isLast =
-                              msg.sequence === lastMessageSequence &&
-                              !isAgentActive;
-                            const expanded = expandedErrors.has(key);
-                            return (
-                              <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
-                                <div className="flex w-full items-center gap-2 px-1.5 py-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleErrorExpansion(key)}
-                                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md text-left transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.995]"
-                                    aria-expanded={expanded}
-                                  >
-                                    <Tooltip content={formatFullTimestamp(msg.timestamp)} asChild>
-                                      <span className="flex min-w-0 flex-1 items-center gap-2">
-                                        <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-danger" aria-hidden="true">
-                                          <WarningCircle size={16} weight="fill" />
-                                        </span>
-                                        <span className="flex min-w-0 flex-1 items-center gap-1">
-                                          <span className="min-w-0 truncate">
-                                            <span className="font-medium text-kumo-danger">Error: </span>
-                                            <span className="text-kumo-subtle">{msg.message}</span>
-                                          </span>
-                                          <CaretRight
-                                            size={13}
-                                            weight="bold"
-                                            className={`flex-shrink-0 text-kumo-subtle transition-transform duration-150 ease-out ${expanded ? "rotate-90" : ""}`}
-                                          />
-                                        </span>
+                                    <span className="inline-flex items-center gap-3 px-1.5">
+                                      <span
+                                        className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                        aria-hidden="true"
+                                      >
+                                        {isMerge ? (
+                                          <Check size={16} />
+                                        ) : (
+                                          <ArrowUUpLeft size={16} />
+                                        )}
                                       </span>
-                                    </Tooltip>
-                                  </button>
-                                  {isLast && msg.code === "usage_limit" && (
-                                    <Tooltip content="Add credits to continue." asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => setUsageModalOpen(true)}
-                                        className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-ui-sm leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98]"
+                                      <span className="font-medium">
+                                        {msg.author.name}{" "}
+                                        {isMerge
+                                          ? "accepted changes"
+                                          : "discarded changes"}
+                                      </span>
+                                    </span>
+                                  </Tooltip>
+                                </div>
+                              );
+                            })()}
+
+                          {msg.type === "action" && renderActionCard(msg)}
+
+                          {msg.type === "connectionRequest" &&
+                            renderConnectionRequestCard(msg)}
+
+                          {msg.type === "useGadget" && (
+                            <div className="max-w-[860px] text-ui-md text-kumo-subtle">
+                              <Tooltip
+                                content={`Used the gadget at ${formatFullTimestamp(msg.timestamp)}`}
+                                asChild
+                              >
+                                <span className="inline-flex items-center gap-3 px-1.5 py-1">
+                                  <span
+                                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                    aria-hidden="true"
+                                  >
+                                    <Plug size={16} />
+                                  </span>
+                                  <span>Used the gadget</span>
+                                </span>
+                              </Tooltip>
+                            </div>
+                          )}
+
+                          {msg.type === "error" &&
+                            (() => {
+                              const key = `${msg.chatId}-${msg.sequence}`;
+                              const isLast =
+                                msg.sequence === lastMessageSequence &&
+                                !isAgentActive;
+                              const expanded = expandedErrors.has(key);
+                              return (
+                                <div className="group/work max-w-[860px] text-ui-md text-kumo-subtle">
+                                  <div className="flex w-full items-center gap-2 px-1.5 py-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleErrorExpansion(key)}
+                                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md text-left transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.995]"
+                                      aria-expanded={expanded}
+                                    >
+                                      <Tooltip
+                                        content={formatFullTimestamp(
+                                          msg.timestamp
+                                        )}
+                                        asChild
                                       >
-                                        <Lightning size={12} weight="bold" />
-                                        Continue
-                                      </button>
-                                    </Tooltip>
-                                  )}
-                                  {isLast && msg.code !== "usage_limit" && (
-                                    <Tooltip content="Retry the last action." asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRetry()}
-                                        disabled={selectedModel === null}
-                                        className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-ui-sm leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                                        <span className="flex min-w-0 flex-1 items-center gap-2">
+                                          <span
+                                            className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-danger"
+                                            aria-hidden="true"
+                                          >
+                                            <WarningCircle
+                                              size={16}
+                                              weight="fill"
+                                            />
+                                          </span>
+                                          <span className="flex min-w-0 flex-1 items-center gap-1">
+                                            <span className="min-w-0 truncate">
+                                              <span className="font-medium text-kumo-danger">
+                                                Error:{" "}
+                                              </span>
+                                              <span className="text-kumo-subtle">
+                                                {msg.message}
+                                              </span>
+                                            </span>
+                                            <CaretRight
+                                              size={13}
+                                              weight="bold"
+                                              className={`flex-shrink-0 text-kumo-subtle transition-transform duration-150 ease-out ${expanded ? "rotate-90" : ""}`}
+                                            />
+                                          </span>
+                                        </span>
+                                      </Tooltip>
+                                    </button>
+                                    {isLast && msg.code === "usage_limit" && (
+                                      <Tooltip
+                                        content="Add credits to continue."
+                                        asChild
                                       >
-                                        <ArrowsClockwise size={12} weight="bold" />
-                                        Retry
-                                      </button>
-                                    </Tooltip>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setUsageModalOpen(true)
+                                          }
+                                          className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-ui-sm leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98]"
+                                        >
+                                          <Lightning size={12} weight="bold" />
+                                          Continue
+                                        </button>
+                                      </Tooltip>
+                                    )}
+                                    {isLast && msg.code !== "usage_limit" && (
+                                      <Tooltip
+                                        content="Retry the last action."
+                                        asChild
+                                      >
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRetry()}
+                                          disabled={selectedModel === null}
+                                          className="flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-ui-sm leading-4 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                          <ArrowsClockwise
+                                            size={12}
+                                            weight="bold"
+                                          />
+                                          Retry
+                                        </button>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                  {expanded && (
+                                    <div className="ml-8 mt-1">
+                                      <pre className="max-h-48 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
+                                        {msg.message}
+                                      </pre>
+                                    </div>
                                   )}
                                 </div>
-                                {expanded && (
-                                  <div className="ml-8 mt-1">
-                                    <pre className="max-h-48 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
-                                      {msg.message}
-                                    </pre>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
+                              );
+                            })()}
 
-                        {msg.type === "agentCallback" && (
-                          <div className="max-w-[860px] text-ui-md text-kumo-subtle">
-                            <div className="flex items-center gap-3 px-1.5 py-1">
-                              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
-                                <Code size={16} />
-                              </span>
-                              <span className="min-w-0 truncate font-mono text-ui-sm">
-                                self.{msg.methodName}()
-                              </span>
-                            </div>
-                            {msg.argsSummary && (
-                              <div className="ml-8 mt-1">
-                                <pre className="max-h-24 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
-                                  {msg.argsSummary}
-                                </pre>
+                          {msg.type === "agentCallback" && (
+                            <div className="max-w-[860px] text-ui-md text-kumo-subtle">
+                              <div className="flex items-center gap-3 px-1.5 py-1">
+                                <span
+                                  className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                  aria-hidden="true"
+                                >
+                                  <Code size={16} />
+                                </span>
+                                <span className="min-w-0 truncate font-mono text-ui-sm">
+                                  self.{msg.methodName}()
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        )}
+                              {msg.argsSummary && (
+                                <div className="ml-8 mt-1">
+                                  <pre className="max-h-24 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
+                                    {msg.argsSummary}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
 
-                    {currentDraftState && currentDraftState.entries.length > 0 && (() => {
-                      const latestAuthor = currentDraftState.latestAuthor;
-                      const isUserAuthored = latestAuthor?.type === "user";
-                      const title = isUserAuthored
-                        ? "Draft changes pending"
-                        : "Draft changes in progress";
-                      const description = isUserAuthored
-                        ? "Your edits are still a live draft."
-                        : `${latestAuthor?.name ?? "The agent"} is editing changes for this gadget.`;
-                      const lastDraftEntry =
-                        currentDraftState.entries[
-                          currentDraftState.entries.length - 1
-                        ];
-                      const lastEntry = displayEntries[displayEntries.length - 1] ?? null;
-                      const draftTopClass = !lastEntry
-                        ? ""
-                        : isUserMessageEntry(lastEntry)
-                          ? "mt-6"
-                          : entryEndsInWorkRow(lastEntry)
-                            ? "mt-2"
-                            : "mt-4";
-                      return (
-                        <div className={`${draftTopClass} max-w-[860px] py-1 text-ui-md text-kumo-subtle`}>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1.5">
-                            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle" aria-hidden="true">
-                              <Pencil size={16} />
-                            </span>
-                            <Tooltip
-                              content={`${description} Last edited ${formatFullTimestamp(lastDraftEntry.timestamp)}`}
-                              asChild
-                            >
-                              <span className="font-medium text-kumo-subtle">
-                                {title}
-                              </span>
-                            </Tooltip>
-                            <div className="flex flex-wrap items-center gap-2 text-ui-sm leading-4">
-                              <Tooltip content="Throw away these draft edits." asChild>
-                                <button
-                                  type="button"
-                                  disabled={isAgentActive}
-                                  onClick={handleDiscardDraftChanges}
-                                  className="cursor-pointer rounded-md px-1 py-0.5 font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-danger focus-visible:text-kumo-danger focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                  Discard
-                                </button>
-                              </Tooltip>
-                              <Tooltip content="Save these edits as a draft version. They won't affect the gadget until you accept changes." asChild>
-                                <button
-                                  type="button"
-                                  disabled={isAgentActive}
-                                  onClick={handleFinalizeDraftChanges}
-                                  className="cursor-pointer rounded-md px-1 py-0.5 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                  Save draft
-                                </button>
-                              </Tooltip>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {isAgentActive && activeAgent && (() => {
-                      // Placeholder shown only while the agent is active but hasn't produced
-                      // visible output yet; once real output appears, that speaks for itself.
-                      const hasShownReasoning =
-                        showThinkingTraces && !!currentProvisionalState?.reasoning;
-                      // Only while awaiting the agent's first output this turn; otherwise it
-                      // flashes again in the gap after the last message finalizes but before
-                      // isAgentActive clears.
-                      const lastMessage =
-                        currentMessages.length > 0
-                          ? currentMessages[currentMessages.length - 1]
-                          : null;
-                      const awaitingFirstResponse =
-                        !lastMessage ||
-                        lastMessage.author.type === "user" ||
-                        lastMessage.author.type === "gadget";
-                      const showThinking =
-                        !isCompacting &&
-                        awaitingFirstResponse &&
-                        !currentProvisionalState?.text &&
-                        !hasShownReasoning &&
-                        provisionalToolCalls.length === 0;
-
-                      // Match the spacing this response gets once finalized (see rhythmTopClass)
-                      // so it doesn't shift when streaming completes.
-                      const lastEntry =
-                        displayEntries.length > 0
-                          ? displayEntries[displayEntries.length - 1]
-                          : null;
-                      // This turn's earlier steps have already committed as entries, so the rail
-                      // carries on into the part still streaming.
-                      const railFromLastEntry = !!lastEntry && isRailEntry(lastEntry);
-                      const provisionalTopClass = !lastEntry
-                        ? ""
-                        : railFromLastEntry
-                          ? RAIL_BRIDGE
-                          : lastEntry.type === "modelChange"
-                            ? "mt-2"
-                            : isUserMessageEntry(lastEntry)
-                              ? "mt-5"
+                    {currentDraftState &&
+                      currentDraftState.entries.length > 0 &&
+                      (() => {
+                        const latestAuthor = currentDraftState.latestAuthor;
+                        const isUserAuthored = latestAuthor?.type === "user";
+                        const title = isUserAuthored
+                          ? "Draft changes pending"
+                          : "Draft changes in progress";
+                        const description = isUserAuthored
+                          ? "Your edits are still a live draft."
+                          : `${latestAuthor?.name ?? "The agent"} is editing changes for this gadget.`;
+                        const lastDraftEntry =
+                          currentDraftState.entries[
+                            currentDraftState.entries.length - 1
+                          ];
+                        const lastEntry =
+                          displayEntries[displayEntries.length - 1] ?? null;
+                        const draftTopClass = !lastEntry
+                          ? ""
+                          : isUserMessageEntry(lastEntry)
+                            ? "mt-6"
+                            : entryEndsInWorkRow(lastEntry)
+                              ? "mt-2"
                               : "mt-4";
-
-                      // Which rail steps this in-flight turn is currently showing, so the rail can
-                      // terminate at the last one instead of trailing into whitespace.
-                      const streamingReasoning =
-                        showThinkingTraces && !!currentProvisionalState?.reasoning;
-                      const streamingText = !!currentProvisionalState?.text;
-                      const streamingTools = provisionalToolCalls.length > 0;
-
-                      return (
-                        <div className={`group/agent relative min-w-0 w-full max-w-[860px] ${provisionalTopClass}`}>
-                          {railFromLastEntry && (
-                            <span aria-hidden="true" className={RAIL_BRIDGE_LINE} />
-                          )}
-                          {/* Rail-aligned so these placeholders don't shift sideways once real
-                              steps arrive and take over the gutter. */}
-                          {isCompacting && (
-                            <RailAligned>
-                              <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
-                                Compacting…
-                              </div>
-                            </RailAligned>
-                          )}
-
-                          {showThinking && (
-                            <RailAligned>
-                              <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
-                                Thinking
-                              </div>
-                            </RailAligned>
-                          )}
-
-                          {streamingReasoning && (
-                            <RailNode
-                              node={{ type: "thinking" }}
-                              isFirst={!railFromLastEntry}
-                              isLast={!streamingText && !streamingTools}
-                            >
-                              <ThinkingTraceRow
-                                reasoning={currentProvisionalState!.reasoning}
-                                open={expandedToolCalls.has(PROVISIONAL_REASONING_KEY)}
-                                onToggle={() =>
-                                  toggleToolCallExpansion(PROVISIONAL_REASONING_KEY)
-                                }
-                              />
-                            </RailNode>
-                          )}
-
-                          {streamingText && (
-                            <RailNode
-                              node={{ type: "text" }}
-                              isFirst={!streamingReasoning && !railFromLastEntry}
-                              isLast={!streamingTools}
-                            >
-                              <div className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
-                                <MarkdownMessage message={currentProvisionalState!.text} />
-                              </div>
-                            </RailNode>
-                          )}
-
-                          {provisionalToolCalls.length > 0 && (() => {
-                            const first = provisionalToolCalls[0];
-                            const { label, detailLines } =
-                              buildProvisionalToolSummary(provisionalToolCalls);
-                            const expansionKey = `group-${first.toolCallId}`;
-                            const isExpanded = expandedToolCalls.has(expansionKey);
-                            const detailCalls = provisionalToolCalls.filter(
-                              (t) => t.code || t.output,
-                            );
-                            return (
-                              <RailNode
-                                // Provisional calls carry no error state, so the outcome isn't
-                                // known until the turn commits and the real tone takes over.
-                                node={{ type: "toolGroup", hasError: false, inFlight: true }}
-                                isFirst={
-                                  !streamingReasoning && !streamingText && !railFromLastEntry
-                                }
-                                isLast
+                        return (
+                          <div
+                            className={`${draftTopClass} max-w-[860px] py-1 text-ui-md text-kumo-subtle`}
+                          >
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1.5">
+                              <span
+                                className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-kumo-subtle"
+                                aria-hidden="true"
                               >
-                              <div>
-                                <div className="group/work min-w-0">
+                                <Pencil size={16} />
+                              </span>
+                              <Tooltip
+                                content={`${description} Last edited ${formatFullTimestamp(lastDraftEntry.timestamp)}`}
+                                asChild
+                              >
+                                <span className="font-medium text-kumo-subtle">
+                                  {title}
+                                </span>
+                              </Tooltip>
+                              <div className="flex flex-wrap items-center gap-2 text-ui-sm leading-4">
+                                <Tooltip
+                                  content="Throw away these draft edits."
+                                  asChild
+                                >
                                   <button
                                     type="button"
-                                    onClick={() => toggleToolCallExpansion(expansionKey)}
-                                    className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-1.5 py-1 text-left text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.995]"
-                                    aria-expanded={isExpanded}
+                                    disabled={isAgentActive}
+                                    onClick={handleDiscardDraftChanges}
+                                    className="cursor-pointer rounded-md px-1 py-0.5 font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-danger focus-visible:text-kumo-danger focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                                   >
-                                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                                      <WorkIcon Icon={getToolIcon(first.toolName, first.outputFormat)} />
-                                    </span>
-                                    <span className="min-w-0 flex-1">
-                                      <span className="flex min-w-0 items-center gap-2 text-ui-md ">
-                                        <span className="min-w-0 truncate">{label}</span>
-                                        <CaretRight
-                                          size={13}
-                                          weight="bold"
-                                          className={`flex-shrink-0 text-kumo-subtle transition-transform duration-150 ease-out ${isExpanded ? "rotate-90" : ""}`}
-                                        />
-                                      </span>
-                                      {detailLines.length > 1 && (
-                                        <span className="mt-1 block truncate font-mono text-ui-xs text-kumo-subtle">
-                                          {detailLines.join(" · ")}
-                                        </span>
-                                      )}
-                                    </span>
+                                    Discard
                                   </button>
-                                  {isExpanded && detailCalls.length > 0 && (
-                                    <div className="ml-8 mt-1 space-y-1">
-                                      {detailCalls.map((toolCall) => (
-                                        <div
-                                          key={`stream-tool-${toolCall.toolCallId}`}
-                                          className="themed-surface-inset space-y-3 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3"
-                                        >
-                                          {toolCall.code && (
-                                            <>
-                                              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">Code</span>
-                                              <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
-                                                {toolCall.code}
-                                              </pre>
-                                            </>
-                                          )}
-                                          {toolCall.output && (
-                                            <>
-                                              <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">Output</span>
-                                              <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
-                                                {toolCall.output}
-                                              </pre>
-                                            </>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+                                </Tooltip>
+                                <Tooltip
+                                  content="Save these edits as a draft version. They won't affect the gadget until you accept changes."
+                                  asChild
+                                >
+                                  <button
+                                    type="button"
+                                    disabled={isAgentActive}
+                                    onClick={handleFinalizeDraftChanges}
+                                    className="cursor-pointer rounded-md px-1 py-0.5 font-medium text-kumo-default transition-[color,opacity,transform] duration-150 ease-out hover:text-kumo-default-hover focus-visible:text-kumo-default-hover focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                                  >
+                                    Save draft
+                                  </button>
+                                </Tooltip>
                               </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                    {isAgentActive &&
+                      activeAgent &&
+                      (() => {
+                        // Placeholder shown only while the agent is active but hasn't produced
+                        // visible output yet; once real output appears, that speaks for itself.
+                        const hasShownReasoning =
+                          showThinkingTraces &&
+                          !!currentProvisionalState?.reasoning;
+                        // Only while awaiting the agent's first output this turn; otherwise it
+                        // flashes again in the gap after the last message finalizes but before
+                        // isAgentActive clears.
+                        const lastMessage =
+                          currentMessages.length > 0
+                            ? currentMessages[currentMessages.length - 1]
+                            : null;
+                        const awaitingFirstResponse =
+                          !lastMessage ||
+                          lastMessage.author.type === "user" ||
+                          lastMessage.author.type === "gadget";
+                        const showThinking =
+                          !isCompacting &&
+                          awaitingFirstResponse &&
+                          !currentProvisionalState?.text &&
+                          !hasShownReasoning &&
+                          provisionalToolCalls.length === 0;
+
+                        // Match the spacing this response gets once finalized (see rhythmTopClass)
+                        // so it doesn't shift when streaming completes.
+                        const lastEntry =
+                          displayEntries.length > 0
+                            ? displayEntries[displayEntries.length - 1]
+                            : null;
+                        // This turn's earlier steps have already committed as entries, so the rail
+                        // carries on into the part still streaming.
+                        const railFromLastEntry =
+                          !!lastEntry && isRailEntry(lastEntry);
+                        const provisionalTopClass = !lastEntry
+                          ? ""
+                          : railFromLastEntry
+                            ? RAIL_BRIDGE
+                            : lastEntry.type === "modelChange"
+                              ? "mt-2"
+                              : isUserMessageEntry(lastEntry)
+                                ? "mt-5"
+                                : "mt-4";
+
+                        // Which rail steps this in-flight turn is currently showing, so the rail can
+                        // terminate at the last one instead of trailing into whitespace.
+                        const streamingReasoning =
+                          showThinkingTraces &&
+                          !!currentProvisionalState?.reasoning;
+                        const streamingText = !!currentProvisionalState?.text;
+                        const streamingTools = provisionalToolCalls.length > 0;
+
+                        return (
+                          <div
+                            className={`group/agent relative min-w-0 w-full max-w-[860px] ${provisionalTopClass}`}
+                          >
+                            {railFromLastEntry && (
+                              <span
+                                aria-hidden="true"
+                                className={RAIL_BRIDGE_LINE}
+                              />
+                            )}
+                            {/* Rail-aligned so these placeholders don't shift sideways once real
+                              steps arrive and take over the gutter. */}
+                            {isCompacting && (
+                              <RailAligned>
+                                <div
+                                  className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}
+                                >
+                                  Compacting…
+                                </div>
+                              </RailAligned>
+                            )}
+
+                            {showThinking && (
+                              <RailAligned>
+                                <div
+                                  className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}
+                                >
+                                  Thinking
+                                </div>
+                              </RailAligned>
+                            )}
+
+                            {streamingReasoning && (
+                              <RailNode
+                                node={{ type: "thinking" }}
+                                isFirst={!railFromLastEntry}
+                                isLast={!streamingText && !streamingTools}
+                              >
+                                <ThinkingTraceRow
+                                  reasoning={currentProvisionalState!.reasoning}
+                                  open={expandedToolCalls.has(
+                                    PROVISIONAL_REASONING_KEY
+                                  )}
+                                  onToggle={() =>
+                                    toggleToolCallExpansion(
+                                      PROVISIONAL_REASONING_KEY
+                                    )
+                                  }
+                                />
                               </RailNode>
-                            );
-                          })()}
-                        </div>
-                      );
-                    })()}
+                            )}
+
+                            {streamingText && (
+                              <RailNode
+                                node={{ type: "text" }}
+                                isFirst={
+                                  !streamingReasoning && !railFromLastEntry
+                                }
+                                isLast={!streamingTools}
+                              >
+                                <div
+                                  className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}
+                                >
+                                  <MarkdownMessage
+                                    message={currentProvisionalState!.text}
+                                  />
+                                </div>
+                              </RailNode>
+                            )}
+
+                            {provisionalToolCalls.length > 0 &&
+                              (() => {
+                                const first = provisionalToolCalls[0];
+                                const { label, detailLines } =
+                                  buildProvisionalToolSummary(
+                                    provisionalToolCalls
+                                  );
+                                const expansionKey = `group-${first.toolCallId}`;
+                                const isExpanded =
+                                  expandedToolCalls.has(expansionKey);
+                                const detailCalls = provisionalToolCalls.filter(
+                                  (t) => t.code || t.output
+                                );
+                                return (
+                                  <RailNode
+                                    // Provisional calls carry no error state, so the outcome isn't
+                                    // known until the turn commits and the real tone takes over.
+                                    node={{
+                                      type: "toolGroup",
+                                      hasError: false,
+                                      inFlight: true
+                                    }}
+                                    isFirst={
+                                      !streamingReasoning &&
+                                      !streamingText &&
+                                      !railFromLastEntry
+                                    }
+                                    isLast
+                                  >
+                                    <div>
+                                      <div className="group/work min-w-0">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            toggleToolCallExpansion(
+                                              expansionKey
+                                            )
+                                          }
+                                          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-1.5 py-1 text-left text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.995]"
+                                          aria-expanded={isExpanded}
+                                        >
+                                          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                                            <WorkIcon
+                                              Icon={getToolIcon(
+                                                first.toolName,
+                                                first.outputFormat
+                                              )}
+                                            />
+                                          </span>
+                                          <span className="min-w-0 flex-1">
+                                            <span className="flex min-w-0 items-center gap-2 text-ui-md ">
+                                              <span className="min-w-0 truncate">
+                                                {label}
+                                              </span>
+                                              <CaretRight
+                                                size={13}
+                                                weight="bold"
+                                                className={`flex-shrink-0 text-kumo-subtle transition-transform duration-150 ease-out ${isExpanded ? "rotate-90" : ""}`}
+                                              />
+                                            </span>
+                                            {detailLines.length > 1 && (
+                                              <span className="mt-1 block truncate font-mono text-ui-xs text-kumo-subtle">
+                                                {detailLines.join(" · ")}
+                                              </span>
+                                            )}
+                                          </span>
+                                        </button>
+                                        {isExpanded &&
+                                          detailCalls.length > 0 && (
+                                            <div className="ml-8 mt-1 space-y-1">
+                                              {detailCalls.map((toolCall) => (
+                                                <div
+                                                  key={`stream-tool-${toolCall.toolCallId}`}
+                                                  className="themed-surface-inset space-y-3 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3"
+                                                >
+                                                  {toolCall.code && (
+                                                    <>
+                                                      <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">
+                                                        Code
+                                                      </span>
+                                                      <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
+                                                        {toolCall.code}
+                                                      </pre>
+                                                    </>
+                                                  )}
+                                                  {toolCall.output && (
+                                                    <>
+                                                      <span className="font-mono text-ui-2xs text-kumo-subtle uppercase">
+                                                        Output
+                                                      </span>
+                                                      <pre className="max-h-56 overflow-auto rounded-xl border border-kumo-line/70 bg-kumo-base p-3 font-mono text-ui-xs leading-[18px] text-kumo-subtle whitespace-pre-wrap">
+                                                        {toolCall.output}
+                                                      </pre>
+                                                    </>
+                                                  )}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                      </div>
+                                    </div>
+                                  </RailNode>
+                                );
+                              })()}
+                          </div>
+                        );
+                      })()}
                   </div>
                 )}
               </div>
 
               {/* ── Bottom: input, update state, and cost ──────────────── */}
-              <div className={`flex-shrink-0 bg-kumo-base ${sidebarMode ? "" : "border-t border-kumo-line"}`}>
-                <div className={useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""}>
+              <div className={`shrink-0 bg-kumo-base`}>
+                <div
+                  className={
+                    useConstrainedChatWidth ? "mx-auto w-full max-w-230" : ""
+                  }
+                >
                   <ChatInput
                     createCapsuleGatekeeper={(accountId, url) =>
                       overseer.newGatekeeper(accountId, url)
@@ -7914,43 +9082,63 @@ function ChatInterface({
                       const { activeChanges } = messageStates;
                       const cuts = [
                         ...(activeChanges.length > 0
-                          ? [activeChanges[activeChanges.length - 1].sequence] : []),
+                          ? [activeChanges[activeChanges.length - 1].sequence]
+                          : []),
                         ...(currentChatMetadata.compactedTo !== undefined
-                          ? [currentChatMetadata.compactedTo - 1] : []),
+                          ? [currentChatMetadata.compactedTo - 1]
+                          : [])
                       ];
                       if (cuts.length === 0) return null;
                       const mergeThrough = Math.max(...cuts);
                       const isDiscardingChanges = discardingChangesChatIds.has(
-                        currentChatMetadata.id,
+                        currentChatMetadata.id
                       );
-                      const changesActionsDisabled = isAgentActive || isDiscardingChanges;
+                      const changesActionsDisabled =
+                        isAgentActive || isDiscardingChanges;
                       return (
                         <div className="themed-surface-inset relative flex items-center gap-2 overflow-hidden rounded-t-[calc(1rem-1px)] border-b border-kumo-line bg-kumo-elevated px-3.5 py-2">
-                          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-kumo-brand/40 to-transparent" aria-hidden="true" />
+                          <span
+                            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-kumo-brand/40 to-transparent"
+                            aria-hidden="true"
+                          />
                           <span className="min-w-0 flex-1 truncate text-ui-xs font-medium text-kumo-default">
                             Pending changes
                           </span>
                           <DiscardPendingChangesPopover
-                            open={discardChangesTarget?.chatId === currentChatMetadata.id}
+                            open={
+                              discardChangesTarget?.chatId ===
+                              currentChatMetadata.id
+                            }
                             disabled={changesActionsDisabled}
                             isDiscarding={isDiscardingChanges}
                             onOpenChange={(open) => {
                               if (isDiscardingChanges) return;
-                              setDiscardChangesTarget(open ? {
-                                chatId: currentChatMetadata.id,
-                              } : null);
+                              setDiscardChangesTarget(
+                                open
+                                  ? {
+                                      chatId: currentChatMetadata.id
+                                    }
+                                  : null
+                              );
                             }}
                             onConfirm={handleDiscardPendingChanges}
                           />
-                          <Tooltip content={isAgentActive
-                            ? "Wait for the agent to finish before accepting changes."
-                            : isDiscardingChanges
-                              ? "Wait for pending changes to finish discarding."
-                              : "Keep this draft and make it the gadget's current version."} asChild>
+                          <Tooltip
+                            content={
+                              isAgentActive
+                                ? "Wait for the agent to finish before accepting changes."
+                                : isDiscardingChanges
+                                  ? "Wait for pending changes to finish discarding."
+                                  : "Keep this draft and make it the gadget's current version."
+                            }
+                            asChild
+                          >
                             <WorkshopButton
                               disabled={changesActionsDisabled}
                               onClick={() =>
-                                handleMergeChanges(mergeThrough, { includeDraft: true })
+                                handleMergeChanges(mergeThrough, {
+                                  includeDraft: true
+                                })
                               }
                               tone="primary"
                               className="!h-7 !cursor-pointer !rounded-md !border-transparent !shadow-none gap-1 text-ui-xs"
@@ -7968,7 +9156,8 @@ function ChatInterface({
                   <div className="-mt-1 flex min-h-[1.25rem] items-start justify-end gap-4 px-4 pb-1 font-mono text-ui-2xs text-kumo-subtle">
                     {currentChatMetadata?.totalTokens != null && (
                       <span>
-                        {currentChatMetadata.totalTokens.toLocaleString()} tokens
+                        {currentChatMetadata.totalTokens.toLocaleString()}{" "}
+                        tokens
                       </span>
                     )}
                     {currentChatMetadata?.totalCost != null && (
@@ -7985,7 +9174,15 @@ function ChatInterface({
       <DeleteConfirmationDialog
         open={deleteTarget !== null}
         title="Delete conversation?"
-        description={<>This removes <span className="font-medium text-kumo-default">{deleteTarget?.title}</span>. You can&apos;t undo this.</>}
+        description={
+          <>
+            This removes{" "}
+            <span className="font-medium text-kumo-default">
+              {deleteTarget?.title}
+            </span>
+            . You can&apos;t undo this.
+          </>
+        }
         isDeleting={isDeleting}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
