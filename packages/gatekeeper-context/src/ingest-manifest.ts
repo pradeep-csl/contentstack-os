@@ -8,11 +8,13 @@ import {
 import { extractDescription } from "./description-extractors.js";
 import { baseName, isValidDocumentPath } from "./document-path.js";
 
-// Per-request ceiling. Batches are bounded by the publisher, so this does not grow with the
-// repository — a 15 MB wiki and a 150 MB one both publish in batches under this size.
+/**
+ * Per-request ceiling. Batches are bounded by the publisher, so this does not grow with the
+ * repository — a 15 MB wiki and a 150 MB one both publish in batches under this size.
+ */
 export const MAX_INGEST_BODY_BYTES = 5 * 1024 * 1024;
 
-// Ceiling on files in one publication.
+/** Ceiling on files in one publication. */
 export const MAX_MANIFEST_ENTRIES = 5_000;
 
 const HEX_SHA256 = /^[0-9a-f]{64}$/;
@@ -22,7 +24,7 @@ const ManifestEntrySchema = z.object({
   hash: z.string().regex(HEX_SHA256, "hash must be lowercase hex SHA-256"),
 });
 
-// One file's identity in the desired state.
+/** One file's identity in the desired state. */
 export type ManifestEntry = z.infer<typeof ManifestEntrySchema>;
 
 // The desired state. Paths must be unique: the manifest is a set keyed by path everywhere it is
@@ -40,7 +42,7 @@ const UploadDocumentSchema = z.object({
   hash: z.string().regex(HEX_SHA256),
 });
 
-// One document being transferred.
+/** One document being transferred. */
 export type UploadDocument = z.infer<typeof UploadDocumentSchema>;
 
 export const PlanRequestSchema = z.object({
@@ -60,7 +62,7 @@ export const CommitRequestSchema = z.object({
   manifest: ManifestSchema,
 });
 
-// The raw bytes of a body as sent, which is what both sides hash.
+/** The raw bytes of a body as sent, which is what both sides hash. */
 export function bodyBytes(body: string, encoding?: "base64"): Uint8Array {
   if (encoding === "base64") {
     let binary = atob(body);
@@ -76,8 +78,10 @@ export async function sha256Hex(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-// A manifest's identity, order-independent so the publisher's file ordering cannot invalidate a
-// session between plan and commit.
+/**
+ * A manifest's identity, order-independent so the publisher's file ordering cannot invalidate a
+ * session between plan and commit.
+ */
 export async function hashManifest(entries: ManifestEntry[]): Promise<string> {
   let canonical = entries
     .map(entry => `${entry.path} ${entry.hash}`)
@@ -86,8 +90,10 @@ export async function hashManifest(entries: ManifestEntry[]): Promise<string> {
   return sha256Hex(new TextEncoder().encode(canonical));
 }
 
-// What the collection lacks, given the manifest and the hashes it already stores. A stored value of
-// undefined means the document predates hashing, so it must be re-sent.
+/**
+ * What the collection lacks, given the manifest and the hashes it already stores. A stored value of
+ * undefined means the document predates hashing, so it must be re-sent.
+ */
 export function planUploads(
     manifest: ManifestEntry[],
     stored: Map<string, string | undefined>,
@@ -105,12 +111,14 @@ export function planUploads(
   return { needed, unchanged, toDelete: [...stored.keys()].filter(path => !wanted.has(path)) };
 }
 
-// Why an upload was refused outright rather than staged.
+/** Why an upload was refused outright rather than staged. */
 export type UploadRejection = { path: string; reason: "invalid-path" | "too-large" | "hash-mismatch" };
 
-// Validate one upload against its declared hash and the storage limits. Unlike the git path, an
-// oversized document is a hard error rather than a silent skip: commit requires every needed path, so
-// skipping one would fail the publication later with a far less obvious message.
+/**
+ * Validate one upload against its declared hash and the storage limits. Unlike the git path, an
+ * oversized document is a hard error rather than a silent skip: commit requires every needed path, so
+ * skipping one would fail the publication later with a far less obvious message.
+ */
 export async function validateUpload(upload: UploadDocument): Promise<UploadRejection | null> {
   if (!isValidDocumentPath(upload.path)) return { path: upload.path, reason: "invalid-path" };
   if (new TextEncoder().encode(upload.body).length > MAX_DOCUMENT_BODY_BYTES) {
@@ -122,9 +130,11 @@ export async function validateUpload(upload: UploadDocument): Promise<UploadReje
   return null;
 }
 
-// Turn a validated upload into a storable document. Content type, name and description are derived
-// here rather than by the client, so published documents are indistinguishable from any other source
-// and parsing rules can evolve without changing every repository's workflow.
+/**
+ * Turn a validated upload into a storable document. Content type, name and description are derived
+ * here rather than by the client, so published documents are indistinguishable from any other source
+ * and parsing rules can evolve without changing every repository's workflow.
+ */
 export function normalizeUpload(upload: UploadDocument): ContextDocument & { hash: string } {
   let contentType = contentTypeFromPath(upload.path);
   let isText = isTextContentType(contentType);

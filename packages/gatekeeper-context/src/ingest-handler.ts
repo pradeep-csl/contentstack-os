@@ -9,8 +9,10 @@ import {
 } from "./ingest-manifest.js";
 import { obsContext } from "./observability.js";
 
-// The router forwards requests unmodified, so the gatekeeper sees its own prefix. Exported so the
-// worker entrypoint can rate-limit ingestion requests without restating the path.
+/**
+ * The router forwards requests unmodified, so the gatekeeper sees its own prefix. Exported so the
+ * worker entrypoint can rate-limit ingestion requests without restating the path.
+ */
 export const INGEST_PATH_PREFIX = "/gatekeeper/context/ingest/";
 
 // Collection ids are crypto.randomUUID() (see context-api.ts), so anything else addresses no
@@ -21,19 +23,23 @@ const logger = obsContext.createLogger({
   component: "gatekeeper.context", vendorId: VENDOR_ID,
 });
 
-// The three routes CI posts to.
+/** The three routes CI posts to. */
 export type IngestAction = "plan" | "upload" | "commit";
 
-// What an ingestion URL addresses, decoded — the same values the handler resolves the collection
-// with, so a caller (the worker entrypoint) can key on the collection's real identity rather than on
-// the many path spellings that reach it.
+/**
+ * What an ingestion URL addresses, decoded — the same values the handler resolves the collection
+ * with, so a caller (the worker entrypoint) can key on the collection's real identity rather than on
+ * the many path spellings that reach it.
+ */
 export type IngestRoute = { domain: string; collectionId: string; action: IngestAction };
 
-// Parse an ingestion path, or return null when it addresses no route — either because it is not
-// under the ingestion prefix at all, or because it is malformed beneath it. Total by construction:
-// the URL parser leaves an invalid escape such as `%ZZ` in the pathname and decodeURIComponent
-// throws URIError on it, which unguarded would leave an unauthenticated caller a 500 from the top of
-// fetch() — before either rate limiter has been charged.
+/**
+ * Parse an ingestion path, or return null when it addresses no route — either because it is not
+ * under the ingestion prefix at all, or because it is malformed beneath it. Total by construction:
+ * the URL parser leaves an invalid escape such as `%ZZ` in the pathname and decodeURIComponent
+ * throws URIError on it, which unguarded would leave an unauthenticated caller a 500 from the top of
+ * fetch() — before either rate limiter has been charged.
+ */
 export function parseIngestPath(pathname: string): IngestRoute | null {
   if (!pathname.startsWith(INGEST_PATH_PREFIX)) return null;
   let segments = pathname.slice(INGEST_PATH_PREFIX.length).split("/").filter(s => s.length > 0);
@@ -48,13 +54,15 @@ export function parseIngestPath(pathname: string): IngestRoute | null {
   return { domain, collectionId, action };
 }
 
-// Whether an id can name a collection at all. Checked before the collection is resolved, because
-// resolving instantiates a Durable Object for whatever was asked for.
+/**
+ * Whether an id can name a collection at all. Checked before the collection is resolved, because
+ * resolving instantiates a Durable Object for whatever was asked for.
+ */
 export function isCollectionId(collectionId: string): boolean {
   return UUID_RE.test(collectionId);
 }
 
-// A document ready to stage.
+/** A document ready to stage. */
 export type StagedDocument = ContextDocument & { hash: string };
 
 export type PlanOutcome =
@@ -74,8 +82,10 @@ export type CommitOutcome =
   | { status: "applied"; commit: string; added: number; updated: number; deleted: number;
       documentCount: number };
 
-// The slice of the collection this handler needs. Verification is separate from the rest so the token
-// can be checked before the body is read.
+/**
+ * The slice of the collection this handler needs. Verification is separate from the rest so the token
+ * can be checked before the body is read.
+ */
 export type IngestTarget = {
   verifyIngestToken(token: string): Promise<boolean>;
   planIngest(commit: string, manifest: ManifestEntry[], allowEmpty: boolean): Promise<PlanOutcome>;
@@ -83,7 +93,7 @@ export type IngestTarget = {
   commitIngest(sessionId: string, manifest: ManifestEntry[]): Promise<CommitOutcome>;
 };
 
-// Resolves the collection addressed by the request path.
+/** Resolves the collection addressed by the request path. */
 export type ResolveIngestTarget = (domain: string, collectionId: string) => IngestTarget;
 
 function json(status: number, body: unknown): Response {
@@ -92,7 +102,9 @@ function json(status: number, body: unknown): Response {
   });
 }
 
-// Handle an ingestion request, or return null when this is not one so the caller can fall through.
+/**
+ * Handle an ingestion request, or return null when this is not one so the caller can fall through.
+ */
 export async function handleIngestRequest(
     request: Request, resolve: ResolveIngestTarget): Promise<Response | null> {
   let pathname = new URL(request.url).pathname;

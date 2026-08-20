@@ -1,3 +1,4 @@
+import { logRpcFailure } from './rpcErrors'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Dialog, useKumoToastManager, type PortalContainer } from '@cloudflare/kumo'
 import {
@@ -10,15 +11,14 @@ import {
   Sparkle,
   X,
 } from '@phosphor-icons/react'
-import { RpcStub, RpcTarget } from 'capnweb'
+import { RpcStub } from 'capnweb'
 import {
   AgentSpawnerConfig,
   AiModelInfo,
-  ConnectedAccountsSubscriber,
   GatekeeperClient,
   Overseer,
 } from '@gadgets/workshop-shared/api'
-import { AccountDescription, SupportedResource, VendorDescription, matchesResourceUrlPattern } from '@gadgets/workshop-shared/gatekeeper'
+import { SupportedResource, VendorDescription, matchesResourceUrlPattern } from '@gadgets/workshop-shared/gatekeeper'
 import { ResourceConfiguratorFrame } from '@gadgets/workshop-shared/gatekeeper'
 import { useAuthenticatedApi } from './AuthContext'
 import { WorkshopButton, WorkshopIconButton } from './components/WorkshopControls'
@@ -34,28 +34,37 @@ import { AccountChooser, AccountOption } from './gatekeeper-modal/AccountChooser
 import { matchesResourceUrl } from './resourceMatching'
 import { reportIssue } from './errorReporting'
 import { useSiteName } from './ServerConfigContext'
+import { AccountsSubscriberAdapter } from './accountsSubscriber'
 
 export interface GatekeeperModalProps {
   open: boolean
   onClose: () => void
-  // Returns an overseer stub. Called only when actually creating a gatekeeper. This allows
-  // the Home page to lazily provision a gadget on first use.
+  /**
+   * Returns an overseer stub. Called only when actually creating a gatekeeper. This allows
+   * the Home page to lazily provision a gadget on first use.
+   */
   getOverseer: () => Promise<RpcStub<Overseer>> | RpcStub<Overseer>
-  // Called after the gatekeeper is successfully created. The caller decides what to do with
-  // the stub (e.g. assign a binding name, or insert a capsule). The modal awaits this callback
-  // and shows a loading state while it runs.
+  /**
+   * Called after the gatekeeper is successfully created. The caller decides what to do with
+   * the stub (e.g. assign a binding name, or insert a capsule). The modal awaits this callback
+   * and shows a loading state while it runs.
+   */
   onCreated: (gk: RpcStub<GatekeeperClient<any>>) => Promise<void>
-  // Workpieces offered as env entries when creating an agent spawner (see AgentSpawnerConfig.env),
-  // normally the gadget the spawner is being created for plus that gadget's own bindings. All are
-  // enabled by default, reproducing the pre-multi-gadget "spawned agents inherit everything"
-  // behavior; the user may deselect or rename them. Empty (the default) means the spawner starts
-  // with an empty env, which is all a context with no gadget can offer.
+  /**
+   * Workpieces offered as env entries when creating an agent spawner (see AgentSpawnerConfig.env),
+   * normally the gadget the spawner is being created for plus that gadget's own bindings. All are
+   * enabled by default, reproducing the pre-multi-gadget "spawned agents inherit everything"
+   * behavior; the user may deselect or rename them. Empty (the default) means the spawner starts
+   * with an empty env, which is all a context with no gadget can offer.
+   */
   spawnerEnvCandidates?: Omit<SpawnerEnvRow, 'enabled'>[]
-  // Optional pre-seed: when the modal opens, auto-select the resource connection for this vendor.
-  // Used by the agent's requestConnection accept flow so the user lands on the right connection with
-  // minimal clicks. `initialResourceUrlPattern` is the exact SupportedResource.urlPattern the
-  // backend resolved the request to (authoritative); `initialResourceUrl` is the raw URL the agent
-  // supplied (used only as a fallback if the resolved pattern isn't present in the current list).
+  /**
+   * Optional pre-seed: when the modal opens, auto-select the resource connection for this vendor.
+   * Used by the agent's requestConnection accept flow so the user lands on the right connection with
+   * minimal clicks. `initialResourceUrlPattern` is the exact SupportedResource.urlPattern the
+   * backend resolved the request to (authoritative); `initialResourceUrl` is the raw URL the agent
+   * supplied (used only as a fallback if the resolved pattern isn't present in the current list).
+   */
   initialVendorId?: string
   initialResourceUrl?: string
   initialResourceUrlPattern?: string
@@ -215,7 +224,6 @@ export default function GatekeeperModal({
   const spawnerEnvCandidatesRef = useRef(spawnerEnvCandidates)
   spawnerEnvCandidatesRef.current = spawnerEnvCandidates
 
-  const accountSubscriptionRef = useRef<{ [Symbol.dispose](): void } | null>(null)
   const configuratorFrameRef = useRef<ConfiguratorFrameState | null>(null)
   const configuratorCollectResourceUrlRef = useRef<(() => Promise<string>) | null>(null)
   const nextConfiguratorFrameKeyRef = useRef(0)
@@ -407,46 +415,27 @@ export default function GatekeeperModal({
     let cancelled = false
     const accountMap = new Map<number, AccountOption>()
 
-    class AccountsSubscriber extends RpcTarget implements ConnectedAccountsSubscriber {
-      add(
-        id: number,
-        description: AccountDescription,
-        vendor: VendorDescription,
-        supportedResources: SupportedResource[] = [],
-        credentialsValid: boolean = true,
-        vendorId: string = '',
-      ) {
+    const subscriber = new AccountsSubscriberAdapter({
+      add({ id, description, vendor, supportedResources, credentialsValid, vendorId }) {
         if (cancelled) return
         accountMap.set(id, { id, description, vendorId, vendorDescription: vendor, supportedResources, credentialsValid })
         setAccounts(Array.from(accountMap.values()))
-      }
-
-      remove(id: number) {
+      },
+      remove(id) {
         if (cancelled) return
         accountMap.delete(id)
         setAccounts(Array.from(accountMap.values()))
-      }
-
-      ready() {}
-    }
-
-    const subscriber = new AccountsSubscriber()
-    authenticatedApi.subscribeConnectedAccounts(subscriber)
-      .then(stub => {
-        if (cancelled) {
-          stub[Symbol.dispose]()
-        } else {
-          accountSubscriptionRef.current = stub
-        }
-      })
-      .catch(error => {
-        console.error('Failed to subscribe to connected accounts:', error)
-      })
+      },
+    })
+    const subscription = authenticatedApi.subscribeConnectedAccounts(subscriber)
+    subscription.catch(error => {
+      if (cancelled) return
+      logRpcFailure('Failed to subscribe to connected accounts:', error)
+    })
 
     return () => {
       cancelled = true
-      accountSubscriptionRef.current?.[Symbol.dispose]()
-      accountSubscriptionRef.current = null
+      subscription[Symbol.dispose]()
     }
   }, [open, authenticatedApi])
 

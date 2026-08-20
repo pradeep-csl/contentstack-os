@@ -170,8 +170,10 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     return created.remote;
   }
 
-  // Initialize a new collection. Private collections pass an owner; public collections pass "".
-  // Rejects re-initialization so a (vanishingly unlikely) id reuse can't clobber existing content.
+  /**
+   * Initialize a new collection. Private collections pass an owner; public collections pass "".
+   * Rejects re-initialization so a (vanishingly unlikely) id reuse can't clobber existing content.
+   */
   async initialize(metadata: ContextCollectionMetadata, sharingDomain: string, ownerAccountId: string): Promise<ContextCollectionMetadata> {
     if (this.getMetadata().id) {
       throw new Error("Collection already exists.");
@@ -331,7 +333,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     return result;
   }
 
-  // Lenient read: bad/missing paths return null, not RPC errors. Mutations validate paths.
+  /** Lenient read: bad/missing paths return null, not RPC errors. Mutations validate paths. */
   async getContextDocument(path: string): Promise<ContextDocument | null> {
     // Trigger git mirror revalidation in the background on reads.
     if (this.#isGitBased()) this.#startBackgroundArtifactRefresh();
@@ -639,9 +641,11 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     return true;
   }
 
-  // Public so the handler can authenticate before reading a request body. Comparing hashes of a
-  // high-entropy secret does not need a constant-time compare: a timing leak reveals a hash prefix,
-  // which is useless without a preimage.
+  /**
+   * Public so the handler can authenticate before reading a request body. Comparing hashes of a
+   * high-entropy secret does not need a constant-time compare: a timing leak reveals a hash prefix,
+   * which is useless without a preimage.
+   */
   async verifyIngestToken(plaintext: string): Promise<boolean> {
     if (!plaintext) return false;
     let hash = await hashIngestToken(plaintext);
@@ -666,7 +670,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     return count;
   }
 
-  // Compare the desired state against what is stored and open a session for the difference.
+  /** Compare the desired state against what is stored and open a session for the difference. */
   async planIngest(
       commit: string, manifest: ManifestEntry[], allowEmpty: boolean): Promise<PlanOutcome> {
     let meta = this.getMetadata();
@@ -693,7 +697,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     return { status: "planned", sessionId, needed, unchanged, toDelete: toDelete.length };
   }
 
-  // Hold uploaded documents until commit, so a partial transfer is never visible to agents.
+  /** Hold uploaded documents until commit, so a partial transfer is never visible to agents. */
   async stageDocuments(sessionId: string, documents: StagedDocument[]): Promise<StageOutcome> {
     let session = this.storage.ingestSession.get();
     if (!session.sessionId || session.sessionId !== sessionId) return { status: "no-session" };
@@ -709,8 +713,10 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     };
   }
 
-  // Apply the publication in one transaction: upsert what was staged, delete what the manifest no
-  // longer lists, record the commit, clear staging.
+  /**
+   * Apply the publication in one transaction: upsert what was staged, delete what the manifest no
+   * longer lists, record the commit, clear staging.
+   */
   async commitIngest(sessionId: string, manifest: ManifestEntry[]): Promise<CommitOutcome> {
     let session = this.storage.ingestSession.get();
     if (!session.sessionId || session.sessionId !== sessionId) return { status: "no-session" };
@@ -826,7 +832,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
 
   // --- Search ---
 
-  // Linear scan over one collection. Replace with an index if collection size makes it matter.
+  /** Linear scan over one collection. Replace with an index if collection size makes it matter. */
   async search(query: string, limit: number = 20): Promise<{ path: string; name: string; description: string; snippet?: string; score: number }[]> {
     if (this.#isGitBased()) this.#startBackgroundArtifactRefresh();
 
@@ -894,7 +900,7 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     await this.ctx.storage.deleteAll();
   }
 
-  // Account revocation clears the whole user-library index separately; don't update it per item.
+  /** Account revocation clears the whole user-library index separately; don't update it per item. */
   async deleteForRevokedOwner(): Promise<void> {
     let meta = this.getMetadata();
     if (meta.content.source === "git" && meta.id && this.env.ARTIFACTS) {

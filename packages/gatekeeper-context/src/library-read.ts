@@ -29,12 +29,16 @@ type ObserveCollections = (collectionIds: string[]) => Promise<{
   commit(): void;
 }>;
 
-// How a session learns which collections it may reach. Injected rather than derived, so a session can
-// be pinned to a subset (a workspace-scoped collection) without touching the read path.
+/**
+ * How a session learns which collections it may reach. Injected rather than derived, so a session can
+ * be pinned to a subset (a workspace-scoped collection) without touching the read path.
+ */
 export type ResolveEnabledCollections = () => Promise<Map<string, ContextCollectionVisibility>>;
 
-// Default resolution: the account's own private collections plus every public collection in the
-// domain — the global knowledge model.
+/**
+ * Default resolution: the account's own private collections plus every public collection in the
+ * domain — the global knowledge model.
+ */
 export function accountEnabledCollections(
     userLibraries: DurableObjectNamespace<UserLibraryDurableObject>,
     domain: string,
@@ -59,7 +63,7 @@ export class LibraryReadSession extends RpcTarget {
     super();
   }
 
-  // Release the authorizer owned by this read session.
+  /** Release the authorizer owned by this read session. */
   [Symbol.dispose](): void {
     this.authorizer[Symbol.dispose]?.();
   }

@@ -4,7 +4,7 @@
 //
 // This lives apart from ChatInterface.tsx so it can be tested without mounting the chat. The
 // Tailwind classes the tones map to stay in the component, where the design-token guard
-// (scripts/design-tokens.test.js, which reads .tsx only) can see them.
+// (scripts/design-tokens.test.ts, which reads .tsx only) can see them.
 
 /** How a rail dot reads: an outcome, or the absence of one. */
 export type RailTone = "success" | "danger" | "pending" | "neutral";

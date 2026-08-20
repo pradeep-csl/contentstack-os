@@ -16,8 +16,10 @@ interface CreateWorkspaceDialogProps {
   onConfirm: (title: string) => void
 }
 
-// Names a workspace before it exists. Purely presentational -- the owner does the RPC, decides where
-// to navigate, and reports failures, so this stays testable without a server.
+/**
+ * Names a workspace before it exists. Purely presentational -- the owner does the RPC, decides where
+ * to navigate, and reports failures, so this stays testable without a server.
+ */
 export default function CreateWorkspaceDialog({
   open,
   isCreating = false,

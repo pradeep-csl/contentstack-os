@@ -3,7 +3,7 @@
 
 export const MAX_DOCUMENT_PATH_LENGTH = 1024;
 
-// Validate a document path before using it as a storage key.
+/** Validate a document path before using it as a storage key. */
 export function validateDocumentPath(path: string): void {
   if (typeof path !== "string" || path.length === 0) {
     throw new Error("Document path is required.");
@@ -25,7 +25,7 @@ export function validateDocumentPath(path: string): void {
   }
 }
 
-// Whether a path is usable, for callers that reject entries rather than throwing.
+/** Whether a path is usable, for callers that reject entries rather than throwing. */
 export function isValidDocumentPath(path: string): boolean {
   try {
     validateDocumentPath(path);
@@ -35,7 +35,7 @@ export function isValidDocumentPath(path: string): boolean {
   }
 }
 
-// Last path segment; document names derive from paths.
+/** Last path segment; document names derive from paths. */
 export function baseName(path: string): string {
   let i = path.lastIndexOf("/");
   return i < 0 ? path : path.slice(i + 1);

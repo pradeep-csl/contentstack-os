@@ -6,8 +6,10 @@
 
 import type { ContextCollectionContent } from "./context-types.js";
 
-// The error message to reject a web write with, or null if the source may be written via the web
-// CRUD path.
+/**
+ * The error message to reject a web write with, or null if the source may be written via the web
+ * CRUD path.
+ */
 export function webWriteRejection(source: ContextCollectionContent["source"]): string | null {
   if (source === "git") {
     return "Git-based collections are read-only. All changes must be made through git.";

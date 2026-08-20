@@ -8,14 +8,16 @@ function rank(model: AiModelInfo): number {
   return model.gateway ? GATEWAY_RANK[model.gateway] : 2;
 }
 
-// Pick the single model a blueprint's suggested {provider, modelName} refers to, or null when it
-// stays ambiguous.
-//
-// Blueprints store the suggestion as loose text, so the same string can match the same model on
-// two gateways -- e.g. {anthropic, claude-sonnet-5} matches both "claude-sonnet-5" (Cloudflare)
-// and "anthropic/claude-sonnet-5" (OpenRouter). Resolve that by gateway order instead of giving
-// up, which would force manual selection for blueprints that auto-resolved before OpenRouter was
-// enabled. A tie *within* one gateway is genuinely ambiguous and still returns null.
+/**
+ * Pick the single model a blueprint's suggested {provider, modelName} refers to, or null when it
+ * stays ambiguous.
+ *
+ * Blueprints store the suggestion as loose text, so the same string can match the same model on
+ * two gateways -- e.g. {anthropic, claude-sonnet-5} matches both "claude-sonnet-5" (Cloudflare)
+ * and "anthropic/claude-sonnet-5" (OpenRouter). Resolve that by gateway order instead of giving
+ * up, which would force manual selection for blueprints that auto-resolved before OpenRouter was
+ * enabled. A tie *within* one gateway is genuinely ambiguous and still returns null.
+ */
 export function findSuggestedModelId(
   models: AiModelInfo[],
   suggested: {provider: string, modelName: string},

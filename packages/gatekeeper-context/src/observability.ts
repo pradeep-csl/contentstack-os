@@ -10,14 +10,14 @@ export type ContextObservabilityFields = {
   deleted: number;
   dir: string;
   filepath: string;
-  // Which ingestion ceiling a 429 came from: "global" or "collection".
+  /** Which ingestion ceiling a 429 came from: "global" or "collection". */
   limiter: string;
   maxBodyBytes: number;
   maxGitDirBytes: number;
   operation: string;
-  // Why a request was refused, e.g. "bad-token" or "rate-limited". Never the cause's contents.
+  /** Why a request was refused, e.g. "bad-token" or "rate-limited". Never the cause's contents. */
   outcome: string;
-  // How many documents in an upload batch were refused, and the distinct reasons.
+  /** How many documents in an upload batch were refused, and the distinct reasons. */
   reasons: string;
   rejected: number;
   repoName: string;

@@ -17,7 +17,7 @@ import {
 } from "./collection-kv.js";
 import { domainName } from "./domain.js";
 
-// Collections visible to this account's agents.
+/** Collections visible to this account's agents. */
 export async function loadEnabledContextCollections(
     env: Pick<Cloudflare.Env, "CONTEXT_COLLECTIONS">,
     domain: string,
@@ -208,8 +208,10 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     return this.#collection(collectionId).revokeGitToken(tokenId);
   }
 
-  // CI ingestion tokens are independent of the Artifacts binding: unlike the git token methods
-  // above, push-sourced collections don't need it, so there's no #assertArtifactsAvailable() call.
+  /**
+   * CI ingestion tokens are independent of the Artifacts binding: unlike the git token methods
+   * above, push-sourced collections don't need it, so there's no #assertArtifactsAvailable() call.
+   */
   async createContextCollectionIngestToken(
       collectionId: string): Promise<ContextIngestTokenCreateResult> {
     await this.#assertCanWrite(collectionId);

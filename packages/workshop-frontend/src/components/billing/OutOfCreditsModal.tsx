@@ -11,9 +11,11 @@ interface OutOfCreditsModalProps {
   onClose: () => void
 }
 
-// Modal shown when a user has exhausted their free daily allowance. Guides them to connect their
-// Cloudflare account (if not connected), pick which account to bill (if they have several), or top
-// up credits in the Cloudflare dashboard (if connected but low balance).
+/**
+ * Modal shown when a user has exhausted their free daily allowance. Guides them to connect their
+ * Cloudflare account (if not connected), pick which account to bill (if they have several), or top
+ * up credits in the Cloudflare dashboard (if connected but low balance).
+ */
 export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalProps) {
   const auth = useOptionalAuthenticatedApi()
   const toasts = useKumoToastManager()
@@ -58,7 +60,7 @@ export default function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalPr
     if (!auth) return
     setConnecting(true)
     try {
-      const { url } = await auth.authenticatedApi.connectAccount('cloudflare')
+      const { url } = await auth.authenticatedApi.connectAccount('cloudflare', [])
       window.open(url, '_blank', 'noopener,noreferrer')
     } catch {
       // ignore

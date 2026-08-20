@@ -1,9 +1,11 @@
-// The Contentstack mark, inlined as SVG (mirrors public/contentstack-logo.svg, which is kept
-// around solely to serve as the favicon). Rendered by SiteLogo as its default fallback so the
-// mark shows up everywhere a logo slot exists, instead of the generic Phosphor Hexagon.
-//
-// The fill is intentionally Contentstack's brand purple (#7C4DFF), not the Venus accent
-// (#6c5ce7) — that divergence is a recorded, accepted decision, not a bug.
+/**
+ * The Contentstack mark, inlined as SVG (mirrors public/contentstack-logo.svg, which is kept
+ * around solely to serve as the favicon). Rendered by SiteLogo as its default fallback so the
+ * mark shows up everywhere a logo slot exists, instead of the generic Phosphor Hexagon.
+ *
+ * The fill is intentionally Contentstack's brand purple (#7C4DFF), not the Venus accent
+ * (#6c5ce7) — that divergence is a recorded, accepted decision, not a bug.
+ */
 export default function ContentstackMark({
   size,
   className,

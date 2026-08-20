@@ -8,10 +8,11 @@
 // (`oklch(from <seed> ...)`), so the admin only picks one color.
 //
 // Only the accent-related variables are overridden at runtime; backgrounds, lines, and neutral text
-// follow the light/dark palettes selected by `data-mode` in styles.css. The seed is always a
-// validated hex string (see isHexColor), so interpolating it into the CSS strings below is safe.
+// follow the light/dark palettes selected by `data-mode` in styles.css. The shared applicator
+// validates the seed before interpolating it into CSS values.
 
-import { isHexColor } from '@gadgets/workshop-shared/api'
+import { applyAccentColor as applyAccentColorToStyle } from '@gadgets/workshop-shared/theme'
+export { ACCENT_VAR_NAMES } from '@gadgets/workshop-shared/theme'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ResolvedThemeMode = 'light' | 'dark'
@@ -61,43 +62,10 @@ export function applyStoredThemeMode(): ResolvedThemeMode {
   return applyThemeMode(readThemeMode())
 }
 
-// Variables derived from the seed, as (name -> value-template) pairs. `light-dark()` keeps custom
-// deployment accents mode-aware without needing to reapply them when the user toggles themes.
-function accentVars(seed: string): Record<string, string> {
-  return {
-    // Pin the dark-mode lightness to 0.45 to guarantee white button label text stays legible
-    // (L ≤ 0.45 is the only threshold that clears WCAG AA across all hues; worst case is cyan ~4.95:1).
-    // This guard does not affect deployments with no custom accent override, because those pass ""
-    // to applyAccentColor(), which clears these variables so the static tokens.css default applies.
-    '--color-kumo-brand': `light-dark(${seed}, oklch(from ${seed} 0.45 c h))`,
-    // Slightly darker for hover/pressed states.
-    '--color-kumo-brand-hover': `light-dark(oklch(from ${seed} calc(l - 0.06) c h), oklch(from ${seed} 0.38 c h))`,
-    '--color-accent-100': `light-dark(${seed}, oklch(from ${seed} 0.45 c h))`,
-    // Lighter/brighter secondary accent.
-    '--color-accent-200': `light-dark(oklch(from ${seed} calc(l + 0.08) c h), oklch(from ${seed} 0.76 c h))`,
-    '--text-color-kumo-brand': `light-dark(${seed}, oklch(from ${seed} 0.76 c h))`,
-    '--text-color-kumo-link': `light-dark(${seed}, oklch(from ${seed} 0.76 c h))`,
-    // Soft tinted selection background + readable selection text.
-    '--color-selection-bg': `light-dark(oklch(from ${seed} 0.94 calc(c * 0.35) h), oklch(from ${seed} 0.28 calc(c * 0.45) h))`,
-    '--color-selection-text': `light-dark(oklch(from ${seed} calc(l - 0.06) c h), oklch(0.97 0.006 285))`,
-  }
-}
-
-// Exported so tests can assert every variable accentVars() sets gets cleared, without
-// hand-maintaining a second copy of the variable-name list that could silently drift.
-export const ACCENT_VAR_NAMES = Object.keys(accentVars('#000'))
-
-// Apply the accent color to the document root. Pass "" / invalid to clear back to the base theme.
+/** Apply the accent color to the document root. Pass "" / invalid to clear back to the base theme. */
 export function applyAccentColor(color: string | null | undefined): void {
-  const root = document.documentElement
-  if (!color || !isHexColor(color)) {
-    for (const v of ACCENT_VAR_NAMES) root.style.removeProperty(v)
-    return
-  }
-  for (const [v, value] of Object.entries(accentVars(color))) {
-    root.style.setProperty(v, value)
-  }
+  applyAccentColorToStyle(document.documentElement.style, color)
 }
 
-// The base/default accent, shown in the admin picker when no custom color is set.
+/** The base/default accent, shown in the admin picker when no custom color is set. */
 export const DEFAULT_ACCENT_COLOR = '#6c5ce7'

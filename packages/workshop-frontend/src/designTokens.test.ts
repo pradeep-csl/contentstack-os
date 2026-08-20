@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
+// Vitest runs under node, but the src/ tsconfig only has browser types -- hence the suppressions,
+// matching src/rpcErrors.test.ts.
+// @ts-expect-error node builtin without @types/node
 import { readFileSync } from 'node:fs'
+// @ts-expect-error node builtin without @types/node
 import { fileURLToPath } from 'node:url'
 
 const TOKENS_CSS = readFileSync(
@@ -120,7 +124,7 @@ describe('Venus light palette', () => {
   // on. Supersedes (and subsumes) the narrower "body text on both light surfaces" and "brand,
   // link and status text on the base surface" checks: every token and surface those covered is
   // covered here too, plus --text-color-kumo-strong/--text-color-kumo-info and the tint surface.
-  // Moved from scripts/design-tokens.test.js (ruling R23) so there is one WCAG implementation,
+  // Moved from scripts/design-tokens.test.ts (ruling R23) so there is one WCAG implementation,
   // not two that can quietly disagree.
   it('every content text token clears WCAG AA on every light surface', () => {
     const base = token(light, '--color-kumo-base')
@@ -140,7 +144,7 @@ describe('Venus light palette', () => {
   // The inverse guard. `inactive` marks a control the user cannot operate; if it becomes
   // readable it stops communicating that, and content starts being written in it again — which
   // is the exact regression this whole change is remediating. Moved from
-  // scripts/design-tokens.test.js (ruling R23).
+  // scripts/design-tokens.test.ts (ruling R23).
   it('keeps inactive below AA, so it cannot be reused for content', () => {
     const base = token(light, '--color-kumo-base')
     const ratio = contrast(token(light, '--text-color-kumo-inactive'), base)
@@ -148,7 +152,7 @@ describe('Venus light palette', () => {
   })
 
   // Placeholders are measured to sit only on `base` or a transparent parent, never on `tint`.
-  // Moved from scripts/design-tokens.test.js (ruling R23).
+  // Moved from scripts/design-tokens.test.ts (ruling R23).
   it('meets WCAG AA for placeholder text on the surfaces placeholders actually occupy', () => {
     const placeholder = token(light, '--text-color-kumo-placeholder')
     for (const surface of [token(light, '--color-kumo-base'), token(light, '--color-kumo-elevated')]) {

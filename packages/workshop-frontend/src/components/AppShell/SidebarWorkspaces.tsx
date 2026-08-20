@@ -1,3 +1,4 @@
+import { logRpcFailure } from '../../rpcErrors'
 import {
   createContext,
   useCallback,
@@ -56,16 +57,18 @@ type WorkspacesContextValue = {
 
 const WorkspacesContext = createContext<WorkspacesContextValue | null>(null)
 
-// Fold a fresh server listing into what the rail is already showing.
-//
-// The load effect only reruns if `authenticatedApi` itself changes (e.g. a reconnect). If that
-// happens while a `listGadgets()` issued *before* an optimistic splice resolves *after* it, a plain
-// replace would silently drop the just-created workspace until some later refetch — so ids in
-// `unconfirmedIds` are carried over.
-//
-// Nothing else is: the server stays authoritative, so a workspace deleted in another tab, or one
-// whose share was revoked, disappears from the rail here rather than being resurrected. Exported
-// for its own tests; callers confirm ids out of `unconfirmedIds` before calling.
+/**
+ * Fold a fresh server listing into what the rail is already showing.
+ *
+ * The load effect only reruns if `authenticatedApi` itself changes (e.g. a reconnect). If that
+ * happens while a `listGadgets()` issued *before* an optimistic splice resolves *after* it, a plain
+ * replace would silently drop the just-created workspace until some later refetch — so ids in
+ * `unconfirmedIds` are carried over.
+ *
+ * Nothing else is: the server stays authoritative, so a workspace deleted in another tab, or one
+ * whose share was revoked, disappears from the rail here rather than being resurrected. Exported
+ * for its own tests; callers confirm ids out of `unconfirmedIds` before calling.
+ */
 export function mergeServerWorkspaces(
   serverList: GadgetMetadataWithTimestamps[],
   shown: GadgetMetadataWithTimestamps[],
@@ -80,11 +83,13 @@ function useWorkspacesContext(): WorkspacesContextValue {
   return ctx
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider: owns all the data + mutation handlers, plus the share / delete dialogs. Renders its
-// children inside its context so SidebarWorkspacesTools and SidebarWorkspacesLists can be placed
-// independently in the parent layout (pinned vs. scrolling areas).
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Provider: owns all the data + mutation handlers, plus the share / delete dialogs. Renders its
+ * children inside its context so SidebarWorkspacesTools and SidebarWorkspacesLists can be placed
+ * independently in the parent layout (pinned vs. scrolling areas).
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export function SidebarWorkspacesProvider({ children }: { children: ReactNode }) {
   const { authenticatedApi } = useAuthenticatedApi()
   const toasts = useKumoToastManager()
@@ -132,8 +137,7 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
   useEffect(() => {
     let cancelled = false
     setGadgetsLoading(true)
-    authenticatedApi
-      .listGadgets()
+    authenticatedApi.listGadgets()
       .then((list) => {
         if (cancelled) return
         // Anything this listing mentions is confirmed; it no longer needs protecting.
@@ -142,7 +146,7 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
         setGadgetsLoading(false)
       })
       .catch((err) => {
-        console.error('Failed to load workspaces for sidebar:', err)
+        logRpcFailure('Failed to load workspaces for sidebar:', err)
         if (!cancelled) setGadgetsLoading(false)
       })
     return () => { cancelled = true }
@@ -341,10 +345,12 @@ export function SidebarWorkspacesProvider({ children }: { children: ReactNode })
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tools (search). Lives in the rail's pinned-top area so it stays put while the lists below scroll.
-// Only renders in collapsed mode — see the note below.
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Tools (search). Lives in the rail's pinned-top area so it stays put while the lists below scroll.
+ * Only renders in collapsed mode — see the note below.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export function SidebarWorkspacesTools({ collapsed = false }: { collapsed?: boolean }) {
   // No "New workspace" button: Home *is* the new-workspace launcher, so it would be redundant.
   // Search lives as a magnifying-glass icon in the brand row when expanded; when collapsed the
@@ -366,10 +372,12 @@ export function SidebarWorkspacesTools({ collapsed = false }: { collapsed?: bool
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Lists (Favorites / Recent workspaces). Lives in the rail's scrolling middle
-// region. In collapsed mode shows a compact avatar stack.
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Lists (Favorites / Recent workspaces). Lives in the rail's scrolling middle
+ * region. In collapsed mode shows a compact avatar stack.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 export function SidebarWorkspacesLists({ collapsed = false }: { collapsed?: boolean }) {
   const {
     search,

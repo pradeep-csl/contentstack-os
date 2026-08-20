@@ -31,9 +31,11 @@ async function withinLimit(limiter: RateLimit | undefined, key: string): Promise
   return !limiter || (await limiter.limit({ key })).success;
 }
 
-// The only HTTP surface this worker serves is CI ingestion; everything else reaches it over RPC/DOs.
-// A WorkerEntrypoint rather than a plain handler, because the collection DOs are reached through
-// ctx.exports (this worker declares no durable_objects binding).
+/**
+ * The only HTTP surface this worker serves is CI ingestion; everything else reaches it over RPC/DOs.
+ * A WorkerEntrypoint rather than a plain handler, because the collection DOs are reached through
+ * ctx.exports (this worker declares no durable_objects binding).
+ */
 export default class extends WorkerEntrypoint<Cloudflare.Env> {
   async fetch(request: Request): Promise<Response> {
     let pathname = new URL(request.url).pathname;

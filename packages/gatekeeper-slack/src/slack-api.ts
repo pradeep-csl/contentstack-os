@@ -24,7 +24,7 @@ export type SlackAccessToken = {
 /** The result of a completed OAuth code exchange for a user token. */
 export type SlackOAuthGrant = {
   accessToken: SlackAccessToken;
-  // Present when token rotation is enabled on the Slack app; absent for legacy long-lived tokens.
+  /** Present when token rotation is enabled on the Slack app; absent for legacy long-lived tokens. */
   refreshToken?: string;
   grantedScopes: string[];
   userId: string;
@@ -373,7 +373,7 @@ export class SlackApi {
     return data.user_id ?? "";
   }
 
-  // The team the token belongs to, used by observer verification to confirm workspace membership.
+  /** The team the token belongs to, used by observer verification to confirm workspace membership. */
   async authedTeamId(): Promise<string> {
     let data = await this.#call<SlackApiEnvelope & { team_id?: string }>("auth.test", {});
     return data.team_id ?? "";
@@ -403,13 +403,20 @@ export class SlackApi {
     return user;
   }
 
-  async getAccountDescription(userId: string): Promise<AccountDescription> {
+  /** `teamId` qualifies the account when the workspace host is unavailable; see uniqueName below. */
+  async getAccountDescription(userId: string, teamId: string): Promise<AccountDescription> {
+    let hostPromise = this.#getWorkspaceHost();
     let data = await this.#call<SlackApiEnvelope & { user?: RawUser }>(
         "users.info", { user: userId });
     let profile = data.user?.profile;
+    let handle = data.user?.name;
+    // A Slack handle is unique only within a workspace, but the Workshop dedupes connected accounts
+    // by uniqueName — so an unqualified handle would collapse two workspaces the same person
+    // connected into one account. Qualify it with the workspace, which is globally unique.
+    let workspace = (await hostPromise) || teamId;
     return {
-      displayName: profile?.real_name || profile?.display_name || data.user?.name,
-      uniqueName: data.user?.name,
+      displayName: profile?.real_name || profile?.display_name || handle,
+      uniqueName: handle && workspace ? `${handle}@${workspace}` : handle,
       avatar: { url: profile?.image_192 || profile?.image_72 || profile?.image_48 || "" },
     };
   }
@@ -426,7 +433,7 @@ export class SlackApi {
 
   // ── Conversations ─────────────────────────────────────────────────
 
-  // Resolve 1:1 DM peers because Slack's member listing may omit them.
+  /** Resolve 1:1 DM peers because Slack's member listing may omit them. */
   async listUserConversations(
       types: SlackConversationTypeFilter[], cursor: string | undefined, limit: number)
       : Promise<SlackPage<SlackConversationInfo>> {
@@ -483,7 +490,7 @@ export class SlackApi {
   // ── Search ────────────────────────────────────────────────────────
   // search.messages is page-based (not cursor-based). We encode the page number as the cursor.
 
-  // Channel-ID filtering is the authority boundary; query syntax is only a search hint.
+  /** Channel-ID filtering is the authority boundary; query syntax is only a search hint. */
   async searchMessages(
       query: string, cursor: string | undefined, count: number, restrictChannelId?: string)
       : Promise<SlackPage<SlackSearchMatch>> {
@@ -646,6 +653,8 @@ function mentionedUserIds(text: string): string[] {
   return ids;
 }
 
+const SLACK_TEXT_ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">" };
+
 /** Converts Slack mention/link markup and HTML entities to readable text. */
 export function resolveText(text: string, userName: (id: string) => string): string {
   let out = text
@@ -660,8 +669,5 @@ export function resolveText(text: string, userName: (id: string) => string): str
           (_m, url: string, label?: string) => label ? `${label} (${url})` : url)
       .replace(/<(mailto:[^|>]+)(?:\|([^>]*))?>/g,
           (_m, url: string, label?: string) => label || url.replace(/^mailto:/, ""));
-  return out
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">");
+  return out.replace(/&(amp|lt|gt);/g, (_match, name: string) => SLACK_TEXT_ENTITIES[name]);
 }
