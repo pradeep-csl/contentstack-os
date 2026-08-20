@@ -62,7 +62,7 @@ function StripLink({
       to={to}
       aria-label={label}
       className={[
-        'flex h-8 items-center gap-2 rounded-md transition-colors',
+        'flex h-[34px] items-center gap-2 rounded-md transition-colors',
         collapsed ? 'w-8 justify-center' : 'px-2',
         active
           ? 'bg-kumo-fill text-kumo-brand'
@@ -71,7 +71,7 @@ function StripLink({
     >
       {children}
       {!collapsed && (
-        <span className="text-ui-xs leading-4 font-medium">{label}</span>
+        <span className="text-ui-md font-medium">{label}</span>
       )}
     </Link>
   )
