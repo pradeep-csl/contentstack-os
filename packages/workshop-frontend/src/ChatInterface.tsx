@@ -1628,11 +1628,14 @@ const NestedObservationRow = memo(function NestedObservationRow({
 // trace therefore collapses once the turn commits, which is also its default state.
 const PROVISIONAL_REASONING_KEY = "reasoning-provisional";
 
+// `subtle` is a text-only token (--text-color-kumo-subtle); there is no --color-kumo-subtle, so
+// `bg-kumo-subtle` compiles to nothing and leaves a transparent dot. Route it through currentColor
+// instead, which also keeps the grey dots on the same contrast-tuned value as the prose beside them.
 const RAIL_DOT_CLASS: Record<RailTone, string> = {
   success: "bg-kumo-success",
   danger: "bg-kumo-danger",
-  pending: "bg-kumo-subtle animate-pulse",
-  neutral: "bg-kumo-subtle",
+  pending: "bg-current text-kumo-subtle animate-pulse",
+  neutral: "bg-current text-kumo-subtle",
 };
 
 // Geometry shared by every rail element. The dot is centred on its step's first text line, which
@@ -3986,6 +3989,24 @@ export function buildChatDisplayEntries(
 
 // Transcript spacing helpers.
 
+/**
+ * Whether this entry renders steps on an agent turn's rail.
+ *
+ * One turn is split across several display entries -- a `workRun` per batch of tool calls, then the
+ * `message` carrying the prose -- so the rail has to run between them to read as one turn. Anything
+ * else (a user message, a model change, a compaction notice) ends the rail.
+ */
+export function isRailEntry(entry: ChatDisplayEntry): boolean {
+  if (entry.type === "workRun") return true;
+  if (entry.type !== "message") return false;
+  const m = entry.message;
+  return m.type === "message" && m.author.type !== "user";
+}
+
+/** Height of the gap the rail bridges between two entries of the same turn (Tailwind's `2`). */
+const RAIL_BRIDGE = "pt-2";
+const RAIL_BRIDGE_LINE = `${RAIL_LINE} top-0 h-2`;
+
 function isUserMessageEntry(entry: ChatDisplayEntry): boolean {
   return (
     entry.type === "message" &&
@@ -4729,13 +4750,34 @@ function ChatInterface({
     [currentMessages, messageStates, currentCompactions, resolveToolOutput],
   );
 
-  const entryTopClasses = useMemo(() => {
-    const out: string[] = Array.from({ length: displayEntries.length });
+  // Where each entry's rail joins its neighbours. An entry that continues the rail swaps its top
+  // margin for RAIL_BRIDGE padding, so the gap sits inside its box where the line can cross it.
+  const entryRailLinks = useMemo(() => {
+    const out: { fromPrev: boolean; toNext: boolean }[] = Array.from({
+      length: displayEntries.length,
+    });
     for (let i = 0; i < displayEntries.length; i++) {
-      out[i] = rhythmTopClass(i > 0 ? displayEntries[i - 1] : null, displayEntries[i]);
+      const onRail = isRailEntry(displayEntries[i]);
+      out[i] = {
+        fromPrev: onRail && i > 0 && isRailEntry(displayEntries[i - 1]),
+        toNext:
+          onRail &&
+          i + 1 < displayEntries.length &&
+          isRailEntry(displayEntries[i + 1]),
+      };
     }
     return out;
   }, [displayEntries]);
+
+  const entryTopClasses = useMemo(() => {
+    const out: string[] = Array.from({ length: displayEntries.length });
+    for (let i = 0; i < displayEntries.length; i++) {
+      out[i] = entryRailLinks[i].fromPrev
+        ? RAIL_BRIDGE
+        : rhythmTopClass(i > 0 ? displayEntries[i - 1] : null, displayEntries[i]);
+    }
+    return out;
+  }, [displayEntries, entryRailLinks]);
 
   // Hide the user name on user message rows when the only human in the chat is the
   // currently-logged-in user (it would just say "you" on every message). If anyone else has ever
@@ -6924,6 +6966,10 @@ function ChatInterface({
 
                     {displayEntries.map((entry, entryIndex) => {
                       const entryTopClass = entryTopClasses[entryIndex] ?? "";
+                      const railLink = entryRailLinks[entryIndex] ?? {
+                        fromPrev: false,
+                        toNext: false,
+                      };
                       if (entry.type === "compactionCut") {
                         // Only meaningful alongside the summary it belongs to, which is announced
                         // further down; on its own it would be a line with nothing to explain it.
@@ -7094,13 +7140,16 @@ function ChatInterface({
                         const lastRailIndex =
                           entry.toolCallGroups.length + createdGadgets.length - 1;
                         return (
-                          <div key={entry.key} className={`${entryTopClass} min-w-0 w-full max-w-[860px]`}>
+                          <div key={entry.key} className={`${entryTopClass} relative min-w-0 w-full max-w-[860px]`}>
+                            {railLink.fromPrev && (
+                              <span aria-hidden="true" className={RAIL_BRIDGE_LINE} />
+                            )}
                             {entry.toolCallGroups.map((group, groupIndex) => (
                               <RailNode
                                 key={group.key}
                                 node={{ type: "toolGroup", hasError: group.hasError }}
-                                isFirst={groupIndex === 0}
-                                isLast={groupIndex === lastRailIndex}
+                                isFirst={groupIndex === 0 && !railLink.fromPrev}
+                                isLast={groupIndex === lastRailIndex && !railLink.toNext}
                               >
                                 <ToolGroupRow
                                   outputOf={resolveToolOutput}
@@ -7135,9 +7184,13 @@ function ChatInterface({
                               <RailNode
                                 key={created.gadgetId}
                                 node={{ type: "text" }}
-                                isFirst={entry.toolCallGroups.length + createdIndex === 0}
+                                isFirst={
+                                  entry.toolCallGroups.length + createdIndex === 0 &&
+                                  !railLink.fromPrev
+                                }
                                 isLast={
-                                  entry.toolCallGroups.length + createdIndex === lastRailIndex
+                                  entry.toolCallGroups.length + createdIndex === lastRailIndex &&
+                                  !railLink.toNext
                                 }
                               >
                                 <CreatedGadgetChatCard
@@ -7153,7 +7206,10 @@ function ChatInterface({
                       const msg = entry.message;
 
                       return (
-                        <div key={entry.key} className={entryTopClass}>
+                        <div key={entry.key} className={`${entryTopClass} relative`}>
+                        {railLink.fromPrev && (
+                          <span aria-hidden="true" className={RAIL_BRIDGE_LINE} />
+                        )}
                         {/* ── user / AI text message ── */}
                         {msg.type === "slashCommand" && (
                           <div className="group/message relative flex flex-col items-end">
@@ -7271,8 +7327,8 @@ function ChatInterface({
                               {showReasoning && (
                                 <RailNode
                                   node={{ type: "thinking" }}
-                                  isFirst
-                                  isLast={lastRailIndex === 0}
+                                  isFirst={!railLink.fromPrev}
+                                  isLast={lastRailIndex === 0 && !railLink.toNext}
                                 >
                                   <ThinkingTraceRow
                                     reasoning={msg.reasoning!}
@@ -7285,8 +7341,10 @@ function ChatInterface({
                               {hasMessageText && (
                                 <RailNode
                                   node={{ type: "text" }}
-                                  isFirst={reasoningNodeCount === 0}
-                                  isLast={reasoningNodeCount === lastRailIndex}
+                                  isFirst={reasoningNodeCount === 0 && !railLink.fromPrev}
+                                  isLast={
+                                    reasoningNodeCount === lastRailIndex && !railLink.toNext
+                                  }
                                 >
                                   <div className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
                                     <MarkdownMessage
@@ -7353,8 +7411,13 @@ function ChatInterface({
                               <RailNode
                                 key={created.gadgetId}
                                 node={{ type: "text" }}
-                                isFirst={firstGadgetRailIndex + createdIndex === 0}
-                                isLast={firstGadgetRailIndex + createdIndex === lastRailIndex}
+                                isFirst={
+                                  firstGadgetRailIndex + createdIndex === 0 && !railLink.fromPrev
+                                }
+                                isLast={
+                                  firstGadgetRailIndex + createdIndex === lastRailIndex &&
+                                  !railLink.toNext
+                                }
                               >
                                 <CreatedGadgetChatCard
                                   gadget={created}
@@ -7369,8 +7432,13 @@ function ChatInterface({
                                   <RailNode
                                     key={group.key}
                                     node={{ type: "toolGroup", hasError: group.hasError }}
-                                    isFirst={firstGroupRailIndex + groupIndex === 0}
-                                    isLast={firstGroupRailIndex + groupIndex === lastRailIndex}
+                                    isFirst={
+                                      firstGroupRailIndex + groupIndex === 0 && !railLink.fromPrev
+                                    }
+                                    isLast={
+                                      firstGroupRailIndex + groupIndex === lastRailIndex &&
+                                      !railLink.toNext
+                                    }
                                   >
                                     <ToolGroupRow
                                       outputOf={resolveToolOutput}
@@ -7645,13 +7713,18 @@ function ChatInterface({
                         displayEntries.length > 0
                           ? displayEntries[displayEntries.length - 1]
                           : null;
+                      // This turn's earlier steps have already committed as entries, so the rail
+                      // carries on into the part still streaming.
+                      const railFromLastEntry = !!lastEntry && isRailEntry(lastEntry);
                       const provisionalTopClass = !lastEntry
                         ? ""
-                        : lastEntry.type === "modelChange"
-                          ? "mt-2"
-                          : isUserMessageEntry(lastEntry)
-                            ? "mt-5"
-                            : "mt-4";
+                        : railFromLastEntry
+                          ? RAIL_BRIDGE
+                          : lastEntry.type === "modelChange"
+                            ? "mt-2"
+                            : isUserMessageEntry(lastEntry)
+                              ? "mt-5"
+                              : "mt-4";
 
                       // Which rail steps this in-flight turn is currently showing, so the rail can
                       // terminate at the last one instead of trailing into whitespace.
@@ -7661,7 +7734,10 @@ function ChatInterface({
                       const streamingTools = provisionalToolCalls.length > 0;
 
                       return (
-                        <div className={`group/agent min-w-0 w-full max-w-[860px] ${provisionalTopClass}`}>
+                        <div className={`group/agent relative min-w-0 w-full max-w-[860px] ${provisionalTopClass}`}>
+                          {railFromLastEntry && (
+                            <span aria-hidden="true" className={RAIL_BRIDGE_LINE} />
+                          )}
                           {/* Rail-aligned so these placeholders don't shift sideways once real
                               steps arrive and take over the gutter. */}
                           {isCompacting && (
@@ -7683,7 +7759,7 @@ function ChatInterface({
                           {streamingReasoning && (
                             <RailNode
                               node={{ type: "thinking" }}
-                              isFirst
+                              isFirst={!railFromLastEntry}
                               isLast={!streamingText && !streamingTools}
                             >
                               <ThinkingTraceRow
@@ -7699,7 +7775,7 @@ function ChatInterface({
                           {streamingText && (
                             <RailNode
                               node={{ type: "text" }}
-                              isFirst={!streamingReasoning}
+                              isFirst={!streamingReasoning && !railFromLastEntry}
                               isLast={!streamingTools}
                             >
                               <div className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
@@ -7722,7 +7798,9 @@ function ChatInterface({
                                 // Provisional calls carry no error state, so the outcome isn't
                                 // known until the turn commits and the real tone takes over.
                                 node={{ type: "toolGroup", hasError: false, inFlight: true }}
-                                isFirst={!streamingReasoning && !streamingText}
+                                isFirst={
+                                  !streamingReasoning && !streamingText && !railFromLastEntry
+                                }
                                 isLast
                               >
                               <div>
