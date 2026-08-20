@@ -61,6 +61,7 @@ import {
   persistSelectedModel,
 } from "./modelSelection";
 import { gatewayLabel } from "./modelListDisplay";
+import { railStatusLabel, railToneFor, type RailNodeSpec, type RailTone } from "./chatRail";
 import {
   Overseer,
   GatekeeperClient,
@@ -1622,16 +1623,122 @@ const NestedObservationRow = memo(function NestedObservationRow({
   );
 });
 
-const ThinkingTraceRow = memo(function ThinkingTraceRow({
-  reasoning,
+// Expansion key for the reasoning of the turn still streaming. A provisional turn has no sequence
+// number yet, so it can't share the committed `reasoning-<chatId>-<sequence>` key -- an expanded
+// trace therefore collapses once the turn commits, which is also its default state.
+const PROVISIONAL_REASONING_KEY = "reasoning-provisional";
+
+const RAIL_DOT_CLASS: Record<RailTone, string> = {
+  success: "bg-kumo-success",
+  danger: "bg-kumo-danger",
+  pending: "bg-kumo-subtle animate-pulse",
+  neutral: "bg-kumo-subtle",
+};
+
+// Geometry shared by every rail element. The dot is centred on its step's first text line, which
+// throughout an agent turn is a 20px line box under `py-1` -- hence 11px down, ending at 17px.
+//
+// The rail is one line per step running the full height of that step's box, with the opaque dot
+// painted over it. Steps therefore have to be flush against each other for the line to read as
+// continuous, so the vertical rhythm lives in each step's own `pb-2` rather than in a `space-y-*`
+// on the container. Drawing the line only in the gaps instead leaves it short of the next dot.
+const RAIL_LINE = "absolute left-[2.5px] w-px bg-kumo-line";
+const RAIL_LINE_FROM_DOT = "top-[11px]";
+// Underscores are how an arbitrary value spells the whitespace calc() requires around its operator.
+const RAIL_LINE_TO_DOT = "bottom-[calc(100%_-_17px)]";
+
+/**
+ * One step of an agent turn -- its reasoning, a group of tool calls, or its prose -- rendered as a
+ * dot on the turn's vertical rail, with the step's own content beside it.
+ *
+ * `isFirst`/`isLast` trim the line to the outermost dots, so the rail starts and stops at a dot
+ * instead of trailing off into whitespace.
+ */
+const RailNode = memo(function RailNode({
+  node,
+  isFirst = false,
+  isLast = false,
+  children,
 }: {
-  reasoning: string;
+  node: RailNodeSpec;
+  isFirst?: boolean;
+  isLast?: boolean;
+  children: ReactNode;
+}) {
+  const tone = railToneFor(node);
+  const status = railStatusLabel(tone);
+  return (
+    <div className={`relative flex min-w-0 items-start gap-3 ${isLast ? "" : "pb-2"}`}>
+      <span
+        aria-hidden="true"
+        className={`${RAIL_LINE} ${isFirst ? RAIL_LINE_FROM_DOT : "top-0"} ${
+          isLast ? RAIL_LINE_TO_DOT : "bottom-0"
+        }`}
+      />
+      <span
+        aria-hidden="true"
+        className={`relative mt-[11px] h-1.5 w-1.5 flex-shrink-0 rounded-full ${RAIL_DOT_CLASS[tone]}`}
+      />
+      {/* Colour alone must not carry the outcome (WCAG 1.4.1). */}
+      {status && <span className="sr-only">{status}</span>}
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+});
+
+/**
+ * Aligns content that is not itself a step -- a turn's action buttons, say -- with the content of
+ * the rail nodes around it. The inset is the dot (6px) plus RailNode's `gap-3` (12px).
+ *
+ * Pass `continues` when more steps follow, so the rail runs past this content rather than breaking
+ * around it.
+ */
+function RailAligned({
+  continues = false,
+  children,
+}: {
+  continues?: boolean;
+  children: ReactNode;
 }) {
   return (
-    <div className="min-w-0 py-1 text-kumo-subtle">
-      <div className={`min-w-0 text-ui-sm ${styles.markdownContent}`}>
-        <MarkdownMessage message={reasoning} />
-      </div>
+    <div className={`relative min-w-0 pl-[18px] ${continues ? "pb-2" : ""}`}>
+      {continues && <span aria-hidden="true" className={`${RAIL_LINE} inset-y-0`} />}
+      {children}
+    </div>
+  );
+}
+
+const ThinkingTraceRow = memo(function ThinkingTraceRow({
+  reasoning,
+  open,
+  onToggle,
+}: {
+  reasoning: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="min-w-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex cursor-pointer items-center gap-2 rounded-xl px-1.5 py-1 text-left text-ui-md text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none active:scale-[0.995]"
+        aria-expanded={open}
+      >
+        <span>Thought</span>
+        <CaretRight
+          size={13}
+          weight="bold"
+          className={`flex-shrink-0 transition-transform duration-150 ease-out ${open ? "rotate-90" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="themed-surface-inset mt-1 min-w-0 rounded-2xl border border-kumo-line/70 bg-kumo-elevated/45 p-3">
+          <div className={`min-w-0 text-ui-sm text-kumo-subtle ${styles.markdownContent}`}>
+            <MarkdownMessage message={reasoning} />
+          </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -1665,7 +1772,7 @@ const ToolGroupRow = memo(function ToolGroupRow({
     ? getDiscardLabel(footerIsTrailing, footerCreatedGadgetTitles)
     : null;
   return (
-    <div className="group -ml-0.5">
+    <div className="group min-w-0">
       <button
         type="button"
         onClick={() => onToggle(group.key)}
@@ -6982,44 +7089,62 @@ function ChatInterface({
                         const showFooterOnGroupIndex = pendingChange
                           ? entry.toolCallGroups.length - 1
                           : -1;
+                        // The rail runs through every step this run produced, so the connector
+                        // stops at the last one whether that is a tool group or a created gadget.
+                        const lastRailIndex =
+                          entry.toolCallGroups.length + createdGadgets.length - 1;
                         return (
-                          <div key={entry.key} className={`${entryTopClass} min-w-0 w-full max-w-[860px] space-y-2`}>
+                          <div key={entry.key} className={`${entryTopClass} min-w-0 w-full max-w-[860px]`}>
                             {entry.toolCallGroups.map((group, groupIndex) => (
-                              <ToolGroupRow
-                                outputOf={resolveToolOutput}
+                              <RailNode
                                 key={group.key}
-                                group={group}
-                                open={expandedToolCalls.has(group.key)}
-                                expandedKeys={expandedToolCalls}
-                                onToggle={toggleToolCallExpansion}
-                                footerChangeSequence={
-                                  groupIndex === showFooterOnGroupIndex
-                                    ? pendingChange?.revertFrom
-                                    : undefined
-                                }
-                                footerTimestamp={
-                                  groupIndex === showFooterOnGroupIndex
-                                    ? entry.lastMessageTimestamp
-                                    : undefined
-                                }
-                                footerIsTrailing={
-                                  pendingChange?.through === lastDurablePendingChange?.sequence
-                                }
-                                footerCreatedGadgetTitles={
-                                  groupIndex === showFooterOnGroupIndex
-                                    ? pendingChange?.createdGadgetTitles
-                                    : undefined
-                                }
-                                footerDisabled={isAgentActive}
-                                onFooterRevert={handleRevertChanges}
-                              />
+                                node={{ type: "toolGroup", hasError: group.hasError }}
+                                isFirst={groupIndex === 0}
+                                isLast={groupIndex === lastRailIndex}
+                              >
+                                <ToolGroupRow
+                                  outputOf={resolveToolOutput}
+                                  group={group}
+                                  open={expandedToolCalls.has(group.key)}
+                                  expandedKeys={expandedToolCalls}
+                                  onToggle={toggleToolCallExpansion}
+                                  footerChangeSequence={
+                                    groupIndex === showFooterOnGroupIndex
+                                      ? pendingChange?.revertFrom
+                                      : undefined
+                                  }
+                                  footerTimestamp={
+                                    groupIndex === showFooterOnGroupIndex
+                                      ? entry.lastMessageTimestamp
+                                      : undefined
+                                  }
+                                  footerIsTrailing={
+                                    pendingChange?.through === lastDurablePendingChange?.sequence
+                                  }
+                                  footerCreatedGadgetTitles={
+                                    groupIndex === showFooterOnGroupIndex
+                                      ? pendingChange?.createdGadgetTitles
+                                      : undefined
+                                  }
+                                  footerDisabled={isAgentActive}
+                                  onFooterRevert={handleRevertChanges}
+                                />
+                              </RailNode>
                             ))}
-                            {createdGadgets.map((created) => (
-                              <CreatedGadgetChatCard
+                            {createdGadgets.map((created, createdIndex) => (
+                              <RailNode
                                 key={created.gadgetId}
-                                gadget={created}
-                                onOpen={() => onOpenGadget(created.gadgetId)}
-                              />
+                                node={{ type: "text" }}
+                                isFirst={entry.toolCallGroups.length + createdIndex === 0}
+                                isLast={
+                                  entry.toolCallGroups.length + createdIndex === lastRailIndex
+                                }
+                              >
+                                <CreatedGadgetChatCard
+                                  gadget={created}
+                                  onOpen={() => onOpenGadget(created.gadgetId)}
+                                />
+                              </RailNode>
                             ))}
                           </div>
                         );
@@ -7130,25 +7255,52 @@ function ChatInterface({
                             const showFooterOnGroupIndex = attachActionsToToolGroups && pendingChange && messageToolGroups
                               ? messageToolGroups.length - 1
                               : -1;
+                            // Rail node order matches the DOM: reasoning, prose, created gadgets,
+                            // then the tool groups this message invoked.
+                            const reasoningNodeCount = showReasoning ? 1 : 0;
+                            const textNodeCount = hasMessageText ? 1 : 0;
+                            const firstGadgetRailIndex = reasoningNodeCount + textNodeCount;
+                            const firstGroupRailIndex =
+                              firstGadgetRailIndex + createdGadgets.length;
+                            const lastRailIndex =
+                              firstGroupRailIndex + (messageToolGroups?.length ?? 0) - 1;
+                            const reasoningKey = `reasoning-${msg.chatId}-${msg.sequence}`;
                             return (
-                          <div className="min-w-0 w-full max-w-[860px] space-y-2">
-                            <div className="group/agentMessage relative space-y-1.5">
+                          <div className="min-w-0 w-full max-w-[860px]">
+                            <div className="group/agentMessage relative">
                               {showReasoning && (
-                                <ThinkingTraceRow reasoning={msg.reasoning!} />
+                                <RailNode
+                                  node={{ type: "thinking" }}
+                                  isFirst
+                                  isLast={lastRailIndex === 0}
+                                >
+                                  <ThinkingTraceRow
+                                    reasoning={msg.reasoning!}
+                                    open={expandedToolCalls.has(reasoningKey)}
+                                    onToggle={() => toggleToolCallExpansion(reasoningKey)}
+                                  />
+                                </RailNode>
                               )}
 
                               {hasMessageText && (
-                                <div className={`text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
-                                  <MarkdownMessage
-                                    message={msg.message}
-                                    capsules={msg.capsules}
-                                    formats={msg.formats}
-                                  />
-                                </div>
+                                <RailNode
+                                  node={{ type: "text" }}
+                                  isFirst={reasoningNodeCount === 0}
+                                  isLast={reasoningNodeCount === lastRailIndex}
+                                >
+                                  <div className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
+                                    <MarkdownMessage
+                                      message={msg.message}
+                                      capsules={msg.capsules}
+                                      formats={msg.formats}
+                                    />
+                                  </div>
+                                </RailNode>
                               )}
 
                               {showActions && (
-                                <div className={`mt-0.5 -ml-1 flex items-center gap-1 transition-opacity duration-150 ease-out ${
+                                <RailAligned continues={firstGadgetRailIndex <= lastRailIndex}>
+                                <div className={`mt-0.5 flex items-center gap-1 transition-opacity duration-150 ease-out ${
                                   keepActionsVisible
                                     ? "opacity-100"
                                     : "opacity-0 group-hover/agentMessage:opacity-100 group-focus-within/agentMessage:opacity-100"
@@ -7193,48 +7345,61 @@ function ChatInterface({
                                     </span>
                                   </Tooltip>
                                 </div>
+                                </RailAligned>
                               )}
                             </div>
 
-                            {createdGadgets.map((created) => (
-                              <CreatedGadgetChatCard
+                            {createdGadgets.map((created, createdIndex) => (
+                              <RailNode
                                 key={created.gadgetId}
-                                gadget={created}
-                                onOpen={() => onOpenGadget(created.gadgetId)}
-                              />
+                                node={{ type: "text" }}
+                                isFirst={firstGadgetRailIndex + createdIndex === 0}
+                                isLast={firstGadgetRailIndex + createdIndex === lastRailIndex}
+                              >
+                                <CreatedGadgetChatCard
+                                  gadget={created}
+                                  onOpen={() => onOpenGadget(created.gadgetId)}
+                                />
+                              </RailNode>
                             ))}
 
                             {messageToolGroups && messageToolGroups.length > 0 && (
-                              <div className="space-y-1">
+                              <div>
                                 {messageToolGroups.map((group, groupIndex) => (
-                                  <ToolGroupRow
-                                    outputOf={resolveToolOutput}
+                                  <RailNode
                                     key={group.key}
-                                    group={group}
-                                    open={expandedToolCalls.has(group.key)}
-                                    expandedKeys={expandedToolCalls}
-                                    onToggle={toggleToolCallExpansion}
-                                    footerChangeSequence={
-                                      groupIndex === showFooterOnGroupIndex
-                                        ? pendingChange?.revertFrom
-                                        : undefined
-                                    }
-                                    footerTimestamp={
-                                      groupIndex === showFooterOnGroupIndex
-                                        ? msg.timestamp
-                                        : undefined
-                                    }
-                                    footerIsTrailing={
-                                      pendingChange?.through === lastDurablePendingChange?.sequence
-                                    }
-                                    footerCreatedGadgetTitles={
-                                      groupIndex === showFooterOnGroupIndex
-                                        ? pendingChange?.createdGadgetTitles
-                                        : undefined
-                                    }
-                                    footerDisabled={isAgentActive}
-                                    onFooterRevert={handleRevertChanges}
-                                  />
+                                    node={{ type: "toolGroup", hasError: group.hasError }}
+                                    isFirst={firstGroupRailIndex + groupIndex === 0}
+                                    isLast={firstGroupRailIndex + groupIndex === lastRailIndex}
+                                  >
+                                    <ToolGroupRow
+                                      outputOf={resolveToolOutput}
+                                      group={group}
+                                      open={expandedToolCalls.has(group.key)}
+                                      expandedKeys={expandedToolCalls}
+                                      onToggle={toggleToolCallExpansion}
+                                      footerChangeSequence={
+                                        groupIndex === showFooterOnGroupIndex
+                                          ? pendingChange?.revertFrom
+                                          : undefined
+                                      }
+                                      footerTimestamp={
+                                        groupIndex === showFooterOnGroupIndex
+                                          ? msg.timestamp
+                                          : undefined
+                                      }
+                                      footerIsTrailing={
+                                        pendingChange?.through === lastDurablePendingChange?.sequence
+                                      }
+                                      footerCreatedGadgetTitles={
+                                        groupIndex === showFooterOnGroupIndex
+                                          ? pendingChange?.createdGadgetTitles
+                                          : undefined
+                                      }
+                                      footerDisabled={isAgentActive}
+                                      onFooterRevert={handleRevertChanges}
+                                    />
+                                  </RailNode>
                                 ))}
                               </div>
                             )}
@@ -7488,28 +7653,59 @@ function ChatInterface({
                             ? "mt-5"
                             : "mt-4";
 
+                      // Which rail steps this in-flight turn is currently showing, so the rail can
+                      // terminate at the last one instead of trailing into whitespace.
+                      const streamingReasoning =
+                        showThinkingTraces && !!currentProvisionalState?.reasoning;
+                      const streamingText = !!currentProvisionalState?.text;
+                      const streamingTools = provisionalToolCalls.length > 0;
+
                       return (
-                        <div className={`group/agent min-w-0 w-full max-w-[860px] space-y-2 ${provisionalTopClass}`}>
+                        <div className={`group/agent min-w-0 w-full max-w-[860px] ${provisionalTopClass}`}>
+                          {/* Rail-aligned so these placeholders don't shift sideways once real
+                              steps arrive and take over the gutter. */}
                           {isCompacting && (
-                            <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
-                              Compacting…
-                            </div>
+                            <RailAligned>
+                              <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
+                                Compacting…
+                              </div>
+                            </RailAligned>
                           )}
 
                           {showThinking && (
-                            <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
-                              Thinking
-                            </div>
+                            <RailAligned>
+                              <div className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}>
+                                Thinking
+                              </div>
+                            </RailAligned>
                           )}
 
-                          {showThinkingTraces && currentProvisionalState?.reasoning && (
-                            <ThinkingTraceRow reasoning={currentProvisionalState.reasoning} />
+                          {streamingReasoning && (
+                            <RailNode
+                              node={{ type: "thinking" }}
+                              isFirst
+                              isLast={!streamingText && !streamingTools}
+                            >
+                              <ThinkingTraceRow
+                                reasoning={currentProvisionalState!.reasoning}
+                                open={expandedToolCalls.has(PROVISIONAL_REASONING_KEY)}
+                                onToggle={() =>
+                                  toggleToolCallExpansion(PROVISIONAL_REASONING_KEY)
+                                }
+                              />
+                            </RailNode>
                           )}
 
-                          {currentProvisionalState?.text && (
-                            <div className={`text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
-                              <MarkdownMessage message={currentProvisionalState.text} />
-                            </div>
+                          {streamingText && (
+                            <RailNode
+                              node={{ type: "text" }}
+                              isFirst={!streamingReasoning}
+                              isLast={!streamingTools}
+                            >
+                              <div className={`px-1.5 py-1 text-ui-md leading-[22px] text-kumo-default ${styles.markdownContent}`}>
+                                <MarkdownMessage message={currentProvisionalState!.text} />
+                              </div>
+                            </RailNode>
                           )}
 
                           {provisionalToolCalls.length > 0 && (() => {
@@ -7522,8 +7718,15 @@ function ChatInterface({
                               (t) => t.code || t.output,
                             );
                             return (
-                              <div className="space-y-1">
-                                <div className="group/work -ml-0.5">
+                              <RailNode
+                                // Provisional calls carry no error state, so the outcome isn't
+                                // known until the turn commits and the real tone takes over.
+                                node={{ type: "toolGroup", hasError: false, inFlight: true }}
+                                isFirst={!streamingReasoning && !streamingText}
+                                isLast
+                              >
+                              <div>
+                                <div className="group/work min-w-0">
                                   <button
                                     type="button"
                                     onClick={() => toggleToolCallExpansion(expansionKey)}
@@ -7578,6 +7781,7 @@ function ChatInterface({
                                   )}
                                 </div>
                               </div>
+                              </RailNode>
                             );
                           })()}
                         </div>
