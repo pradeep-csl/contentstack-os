@@ -1631,11 +1631,15 @@ const PROVISIONAL_REASONING_KEY = "reasoning-provisional";
 // `subtle` is a text-only token (--text-color-kumo-subtle); there is no --color-kumo-subtle, so
 // `bg-kumo-subtle` compiles to nothing and leaves a transparent dot. Route it through currentColor
 // instead, which also keeps the grey dots on the same contrast-tuned value as the prose beside them.
+//
+// The tones are softened a step so the rail reads as an aside to the turn rather than competing
+// with it. The dots are decoration on top of the outcome, never its only carrier -- the error pill
+// and each dot's own assistive text say the same thing in words -- so this costs no meaning.
 const RAIL_DOT_CLASS: Record<RailTone, string> = {
-  success: "bg-kumo-success",
-  danger: "bg-kumo-danger",
-  pending: "bg-current text-kumo-subtle animate-pulse",
-  neutral: "bg-current text-kumo-subtle",
+  success: "bg-kumo-success/70",
+  danger: "bg-kumo-danger/70",
+  pending: "bg-current text-kumo-subtle/70 animate-pulse",
+  neutral: "bg-current text-kumo-subtle/70",
 };
 
 // Geometry shared by every rail element. The dot is centred on its step's first text line, which
@@ -1645,7 +1649,7 @@ const RAIL_DOT_CLASS: Record<RailTone, string> = {
 // painted over it. Steps therefore have to be flush against each other for the line to read as
 // continuous, so the vertical rhythm lives in each step's own `pb-2` rather than in a `space-y-*`
 // on the container. Drawing the line only in the gaps instead leaves it short of the next dot.
-const RAIL_LINE = "absolute left-[2.5px] w-px bg-kumo-line";
+const RAIL_LINE = "absolute left-[2.5px] w-px bg-kumo-line/70";
 const RAIL_LINE_FROM_DOT = "top-[11px]";
 // Underscores are how an arbitrary value spells the whitespace calc() requires around its operator.
 const RAIL_LINE_TO_DOT = "bottom-[calc(100%_-_17px)]";
