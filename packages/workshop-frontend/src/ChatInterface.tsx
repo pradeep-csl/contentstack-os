@@ -9193,7 +9193,7 @@ function ChatInterface({
 
                             {streamingReasoning && (
                               <RailNode
-                                node={{ type: "thinking" }}
+                                node={{ type: "thinking", inFlight: true }}
                                 isFirst={!railFromLastEntry}
                                 isLast={!streamingText && !streamingTools}
                               >
@@ -9213,7 +9213,7 @@ function ChatInterface({
 
                             {streamingText && (
                               <RailNode
-                                node={{ type: "text" }}
+                                node={{ type: "text", inFlight: true }}
                                 isFirst={
                                   !streamingReasoning && !railFromLastEntry
                                 }

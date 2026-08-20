@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 import { railStatusLabel, railToneFor } from "./chatRail";
 
 describe("railToneFor", () => {
-  it("keeps prose nodes neutral, since neither succeeds nor fails", () => {
+  it("keeps settled prose nodes neutral, since neither succeeds nor fails", () => {
     expect(railToneFor({ type: "thinking" })).toBe("neutral");
     expect(railToneFor({ type: "text" })).toBe("neutral");
+  });
+
+  it("holds prose the agent is still producing at pending", () => {
+    expect(railToneFor({ type: "thinking", inFlight: true })).toBe("pending");
+    expect(railToneFor({ type: "text", inFlight: true })).toBe("pending");
   });
 
   it("marks a settled tool group by whether anything in it errored", () => {
