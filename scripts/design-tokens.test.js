@@ -39,7 +39,7 @@ function kumoFiles(dir, out = []) {
 function referencedKumoTokens() {
   const referenced = new Set()
   for (const file of kumoFiles(KUMO_DIST)) {
-    for (const [, name] of readFileSync(file, 'utf8').matchAll(/--((?:text-)?color-kumo-[a-z-]+)/g)) {
+    for (const [, name] of readFileSync(file, 'utf8').matchAll(/--((?:text-)?color-kumo-[a-z0-9-]+)/g)) {
       referenced.add(`--${name}`)
     }
   }
@@ -53,9 +53,10 @@ function referencedKumoTokens() {
 // audited. Rather than declare 26+ values blind, they're recorded here so the guard still catches
 // anything *new* that Kumo starts consuming, without pretending the backlog is closed.
 //
-// Note: `[a-z-]+` doesn't match digits, so the twelve-plus `--color-kumo-neutral-<n>` variants all
-// collapse into the single captured name `--color-kumo-neutral-` (matching stops at the first
-// digit). That's fine here — one allowlist entry still covers the whole family.
+// `[a-z0-9-]+` matches digits, so each `--color-kumo-neutral-<n>` variant Kumo's dist actually
+// references is listed individually below, rather than the truncated `--color-kumo-neutral-`
+// (matching stopped at the first digit under the old `[a-z-]+` class) silently absorbing any of
+// them, present or future.
 const PENDING_KUMO_TOKENS = new Set([
   '--color-kumo-badge-blue',
   '--color-kumo-badge-green',
@@ -68,7 +69,19 @@ const PENDING_KUMO_TOKENS = new Set([
   '--color-kumo-banner-info',
   '--color-kumo-banner-warning',
   '--color-kumo-canvas',
-  '--color-kumo-neutral-',
+  '--color-kumo-neutral-25',
+  '--color-kumo-neutral-50',
+  '--color-kumo-neutral-75',
+  '--color-kumo-neutral-125',
+  '--color-kumo-neutral-150',
+  '--color-kumo-neutral-450',
+  '--color-kumo-neutral-750',
+  '--color-kumo-neutral-800',
+  '--color-kumo-neutral-850',
+  '--color-kumo-neutral-925',
+  '--color-kumo-neutral-950',
+  '--color-kumo-neutral-975',
+  '--color-kumo-neutral-1000',
   '--color-kumo-shadow-drop',
   '--color-kumo-shadow-edge',
 ])

@@ -34,10 +34,11 @@
      alone they fall back to Kumo's defaults: a hueless 1.21:1 hairline and a near-black focus
      ring, both regressions the surrounding remediation exists to fix. */
   --color-kumo-hairline: #47516133;    /* tracks --color-kumo-line above */
-  /* Focus rings point at --color-kumo-ring (not the brand): our own focus-visible rings already
-     use ring-kumo-ring, so Kumo-drawn focus states now match hand-authored ones instead of
-     introducing a second focus colour. */
-  --color-kumo-focus: #c7d0e1;
+  /* Focus rings use the brand purple rather than --color-kumo-ring (which is #c7d0e1, measuring
+     only 1.55:1 on white — under the 3:1 WCAG 2.4.11/1.4.11 floor for a non-text focus indicator,
+     and worse than Kumo's own near-black default this replaces). --color-kumo-brand is 4.86:1 on
+     white and on-brand, so Kumo-drawn focus rings use it directly. */
+  --color-kumo-focus: #6c5ce7;
 
   /* ===== CHAT ===== */
   --color-kumo-bubble-user: #f8f6ff;
@@ -195,7 +196,10 @@
   --color-kumo-line: oklch(0.32 0.022 285);
   --color-kumo-ring: oklch(0.52 0.08 288);
   --color-kumo-hairline: oklch(0.32 0.022 285);   /* tracks --color-kumo-line above */
-  --color-kumo-focus: oklch(0.52 0.08 288);       /* tracks --color-kumo-ring above */
+  /* Lifted above --color-kumo-ring's lightness (0.52): at 0.52 this only reached 2.85:1 against
+     --color-kumo-tint, under the 3:1 floor for a non-text focus indicator. 0.58 clears 3:1 against
+     base, elevated and tint alike. */
+  --color-kumo-focus: oklch(0.58 0.08 288);
   --color-kumo-bubble-user: oklch(0.25 0.024 285);
 
   /* Fills keep true Venus purple; brand *text* lightens further down (decision D5). */

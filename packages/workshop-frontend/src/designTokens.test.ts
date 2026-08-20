@@ -155,6 +155,20 @@ describe('Venus light palette', () => {
       expect(contrast(placeholder, surface), `placeholder on ${surface}`).toBeGreaterThanOrEqual(4.5)
     }
   })
+
+  // Focus rings are a non-text UI indicator (WCAG 2.4.11/1.4.11), so the bar is 3:1, not the 4.5:1
+  // body-text bar above. A prior fix pointed this token at --color-kumo-ring (1.55:1 on white) for
+  // consistency with the app's own focus rings — levelling a conformant indicator down to a
+  // non-conformant one. This guard is what should have caught that.
+  it('meets WCAG non-text contrast (3:1) for the focus ring on every light surface', () => {
+    const focus = token(light, '--color-kumo-focus')
+    const surfaces = [
+      token(light, '--color-kumo-base'), token(light, '--color-kumo-elevated'), token(light, '--color-kumo-tint'),
+    ]
+    for (const surface of surfaces) {
+      expect(contrast(focus, surface), `focus on ${surface}`).toBeGreaterThanOrEqual(3)
+    }
+  })
 })
 
 /** Converts an `oklch(L C H)` string to linear-light sRGB, clipped to gamut. */
@@ -216,6 +230,18 @@ describe('Venus-derived dark palette', () => {
 
   it('meets WCAG AA for white label text on the dark primary button', () => {
     expect(contrast('#ffffff', asHex(token(dark, '--color-kumo-brand')))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  // Same non-text 3:1 bar as the light-mode focus check above. --color-kumo-focus was newly added
+  // by this remediation tracking --color-kumo-ring's oklch(0.52 0.08 288), which only reached
+  // 2.85:1 against --color-kumo-tint — this guard is what should have caught that.
+  it('meets WCAG non-text contrast (3:1) for the focus ring on every dark surface', () => {
+    const focus = asHex(token(dark, '--color-kumo-focus'))
+    const surfaces = ['--color-kumo-base', '--color-kumo-elevated', '--color-kumo-tint']
+      .map((name) => asHex(token(dark, name)))
+    for (const surface of surfaces) {
+      expect(contrast(focus, surface), `focus on ${surface}`).toBeGreaterThanOrEqual(3)
+    }
   })
 })
 
