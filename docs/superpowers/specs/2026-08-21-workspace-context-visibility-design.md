@@ -42,8 +42,10 @@ Two comments in the code anticipate this feature:
 1. A third visibility, **workspace**: a collection whose documents and skills are available to the
    agent of exactly one workspace, for everyone chatting there.
 2. Chosen at creation time from the existing New collection dialog, via a dropdown of workspaces.
-3. Create is blocked until a workspace is selected; with no eligible workspace the option is
-   offered but disabled, so the only way forward is Only me / Everyone.
+3. Create is blocked until a workspace is selected, so there is no path to a workspace collection
+   without a workspace. A user who owns none meets that in the picker's empty state ("You don't own
+   any workspaces yet") rather than a disabled radio: disabling the *option* would require telling
+   the frame how many workspaces the user owns, which is the enumeration §4.6 exists to avoid.
 4. Reversible: the scope can be removed, returning the collection to private.
 
 ## 3. Non-goals
@@ -363,7 +365,12 @@ full-viewport iframe.
 - Selecting it reveals the control: `Choose workspace…` → host picker → chosen title with a change
   affordance.
 - **Create collection stays disabled** while visibility is `workspace` and nothing is chosen.
-- With no owned workspace the option renders disabled, hinted "Create a workspace first".
+- A user owning no workspace learns so from the picker's empty state, not a disabled radio (Goal 3).
+- **The Visibility group must be un-gated first.** It is currently wrapped in `{isAdmin && (`, so
+  non-admins see no Visibility control at all and get `private` implicitly. Adding the option inside
+  that block would make the whole tier admin-only. The group becomes unconditional and the `public`
+  option alone is filtered to admins — a deliberate UI change for non-admins, who go from no
+  Visibility section to one offering Only me / Workspace.
 - **The settings pane's Source/Access fields must stop being binary.** Today
   [`:1240-1252`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) renders
   `isPublic ? … : …`, which would label a workspace-scoped collection **"You" / "Private to you"** —

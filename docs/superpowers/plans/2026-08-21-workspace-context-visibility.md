@@ -504,7 +504,11 @@ declaration in `interface ContextApi` and add the two new methods next to it:
     source?: ContextCollectionContent["source"], workspaceId?: string,
   ): Promise<ContextCollectionMetadata>;
 
-  /** The workspace this collection is scoped to, or null if it is not workspace-scoped. */
+  /**
+   * The workspace this collection is scoped to, or null if it is not workspace-scoped. Readable by
+   * the owner (and, for a public collection, anyone) — an admin who does not own a workspace-scoped
+   * collection cannot read it, the same position they are in for private collections.
+   */
   getContextCollectionWorkspace(collectionId: string): Promise<string | null>;
 
   /**
@@ -990,14 +994,23 @@ export class ContextObserverTracker {
   }
 ```
 
-In `addObserver`, filter before querying. Replace its body:
+In `addObserver`, filter before querying — but short-circuit *before* resolving the scoped set, so a
+workspace whose agent has read nothing still admits collaborators without any Durable Object read
+(the common case, and one that previously could not fail on a library read at all). Replace its
+body:
 
 ```ts
   async addObserver(id: string, verifier: Fetcher<ContextVerifierApi>): Promise<void> {
     let checked = new Set<string>();
     while (true) {
-      let collections = await this.#needingVerification(
-        this.#listTrackedCollections().filter(collectionId => !checked.has(collectionId)));
+      let tracked = this.#listTrackedCollections()
+          .filter(collectionId => !checked.has(collectionId));
+      // Nothing observed yet: admit without resolving scope. Keeps the empty case free.
+      if (tracked.length === 0) {
+        this.kv.put(this.#observerKey(id), verifier);
+        return;
+      }
+      let collections = await this.#needingVerification(tracked);
       if (collections.length === 0) {
         this.kv.put(this.#observerKey(id), verifier);
         return;
@@ -1017,12 +1030,22 @@ In `addObserver`, filter before querying. Replace its body:
   }
 ```
 
-In `prepareObservation`, filter the ids each observer is asked about. Replace the
+In `prepareObservation`, filter the ids each observer is asked about — again short-circuiting before
+the scope resolution, because **this method runs on every single agent read** (search, list and
+read all call it). An unshared workspace has no observers, and must not pay anything. Replace the
 `observerAccess` computation:
 
 ```ts
+    let observers = [...this.#listObservers()];
+    // No observers (the common single-user case) means nothing to exclude and no scope to resolve.
+    if (observers.length === 0) {
+      return {
+        pendingCollections,
+        commit: () => this.commitObservation(pendingCollections),
+      };
+    }
     let toVerify = await this.#needingVerification(pendingCollections);
-    let observerAccess = await Promise.all([...this.#listObservers()].map(async ([id, verifier]) => {
+    let observerAccess = await Promise.all(observers.map(async ([id, verifier]) => {
       let access = await Promise.all(toVerify.map(
         collectionId => verifier.hasCollectionAccess(this.sharingDomain, collectionId),
       ));
@@ -1046,18 +1069,31 @@ cd packages/gatekeeper-context && pnpm exec vitest run context-observers
 Expected: PASS — the four new tests **and** all six pre-existing ones, which construct the tracker
 with two arguments and must be untouched.
 
-- [ ] **Step 5: Feed the tracker its scoped set**
+- [ ] **Step 5: Feed the tracker its scoped set — reusing data already resolved**
+
+The naive wiring (have the tracker read the owner's library itself) would add a Durable Object read
+to **every agent search, list and read**, since `prepareObservation` runs on each one. Avoid it: the
+callers that need a scoped set have already resolved one. `getEnabledCollections` labels this
+workspace's scoped collections `"workspace"` — a value nothing read until now — and
+`loadAgentContextCollections` returns `workspaceId` per entry. So let callers supply the derivation
+and keep the library read as the fallback for the one path with nothing at hand.
 
 In `packages/gatekeeper-context/src/library-gatekeeper.ts`, replace `ContextGatekeeper.#observers()`:
 
 ```ts
-  #observers() {
+  /**
+   * The observer tracker for this facet. Callers that have already resolved this workspace's
+   * enabled set pass a derivation of it, so the read hot path costs no extra Durable Object reads;
+   * `addObserver`/`removeObserver`, which have nothing at hand, fall back to reading the library.
+   */
+  #observers(resolveScoped?: ResolveScopedCollections) {
     return new ContextObserverTracker(
-      this.ctx.storage.kv, this.ctx.props.sharingDomain, () => this.#scopedCollectionIds());
+      this.ctx.storage.kv, this.ctx.props.sharingDomain,
+      resolveScoped ?? (() => this.#scopedCollectionIds()));
   }
 
-  // The collections scoped to this facet's workspace. Read from the owner's library — the same
-  // source the enabled set uses — so the two can never disagree.
+  // Fallback: the collections scoped to this facet's workspace, straight from the owner's library —
+  // the same source the enabled set uses, so the two can never disagree.
   async #scopedCollectionIds(): Promise<Set<string>> {
     let domain = this.ctx.props.sharingDomain;
     let userLibrary = this.#userLibraries().get(
@@ -1069,6 +1105,48 @@ In `packages/gatekeeper-context/src/library-gatekeeper.ts`, replace `ContextGate
         .map(collection => collection.id));
   }
 ```
+
+Then share one resolution between the session and its tracker. Replace `#newReadSession`'s body
+(keeping its existing `dup()` / dispose-on-throw structure exactly):
+
+```ts
+  #newReadSession(authorizer: NativeRpcStub<ObservationAuthorizer>): LibraryReadSession {
+    // The read session uses this authorizer after startSession() returns, so it owns a duplicate.
+    let ownedAuthorizer = authorizer.dup();
+    try {
+      let resolve = accountEnabledCollections(
+        this.#userLibraries(), this.ctx.props.sharingDomain, this.ctx.props.accountId,
+        this.#workspaceId());
+      // Resolved at most once and shared: the tracker's scoped set is a projection of the very map
+      // the session reads, so no second round trip and no chance of the two disagreeing.
+      let enabledOnce: Promise<Map<string, ContextCollectionVisibility>> | undefined;
+      let enabled = () => (enabledOnce ??= resolve());
+      let observers = this.#observers(async () => new Set(
+        [...await enabled()]
+          .filter(([, visibility]) => visibility === "workspace")
+          .map(([collectionId]) => collectionId)));
+      return new LibraryReadSession(
+        this.#collections(), enabled, this.ctx.props.sharingDomain, ownedAuthorizer,
+        collectionIds => observers.prepareObservation(collectionIds));
+    } catch (err) {
+      ownedAuthorizer[Symbol.dispose]?.();
+      throw err;
+    }
+  }
+```
+
+In `getAgentCatalog`, the entries are already in hand, so derive from them. Replace its
+`this.#observers().prepareObservation(collectionIds)` call:
+
+```ts
+      let workspaceId = this.#workspaceId();
+      let check = await this.#observers(async () => new Set(
+        collections.filter(collection => collection.workspaceId === workspaceId)
+          .map(collection => collection.id))).prepareObservation(collectionIds);
+```
+
+Add `ContextCollectionVisibility` to the import from `./context-types.js` and
+`ResolveScopedCollections` to the import from `./context-observers.js`.
 
 - [ ] **Step 6: Record the third access ground in the observer doc**
 
@@ -1441,10 +1519,32 @@ and mount the provider inside `PresentationProvider`:
 closing it before `</PresentationProvider>`, and add `WorkspaceHostProvider` to the `./bridge`
 import.
 
-- [ ] **Step 2: Add the third visibility option**
+- [ ] **Step 2: Un-gate the Visibility group, then add the third option**
 
-In `packages/gatekeeper-context/app/ContextLibraryPage.tsx`, add to `VISIBILITY_OPTIONS`, between
-the `private` and `public` entries so the dialog reads narrow → wide:
+**Read this before touching the file.** The entire Visibility section is wrapped in
+`{isAdmin && (` (around line 855) — non-admins see no Visibility control at all today and get
+`private` implicitly. Adding the third option inside that block would make workspace visibility
+**admin-only**, which contradicts the design (§9.2: "Offered to all users, unlike Everyone") and
+would render the whole feature useless for ordinary users.
+
+So invert the gating: render the group for everyone, and filter the **public option** to admins.
+Replace `{isAdmin && (` … `)}` around the Visibility block with an unconditional block, and filter
+the list where it is mapped:
+
+```tsx
+                  {VISIBILITY_OPTIONS
+                    // "Everyone" is a deployment-wide publication, so it stays admin-only. The other
+                    // two are scoped to the user's own account or their own workspace.
+                    .filter((option) => option.value !== "public" || isAdmin)
+                    .map(({
+```
+
+This is a deliberate UI change for non-admins: they go from *no* Visibility section to one with two
+options (Only me / Workspace). Keep the `ctx-rise` wrapper and its `animationDelay` exactly as they
+are so the section's entrance animation still lines up with its neighbours.
+
+Then add to `VISIBILITY_OPTIONS`, between the `private` and `public` entries so the dialog reads
+narrow → wide:
 
 ```tsx
   {
@@ -1497,6 +1597,13 @@ selected:
               ) : null}
 ```
 
+**Deliberate divergence from spec §9.2.** The spec says the Workspace *option* renders disabled when
+the user owns no workspace. That is not implementable without telling the frame how many workspaces
+the user owns — the enumeration §4.6 exists to avoid. The empty state lives in the picker instead
+(Task 5's component already renders "You don't own any workspaces yet. Create one first."), and
+Create stays disabled because nothing was picked. Goal 3 is satisfied: there is no path to creating a
+workspace collection without a workspace. The spec has been amended to match.
+
 Gate creation. Add above the return:
 
 ```tsx
@@ -1504,6 +1611,15 @@ Gate creation. Add above the return:
   const canCreate = !!title.trim() && !creating &&
     (visibility !== "workspace" || !!workspace);
 ```
+
+Use it on the Create button, replacing its current `disabled={!title.trim()}`:
+
+```tsx
+              disabled={!canCreate}
+```
+
+Leave the neighbouring `loading={creating}` prop alone — it drives the spinner, and `canCreate`
+already covers `creating` for the disabled state.
 
 Use `canCreate` for the Create button's `disabled` prop and as the guard in `handleCreate`
 (replacing `if (!title.trim() || creating) return;` with `if (!canCreate) return;`), and pass the
