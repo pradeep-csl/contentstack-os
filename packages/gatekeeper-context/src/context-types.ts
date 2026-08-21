@@ -90,8 +90,16 @@ export function decodeDocId(docId: string): {collectionId: string; path: string}
 // Stored data model
 // ---------------------------------------------------------------------------
 
-/** Collection visibility within a sharing domain. */
-export type ContextCollectionVisibility = "public" | "private";
+/**
+ * Collection visibility within a sharing domain.
+ *
+ * - `private`: readable only through its owning account's agent sessions.
+ * - `public`: readable by every account in the domain (admin-created).
+ * - `workspace`: readable *only* through one workspace's agent — a narrowing of `private`, not
+ *   private plus a grant. The owner still manages it everywhere; they just cannot read it through
+ *   an agent outside that workspace.
+ */
+export type ContextCollectionVisibility = "public" | "private" | "workspace";
 export const DEFAULT_GIT_BRANCH = "main";
 
 export type ContextCollectionContent =
@@ -117,6 +125,12 @@ export type ContextCollectionMetadata = {
   description: string;
 
   visibility: ContextCollectionVisibility;
+
+  /**
+   * The workspace this collection is scoped to. Set if and only if `visibility` is `"workspace"`.
+   * Opaque here: it is the Overseer Durable Object id the Workshop calls a workspace id.
+   */
+  workspaceId?: string;
 
   created: Date;
   lastUpdated: Date;
@@ -171,6 +185,8 @@ export type ContextCollectionSummary = {
   description: string;
   icon?: string;
   visibility: ContextCollectionVisibility;
+  /** Mirrors ContextCollectionMetadata.workspaceId, so the scope survives propagation. */
+  workspaceId?: string;
   documentCount: number;
   lastUpdated: Date;
 };
@@ -214,6 +230,8 @@ export type OwnedCollectionRecord = {
   title: string;
   description: string;
   icon?: string;
+  /** Set when this collection is scoped to a single workspace (visibility "workspace"). */
+  scopedToWorkspace?: string;
   lastUpdated: Date;
 };
 
@@ -224,6 +242,12 @@ export type EnabledCollectionInfo = {
   description: string;
   icon?: string;
   source: "private" | "public";
+  /**
+   * Set when this collection is scoped to one workspace. `source` deliberately stays
+   * "private" | "public" — a scoped collection is always the viewer's own, and widening `source`
+   * would break the two-valued comparator in the management UI's collection sort.
+   */
+  workspaceId?: string;
   lastUpdated: Date;
 };
 
@@ -235,6 +259,23 @@ export const DEFAULT_DOCUMENT_CONTENT_TYPE = "text/markdown";
 
 /** UTF-8 bytes of stored body; base64 overhead caps raw binary around 1 MB. */
 export const MAX_DOCUMENT_BODY_BYTES = 1_400_000;
+
+/**
+ * How many collections one workspace may hold. Every search fans out across the whole enabled set
+ * (see MAX_COLLECTION_FANOUT in library-read.ts), so an unbounded count would degrade every search
+ * in that workspace.
+ */
+export const MAX_SCOPED_COLLECTIONS_PER_WORKSPACE = 50;
+
+/**
+ * Whether an owned collection is readable by an agent acting in `workspaceId`. An unscoped
+ * collection is readable everywhere; a scoped one only in its own workspace. Passing no
+ * `workspaceId` (a caller with no workspace context) excludes every scoped collection.
+ */
+export function isVisibleInWorkspace(
+    scopedToWorkspace: string | undefined, workspaceId: string | undefined): boolean {
+  return !scopedToWorkspace || scopedToWorkspace === workspaceId;
+}
 
 // Map of file extensions (without the dot, lowercased) to MIME types we recognize.
 //

@@ -34,5 +34,12 @@ export default defineConfig({
   ],
   test: {
     include: ["__tests__/*.workers.test.ts"],
+    // A rejection crossing a Durable Object RPC stub boundary (createOwnedCollection's cap check)
+    // is reported independently from the awaited call the test asserts on, mirroring the same
+    // capability-rejection quirk documented in workshop-backend's vitest.integration.config.ts. Only
+    // this exact expected message is swallowed; every other unhandled error stays fatal.
+    onUnhandledError(error) {
+      if (error.message?.includes("too many Context collections")) return false;
+    },
   },
 });
