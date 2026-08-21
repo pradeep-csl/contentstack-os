@@ -67,6 +67,13 @@ export class UserLibraryDurableObject extends DurableObject<Cloudflare.Env> {
       record.title = summary.title;
       record.description = summary.description;
       record.icon = summary.icon;
+      // Only a scope *change* consults the budget. #propagate() (context-collection.ts) calls this
+      // on every metadata edit with the collection's existing, unchanged workspaceId; counting that
+      // record against its own workspace's budget would wrongly reject a routine edit once the
+      // workspace holds exactly the cap. Clearing a scope never needs the budget either.
+      if (summary.workspaceId && summary.workspaceId !== record.scopedToWorkspace) {
+        this.#assertScopeBudget(summary.workspaceId);
+      }
       // Carried explicitly: this method rebuilds the record from the summary, so omitting it would
       // silently drop the scope on the next metadata edit.
       record.scopedToWorkspace = summary.workspaceId;

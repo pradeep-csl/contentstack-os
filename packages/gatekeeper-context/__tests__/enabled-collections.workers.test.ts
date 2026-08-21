@@ -97,4 +97,43 @@ describe("enabled collection resolution", () => {
     await expect(library.createOwnedCollection("one-too-many", "No", "", undefined, "ws-1"))
       .rejects.toThrow(/too many/i);
   });
+
+  it("lets a metadata refresh re-propagate an unchanged scope at exactly the cap", async () => {
+    let accountId = crypto.randomUUID();
+    let library = LIBRARIES.get(LIBRARIES.idFromName(domainName(DOMAIN, accountId)));
+    for (let i = 0; i < MAX_SCOPED_COLLECTIONS_PER_WORKSPACE; i++) {
+      await library.createOwnedCollection(`scoped-${i}`, `C${i}`, "", undefined, "ws-1");
+    }
+
+    // #propagate() calls this on every metadata edit, carrying the collection's own unchanged
+    // workspaceId. It must not count against ws-1's own budget.
+    await expect(library.updateOwnedCollection("scoped-0", {
+      id: "scoped-0",
+      title: "C0 renamed",
+      description: "",
+      visibility: "workspace",
+      workspaceId: "ws-1",
+      documentCount: 1,
+      lastUpdated: new Date(),
+    })).resolves.toBeUndefined();
+  });
+
+  it("rejects moving a collection into a workspace that is already full", async () => {
+    let accountId = crypto.randomUUID();
+    let library = LIBRARIES.get(LIBRARIES.idFromName(domainName(DOMAIN, accountId)));
+    for (let i = 0; i < MAX_SCOPED_COLLECTIONS_PER_WORKSPACE; i++) {
+      await library.createOwnedCollection(`scoped-${i}`, `C${i}`, "", undefined, "ws-1");
+    }
+    await library.createOwnedCollection("unscoped", "Mine", "Private notes.");
+
+    await expect(library.updateOwnedCollection("unscoped", {
+      id: "unscoped",
+      title: "Mine",
+      description: "Private notes.",
+      visibility: "workspace",
+      workspaceId: "ws-1",
+      documentCount: 0,
+      lastUpdated: new Date(),
+    })).rejects.toThrow(/too many/i);
+  });
 });
