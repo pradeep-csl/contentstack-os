@@ -307,6 +307,19 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     }
   }
 
+  /**
+   * Return a workspace-scoped collection to private. Propagation carries the cleared `workspaceId`
+   * into the owner-library record, which is what actually re-enables the collection everywhere.
+   */
+  async clearWorkspaceScope(): Promise<void> {
+    let meta = this.storage.metadata.get();
+    if (meta.visibility !== "workspace") return;
+    this.storage.metadata.put({
+      ...meta, visibility: "private", workspaceId: undefined, lastUpdated: new Date(),
+    });
+    await this.#propagate();
+  }
+
   // --- Document CRUD ---
 
   #assertWebWritable(): void {

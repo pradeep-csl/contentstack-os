@@ -378,10 +378,31 @@ export interface ContextApi extends RpcTarget {
   /** Gates creating/editing public collections and offering Git-backed collections. */
   getViewerInfo(): Promise<{ isAdmin: boolean; supportsGitCollections: boolean }>;
 
+  /**
+   * `workspaceId` is required when `visibility` is "workspace" and rejected otherwise. Creating a
+   * "public" collection requires admin; "workspace" does not — the Workshop only offers workspaces
+   * the user owns, and a workspace id the creator does not own yields a collection no agent reads.
+   */
   createContextCollection(
     title: string, description: string, visibility: ContextCollectionVisibility, icon?: string,
-    source?: ContextCollectionContent["source"],
+    source?: ContextCollectionContent["source"], workspaceId?: string,
   ): Promise<ContextCollectionMetadata>;
+
+  /**
+   * The workspace this collection is scoped to, or null if it is not workspace-scoped. Readable by
+   * the owner (and, for a public collection, anyone) — an admin who does not own a workspace-scoped
+   * collection cannot read it, the same position they are in for private collections.
+   */
+  getContextCollectionWorkspace(collectionId: string): Promise<string | null>;
+
+  /**
+   * Drop the workspace scope, returning the collection to private.
+   *
+   * NOTE: the workspace's gatekeeper facet keeps its record that this collection's data was
+   * observed, so until the collection is scoped to that workspace again, adding a *new*
+   * collaborator to it will fail. Re-scoping restores it. Callers should confirm before invoking.
+   */
+  revokeContextCollectionWorkspace(collectionId: string): Promise<void>;
   updateContextCollection(collectionId: string, options: {
     title?: string; description?: string; icon?: string; branch?: string;
   }): Promise<void>;

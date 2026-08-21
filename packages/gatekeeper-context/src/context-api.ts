@@ -37,6 +37,7 @@ export async function loadEnabledContextCollections(
       description: collection.description,
       icon: collection.icon,
       source: "private",
+      workspaceId: collection.scopedToWorkspace,
       lastUpdated: collection.lastUpdated,
     });
   }
@@ -130,8 +131,14 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     visibility: ContextCollectionVisibility,
     icon?: string,
     source: ContextCollectionContent["source"] = "web",
+    workspaceId?: string,
   ): Promise<ContextCollectionMetadata> {
     if (visibility === "public") this.#assertAdmin();
+    if (visibility === "workspace") {
+      if (!workspaceId) throw new Error("A workspace must be chosen for a workspace collection.");
+    } else if (workspaceId) {
+      throw new Error("Only workspace-scoped collections accept a workspace id.");
+    }
     if (source !== "web" && source !== "git" && source !== "push") {
       throw new Error(`Unsupported collection source: ${source}`);
     }
@@ -146,6 +153,7 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
       title,
       description,
       visibility,
+      workspaceId,
       created: new Date(),
       lastUpdated: new Date(),
       documentCount: 0,
@@ -154,15 +162,18 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
         : { source },
     };
 
-    // Initialize before indexing; if this fails, nothing is reachable yet.
-    metadata = await this.#collection(id).initialize(metadata, this.domain, visibility === "private" ? this.accountId : "");
+    // Initialize before indexing; if this fails, nothing is reachable yet. A workspace collection
+    // has a creator-owner exactly like a private one — that is what keeps it writable by them.
+    metadata = await this.#collection(id).initialize(
+      metadata, this.domain, visibility === "public" ? "" : this.accountId);
 
-    // Private collections live in the owner's library; public ones live in the domain registry.
+    // Public collections live in the domain registry; private and workspace-scoped ones live in the
+    // owner's library, the latter carrying their scope.
     try {
       if (visibility === "public") {
         await this.#registry().addPublic(this.domain, metadataToSummary(metadata));
       } else {
-        await this.#userLib().createOwnedCollection(id, title, description, icon);
+        await this.#userLib().createOwnedCollection(id, title, description, icon, workspaceId);
       }
     } catch (err) {
       // Indexing failed; delete the now-unreachable collection.
@@ -232,6 +243,16 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
   async deleteContextCollection(collectionId: string): Promise<void> {
     await this.#assertCanWrite(collectionId);
     await this.#collection(collectionId).deleteSelf();
+  }
+
+  async getContextCollectionWorkspace(collectionId: string): Promise<string | null> {
+    await this.#assertCanRead(collectionId);
+    return (await this.#collection(collectionId).getMetadata()).workspaceId ?? null;
+  }
+
+  async revokeContextCollectionWorkspace(collectionId: string): Promise<void> {
+    await this.#assertCanWrite(collectionId);
+    await this.#collection(collectionId).clearWorkspaceScope();
   }
 
   async getContextCollectionMetadata(collectionId: string): Promise<ContextCollectionMetadata | null> {
