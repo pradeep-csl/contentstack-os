@@ -1,6 +1,13 @@
 # Workspace visibility for Context & Skills collections
 
-Status: approved design, not yet implemented.
+Status: approved design, revised after critical review. Not yet implemented.
+
+> **Revision note.** The first draft of this design introduced a per-workspace
+> `WorkspaceLibraryDurableObject` holding grants from any account, allowed any build-role member to
+> grant, and made `workspace` visibility *additive* (private **plus** shared). Review changed two
+> decisions — exclusive scoping (§4.1) and owner-only granting (§4.2) — and together they removed
+> the need for the new Durable Object altogether (§4.3). The result is roughly half the surface, no
+> deploy-time migration, and no trust placed in the workspace id crossing the frame boundary (§7.1).
 
 ## 1. Problem
 
@@ -11,7 +18,7 @@ Context Library collections have two visibilities today ([`context-types.ts`](..
 
 There is nothing in between. A team that wants curated knowledge scoped to one workspace — "anyone
 chatting in this workspace can draw on these documents and skills" — has to choose between keeping
-it to themselves and publishing it deployment-wide (which only an admin can do).
+it to themselves and publishing it deployment-wide, which only an admin can do.
 
 Worse, private collections actively **break collaboration**. The ambient Context capsule in a
 workspace is minted from the *workspace owner's* account, so the owner's private collections are
@@ -33,11 +40,11 @@ Two comments in the code anticipate this feature:
 ## 2. Goals
 
 1. A third visibility, **workspace**: a collection whose documents and skills are available to the
-   agent of one named workspace, for everyone chatting there.
+   agent of exactly one workspace, for everyone chatting there.
 2. Chosen at creation time from the existing New collection dialog, via a dropdown of workspaces.
 3. Create is blocked until a workspace is selected; with no eligible workspace the option is
    offered but disabled, so the only way forward is Only me / Everyone.
-4. Reversible: a grant can be removed, returning the collection to private.
+4. Reversible: the scope can be removed, returning the collection to private.
 
 ## 3. Non-goals
 
@@ -45,69 +52,99 @@ Two comments in the code anticipate this feature:
   account-scoped and carries no workspace context. Members' *agents* read the collection; members
   do not browse or edit it in the management UI. This is the whole of what was asked for
   ("anyone chatting in that workspace").
-- **No multi-workspace grants in the create dialog.** The schema supports many-to-many for free, so
-  this stays available later without a migration.
+- **Only the workspace owner can scope a collection to it** (§4.2). A build-role collaborator
+  cannot contribute one. This is a real loss, taken deliberately as the reversible direction.
+- **One workspace per collection.** Not a technical limit — see §4.4 — but the create dialog and the
+  data model both stay single-valued until there is a reason.
 - **No new content source.** Workspace collections use `web` / `git` / `push` exactly as private
-  ones do.
+  ones do; the axes are independent, as the `push` comment above says.
 - **No change to the `prohibitAllSharing` policy** or to any other gatekeeper.
 
 ## 4. Decisions taken, with rationale
 
-### 4.1 Grant model, not workspace ownership
+### 4.1 Exclusive scoping, not additive sharing
 
-A workspace collection is **stored exactly like a private one** — owned by its creator's Context
-account, indexed in their `UserLibraryDurableObject` — plus a *grant* recorded in a new
-per-workspace index. Visibility `"workspace"` means "mine, and readable by that workspace's agent".
+Visibility `"workspace"` means the collection is readable **only** through that one workspace's
+agent — not through the creator's other workspaces. It is a *narrowing* of private, not private
+plus an extra grant.
 
-Rejected alternative: making the collection *owned* by the workspace, editable by any build-role
-member and deleted with the workspace. That needs a workspace-owned index DO **and** a way for the
-gatekeeper to learn the caller's role in a workspace, which the account-scoped `ContextApi` has no
-access to — the host would have to assert per-workspace roles across the frame boundary. The grant
-model needs neither: the creator is the owner, so
-[the existing `#assertCanWrite` owner check](../../../packages/gatekeeper-context/src/context-api.ts)
-already admits exactly the right person, unchanged.
+The first draft had it additive (the collection stayed in the creator's enabled set everywhere, with
+the workspace added on top). Rejected: the dialog presents Only me / Workspace / Everyone as three
+mutually exclusive choices, and a user picking "Workspace" to scope project knowledge to a project
+would be surprised to find it feeding every other workspace they own. Narrower is also the right
+default for a new sharing surface.
 
-Consequence, accepted: only the creator can edit or delete the collection. Other members' agents
-read it.
+The creator retains full management access (they own it) — they simply cannot *read it through an
+agent* anywhere else.
 
-### 4.2 Index by workspace, not by account
+### 4.2 Only the workspace owner may scope a collection to it
 
-The grant lives in a per-workspace index rather than as a list on the creator's account. This gives
-a property worth having: if a *collaborator* grants their collection to the workspace, the owner's
-ambient facet picks it up too, because the facet resolves grants by workspace id. Membership, not
-ownership, is the access axis.
+The Workshop mints the ambient Context capsule from the **workspace owner's** account
+([`overseer.ts` `ensureAmbientCapsules`](../../../packages/workshop-backend/src/overseer.ts)), so the
+owner is the one account whose collections that workspace's agent reads. Restricting scoping to
+workspace owners makes "who can add knowledge" identical to "who controls the workspace".
 
-### 4.3 A DO index, not a KV snapshot
+This resolves three problems the first draft carried:
 
-Public collections are mirrored to KV because every user session in the domain reads the same one
-key ([`collection-kv.ts`](../../../packages/gatekeeper-context/src/collection-kv.ts)). A workspace
-grant is read by exactly one facet, so a strongly-consistent DO read is both cheaper and simpler —
-no snapshot rewrite, no single-key write contention, no staleness window.
+1. A workspace owner could not remove a collection someone else had pushed into their workspace.
+2. Scoping to a workspace whose owner has no Context account (the vendor is `optional` and they
+   never opted in, or `disabled`) wrote a grant that nothing would ever read — a silent no-op.
+3. Cross-user knowledge injection into someone else's agent was possible in principle (§7.1).
 
-### 4.4 The workspace id comes from facet inheritance
+### 4.3 Therefore: no new Durable Object
 
-The Context singleton is installed as a **Facet under the workspace's Overseer**, so inside
-`ContextGatekeeper` the inherited `this.ctx.id.toString()` *is* the workspace id.
-[`gatekeeper-scheduler` already relies on exactly this](../../../packages/gatekeeper-scheduler/src/scheduler.ts),
-including a smoke check that the inherited id is not the account id, with a workerd
-parent/facet-inheritance test behind it.
+Given §4.1 and §4.2, every scope relevant to a facet necessarily lives in **that facet's own
+account's library**: the facet is minted from the owner's account, and the owner is the only
+possible granter. So the scope is one field on the existing owned-collection record, and the
+per-workspace index the first draft proposed has nothing to hold.
 
-**This means the agent read path needs no `workshop-shared` change at all** — no new field on
-`AppUiContext`, no new method on `GatekeeperUser`. Zero kernel diff on the read side.
+Removed as a result: a new DO class, a `wrangler.jsonc` migration tag, a release-manifest golden
+update, dual-index writes with a rollback path, second-index propagation on every metadata edit, and
+a grant-cleanup step in `ContextAccount.revoke()`. This is the `CLAUDE.md` preference for "reusing
+existing mechanisms over adding parallel ones", arrived at the hard way.
 
-### 4.5 A host-filled dropdown, not an enumeration
+### 4.4 The scope is a field, so multi-workspace stays open
+
+`scopedToWorkspace?: string` is single-valued. Widening it later to a set is a local change to the
+owner record and the one filter that reads it — no new storage and no migration of existing
+records, which all have the field absent.
+
+### 4.5 The workspace id comes from facet inheritance
+
+The Context singleton is installed as a **Facet under the workspace's Overseer**
+([`overseer.ts:2663`](../../../packages/workshop-backend/src/overseer.ts) — `ctx.facets.get('gatekeeper<id>', …)`),
+so inside `ContextGatekeeper` the inherited `this.ctx.id.toString()` *is* the workspace id.
+
+Verified, not assumed:
+
+- [`gatekeeper-scheduler/__tests__/scheduler-scope.test.ts`](../../../packages/gatekeeper-scheduler/__tests__/scheduler-scope.test.ts)
+  asserts that sibling facet names under one parent inherit the parent's id, and that different
+  parents stay isolated.
+- The id the frontend calls a workspace id is the same string: workspaces are created with
+  `this.overseers.newUniqueId().toString()` and reopened with `idFromString`
+  ([`server.ts`](../../../packages/workshop-backend/src/server.ts)).
+
+**So the read path needs no `workshop-shared` change at all** — no new field on `AppUiContext`, no
+new method on `GatekeeperUser`. Zero kernel diff on the read side.
+
+Incidental finding: [`api.ts`](../../../packages/workshop-shared/src/api.ts) documents
+`GadgetMetadata.id` as "a url-safe base64 value chosen randomly", but a
+`DurableObjectId.toString()` is 64 hex characters. The comment is stale; worth a separate one-line
+fix.
+
+### 4.6 A host-filled dropdown, not an enumeration
 
 The requested UX is a dropdown of workspaces inside the New collection dialog. The gatekeeper app
 runs in an opaque-origin `srcDoc` frame and **cannot be handed the workspace list**: the host
 bridge's title lookup is documented as
 ["Deliberately a lookup, not an enumeration: the app learns nothing new"](../../../packages/workshop-frontend/src/SandboxedGatekeeperApp.tsx).
-Adding a `listWorkspaces()` to that bridge would relax the invariant for *every* gatekeeper app,
-including third-party ones such as the MCP portal — every connector UI could then enumerate the
-user's workspace names and ids. That is a bad trade for one dropdown.
+Adding a `listWorkspaces()` there would relax that invariant for *every* gatekeeper app, including
+third-party ones such as the MCP portal — every connector UI could then enumerate the user's
+workspace names and ids. A bad trade for one dropdown.
 
-So the control looks and behaves like a `<select>` in the form, but opening it asks the **host** to
-present the list; the app learns only the one workspace the user picks. The host already owns this
-class of interaction (`openWorkspace`, `resolveWorkspaceTitles`, `setPresenting`).
+So the control looks and behaves like a `<select>`, but opening it asks the **host** to present the
+list; the app learns only the one workspace the user picks. The host already owns this class of
+interaction (`openWorkspace`, `resolveWorkspaceTitles`, `setPresenting`).
 
 ## 5. Data model
 
@@ -117,150 +154,183 @@ class of interaction (`openWorkspace`, `resolveWorkspaceTitles`, `setPresenting`
 export type ContextCollectionVisibility = "public" | "private" | "workspace";
 ```
 
-`ContextCollectionMetadata` gains:
+- `ContextCollectionMetadata` gains `workspaceId?: string` — "the workspace this collection is
+  scoped to; set if and only if visibility is `workspace`".
+- `ContextCollectionSummary` gains the same field, so it survives the denormalized round trip
+  through `metadataToSummary` → `updateOwnedCollection`.
+- `OwnedCollectionRecord` (and the storage-side `OwnedRecord`) gain `scopedToWorkspace?: string`.
+- `EnabledCollectionInfo` gains `workspaceId?: string`. **Its `source` union is deliberately left
+  at `"private" | "public"`** — see §6.3.
+
+`ContextApi.createContextCollection` gains a trailing `workspaceId?: string`, required when
+`visibility === "workspace"` and rejected otherwise. Two methods are added for goal 4:
 
 ```ts
-/** The workspace this collection is granted to. Set if and only if visibility is "workspace". */
-workspaceId?: string;
-```
-
-This field is what lets the collection DO reach the right index during propagation and deletion.
-`ContextCollectionSummary` and `OwnedCollectionRecord` gain the same optional field, so the
-creator's collection list can render a "Workspace" badge without a second round trip.
-
-`EnabledCollectionInfo["source"]` gains `"workspace"`.
-
-`ContextApi.createContextCollection` gains a trailing `workspaceId?: string` parameter, required
-when `visibility === "workspace"` and rejected otherwise.
-
-Two methods are added to `ContextApi` for the reversibility goal:
-
-```ts
-/** The workspace this collection is granted to, if any. Owner/admin only. */
+/** The workspace this collection is scoped to, if any. Owner/admin-readable. */
 getContextCollectionWorkspace(collectionId: string): Promise<string | null>;
-/** Remove the workspace grant, returning the collection to private. Owner only. */
+/** Drop the workspace scope, returning the collection to private. Owner only. */
 revokeContextCollectionWorkspace(collectionId: string): Promise<void>;
 ```
 
-(Granting an *additional* workspace post-creation is deferred; see non-goals.)
+### 5.2 Audited comparison sites
 
-Widening `ContextCollectionVisibility` is a breaking widening for every comparison against it. The
-audited set is exhaustive:
+Widening `ContextCollectionVisibility` breaks every exhaustive comparison against it. This list is
+the audit, not a sketch:
 
 | Site | Change |
 |---|---|
-| [`context-api.ts` `createContextCollection`](../../../packages/gatekeeper-context/src/context-api.ts) — `visibility === "public"` admin gate | unchanged; workspace needs no admin |
-| same file — `initialize(..., visibility === "private" ? accountId : "")` | **must include `"workspace"`**: workspace collections have a creator-owner |
-| same file — index write branch | three-way: workspace writes owner library **and** workspace library |
-| [`context-collection.ts` `#propagate()`](../../../packages/gatekeeper-context/src/context-collection.ts) | three-way dispatch |
-| same file — `deleteSelf()` | three-way dispatch |
-| [`registry-do.ts` `syncPublic`](../../../packages/gatekeeper-context/src/registry-do.ts) — `existing.visibility !== summary.visibility` | unchanged (public-only path) |
-| [`collection-kv.ts` `metadataToSummary`](../../../packages/gatekeeper-context/src/collection-kv.ts) | carry `workspaceId` through |
-| [`ContextLibraryPage.tsx`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) — `isPublic = metadata.visibility === "public"` and its label | add the workspace case |
+| [`context-api.ts`](../../../packages/gatekeeper-context/src/context-api.ts) `createContextCollection` — `visibility === "public"` admin gate | unchanged; workspace needs no admin |
+| same — `initialize(..., visibility === "private" ? accountId : "")` | **must include `"workspace"`**: scoped collections have a creator-owner. Missing this makes the collection ownerless and unmanageable. |
+| same — index-write branch | `"workspace"` follows the private path (owner library), with `scopedToWorkspace` set |
+| [`context-collection.ts`](../../../packages/gatekeeper-context/src/context-collection.ts) `#propagate()` and `deleteSelf()` | **unchanged.** Both branch `public` vs. everything-else, and workspace belongs with private. `workspaceId` rides through `metadataToSummary`, so no new dispatch. |
+| [`registry-do.ts`](../../../packages/gatekeeper-context/src/registry-do.ts) `syncPublic` | unchanged (public-only path) |
+| [`collection-kv.ts`](../../../packages/gatekeeper-context/src/collection-kv.ts) `metadataToSummary` | carry `workspaceId` through |
+| [`user-library.ts`](../../../packages/gatekeeper-context/src/user-library.ts) `updateOwnedCollection` | persist `scopedToWorkspace` from the summary — it rebuilds fields from the summary, so omitting this **silently drops the scope on the next metadata edit** |
+| [`ContextLibraryPage.tsx:1159`, `:1240-1252`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) | see §6.2 — a correctness fix, not cosmetics |
+| [`ContextLibraryPage.tsx:310`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) | badge from the new `workspaceId`, see §6.3 |
+| [`ContextLibraryPage.tsx:987`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) sort | **unchanged, and must stay that way** — see §6.3 |
 
-### 5.2 New `WorkspaceLibraryDurableObject` (`workspace-library.ts`)
-
-One instance per `(sharingDomain, workspaceId)`, addressed by the existing
-[`domainName(domain, workspaceId)`](../../../packages/gatekeeper-context/src/domain.ts) helper
-(NUL-separated; a workspace id is hex, so no escaping concern). Modelled directly on
-[`registry-do.ts`](../../../packages/gatekeeper-context/src/registry-do.ts):
-
-```ts
-grantedCollections: collection<ContextCollectionSummary>()({ primaryKey: "id" })
-```
-
-Methods: `addGranted(summary)`, `removeGranted(id)`, `syncGranted(summary)`, `hasGranted(id)`,
-`listGranted()`, `getEnabledCollections()`. No KV snapshot (§4.3), so `syncGranted` writes
-unconditionally — the conditional-rewrite dance in `syncPublic` exists only to protect a shared KV
-key and has no analogue here.
+`initialize()` itself is visibility-agnostic (verified), so it needs no change.
 
 ## 6. Read path
 
-`ContextGatekeeper` gains:
+### 6.1 One parameterized resolver
 
-```ts
-#workspaceId(): string   // this.ctx.id.toString(), with the scheduler's smoke check
-```
+`UserLibraryDurableObject.getEnabledCollections(domain, workspaceId?)` filters owned records:
 
-and a new resolver beside
-[`accountEnabledCollections`](../../../packages/gatekeeper-context/src/library-read.ts):
+- `scopedToWorkspace` absent → always enabled.
+- `scopedToWorkspace === workspaceId` → enabled.
+- `scopedToWorkspace` set to anything else (or `workspaceId` omitted) → **excluded**.
 
-```ts
-export function workspaceEnabledCollections(
-    userLibraries, workspaceLibraries, domain, accountId, workspaceId): ResolveEnabledCollections
-```
+Then public collections are added as today, owned still winning on overlap. Passing no
+`workspaceId` therefore yields the pre-existing behavior minus scoped collections, which is exactly
+right for any non-workspace caller.
 
-returning own private + all public + everything granted to this workspace. Owned wins on overlap,
-matching `getEnabledCollections`'s existing rule that private is never downgraded.
+[`accountEnabledCollections`](../../../packages/gatekeeper-context/src/library-read.ts) gains the
+same optional argument and forwards it. No second resolver function — the injection point the
+existing comment promised is enough.
 
-**Three call sites, not one.** All of these currently resolve the enabled set and must use the
-workspace-aware resolver:
+`ContextGatekeeper` gains `#workspaceId()` returning `this.ctx.id.toString()`, with the scheduler's
+smoke check that the inherited id is not the account id.
+
+### 6.2 Three call sites, not one
+
+All three of these resolve the enabled set and must pass the workspace id:
 
 1. `#newReadSession()` → `startSession()` — search / list / read.
 2. `getAgentCatalog()` — discovery metadata.
 3. `#listSlashCommands()` via `loadEnabledContextCollections()` — **miss this one and workspace
    Agent Skills silently fail to appear as slash commands.**
 
-`loadEnabledContextCollections(env, domain, userLibrary)` therefore takes an optional workspace
-library. Its other caller, `ContextApi.listEnabledContextCollections()`, is account-scoped and
-passes nothing — correct, since the creator already sees their own collection through their user
-library.
+`loadEnabledContextCollections(env, domain, userLibrary, workspaceId?)` takes the same optional
+argument, and the distinction matters in both directions:
+
+- The three facet call sites **pass it** → scoped collections belonging to other workspaces are
+  filtered out.
+- `ContextApi.listEnabledContextCollections()` **omits it deliberately** and instead includes all
+  owned records, scoped ones among them, carrying `workspaceId` so the UI can badge them. This is
+  the management listing; hiding the creator's own scoped collection from their own library page
+  would be a bug, not exclusivity.
+
+### 6.3 Why `EnabledCollectionInfo.source` stays two-valued
+
+It would be natural to add `source: "workspace"`. Don't:
+
+- [`:987`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) sorts with
+  `if (a.source !== b.source) return a.source === "public" ? -1 : 1`. That is a valid comparator for
+  two values and an **invalid** one for three — `compare(private, workspace)` and
+  `compare(workspace, private)` both return `1`, making the order implementation-defined. A silent
+  regression, unlike the loud ones.
+- Under §4.2 a scoped collection is always the viewer's own, so `"private"` remains truthful.
+  `workspaceId` carries the extra bit, and `:310` badges from that.
+
+Catalog ordering is likewise unaffected: scoped collections sit inside the existing owned block,
+which already precedes public ones, so the Workshop's tail-dropping `AgentCatalog` clamp keeps
+behaving as it does today.
+
+### 6.4 Per-workspace cap
+
+`MAX_SCOPED_COLLECTIONS_PER_WORKSPACE = 50`, enforced in the user library when scoping. Every search
+fans out across the whole enabled set at `MAX_COLLECTION_FANOUT = 8`, so an unbounded scope count
+would degrade every search in that workspace. `gatekeeper-scheduler` sets the precedent with
+`MAX_ENABLED_SCHEDULES_PER_WORKSPACE`.
 
 ## 7. Observers and information flow
 
 [`docs/observers.md`](../../observers.md) §9.2 classifies the Context Library singleton as
-**Strategy C** (data-set tracking), with collections as the data sets and this access oracle:
-"public in the sharing domain, or privately owned by the observer's Context account".
+**Strategy C** (data-set tracking), with collections as the data sets and this oracle: "public in
+the sharing domain, or privately owned by the observer's Context account".
 
 This change adds a **third ground for access that is structural rather than an oracle**: a
-collection granted to workspace W is accessible to every observer of W's facet, because an observer
+collection scoped to workspace W is accessible to every observer of W's facet, because an observer
 *is* a collaborator on W by construction. There is nothing to ask a verifier.
 
-So:
-
-- `ContextObserverTracker` learns which of the collections in play are granted to its own
-  workspace, and **omits those from verifier queries** in both `prepareObservation()` and
-  `addObserver()`. The grant set is resolved by the facet, which knows its workspace id.
+- `ContextObserverTracker` learns which collections in play are scoped to its own workspace and
+  **omits those from verifier queries** in both `prepareObservation()` and `addObserver()`. The set
+  comes from the same owner-library read the enabled set uses.
 - [`ContextVerifier.hasCollectionAccess`](../../../packages/gatekeeper-context/src/library-gatekeeper.ts)
-  is **unchanged**. It has no workspace context and needs none; a comment will record that
-  workspace grants are resolved facet-side rather than through the verifier.
-- Workspace-granted reads are still **recorded as observed**. If the grant is later revoked, a new
-  observer is again checked and rejected. The data genuinely was revealed, so the strict behavior is
-  correct.
-- The Strategy C row in `docs/observers.md` §9.2 is updated, since it enumerates the grounds.
+  is **unchanged**. It has no workspace context and needs none; a comment records that scoped
+  collections are resolved facet-side.
+- Scoped reads are still **recorded as observed** — see §7.2.
+- The Strategy C row in `docs/observers.md` §9.2 gains the third ground.
 
-This is what dissolves the collaboration deadlock in §1: a workspace collection never excludes a
+This is what dissolves the collaboration deadlock in §1: a workspace collection never excludes that
 workspace's own collaborators.
 
-### 7.1 Trust boundary, stated explicitly
+### 7.1 No trust in the workspace id — structurally
 
-The gatekeeper **trusts the `workspaceId` the app passes at creation.** It cannot verify workspace
-membership: only the Workshop knows it.
+The app passes a `workspaceId` the gatekeeper cannot verify, since only the Workshop knows workspace
+membership. Under §4.1 + §4.2 **this requires no trust at all**: a facet reads only *its own
+account's* library, so a record scoped to a workspace the creator does not own is read by nobody. A
+false workspace id does not inject anything anywhere — it makes the collection unreadable
+everywhere, visible in the UI as a scope whose title will not resolve (§8).
 
-- A workspace id is a 64-hex DO id, unguessable, and the host will only offer workspaces where the
-  user has **build** access.
-- Residual risk: a member who knows a workspace id could grant a collection into it. The
-  consequence is knowledge *injection* into that workspace's agent — not data exfiltration, since a
-  grant only ever *adds* readable content. Context documents are already presented to the agent as
-  untrusted data, which is why the deployment-wide "Everyone" tier is admin-gated.
-- Restricting the host picker to build-access workspaces is the mitigation. The stronger version —
-  the host asserting the workspace per-open, the way `isAdmin` is asserted in `AppUiContext` — is
-  available later **without a data migration**, since the stored grant is identical either way.
+Restricting the host picker to owned workspaces is therefore **UX, not a security control**: it
+keeps users from creating inert collections. The security property holds even if the frame lies.
 
-## 8. Write path and lifecycle
+### 7.2 Revoking a scope blocks new collaborators — and re-scoping restores it
 
-`#assertCanRead` / `#assertCanWrite` in
-[`context-api.ts`](../../../packages/gatekeeper-context/src/context-api.ts) need **no change**: the
-creator owns the collection, so the existing owner check admits exactly the right person.
+Observed-collection keys persist in the facet's storage, and they must: the workspace's chat log
+already contains that collection's data, and a collaborator added later can read the log. Self-
+healing the keys when a scope is dropped would leak exactly what the mechanism exists to prevent.
 
-| Operation | Behavior |
+So after a revoke, `addObserver` consults the verifier for that collection and **throws for any new
+collaborator** — including collaborators with no connection to it, and with an error naming a
+collection they cannot see.
+
+The saving grace, which the UI should say out loud: **re-scoping the collection to that workspace
+restores collaborator-adding immediately**, because the tracker skips the verifier again. The state
+is recoverable, mirroring the deliberately reversible lazy-revocation model in
+[`sharing.ts`](../../../packages/workshop-backend/src/sharing.ts).
+
+Required, therefore:
+
+- A confirming dialog on revoke that states the consequence plainly ("New collaborators cannot be
+  added to *Q3 Launch Plan* until this collection is re-scoped to it or the workspace stops using
+  it").
+- The thrown message in `context-observers.ts` reworded to name the cause and the remedy, since it
+  surfaces in the Workshop's sharing UI.
+
+### 7.3 Admins cannot moderate workspace collections
+
+`#assertCanWrite` is `owns || (isPublic && isAdmin)`, so a deployment admin can edit public
+collections but not another user's workspace-scoped one — the same position they are in for private
+collections. Stated rather than stumbled into; no change proposed.
+
+## 8. Lifecycle
+
+`#assertCanRead` / `#assertCanWrite` need **no change**: the creator owns the collection, so the
+existing owner check admits exactly the right person.
+
+| Event | Behavior |
 |---|---|
-| `createContextCollection(visibility: "workspace", workspaceId)` | Reject a missing/blank `workspaceId`. `initialize()` with the creator as `ownerAccountId`. Write **both** the owner library and the workspace library. On either index write failing, delete the unreachable collection — same rollback the public path already performs. |
-| metadata edit (`#propagate()`) | Refresh the denormalized summary in **both** indexes. |
-| `deleteContextCollection` / `deleteSelf()` | `removeOwnedCollection` **and** `removeGranted`. |
-| `revokeContextCollectionWorkspace` | `removeGranted`, clear `metadata.workspaceId`, set visibility `private`, propagate. |
-| account `revoke()` | Owned collections are deleted via `deleteForRevokedOwner()`, which wipes storage without touching indexes ("the user-library index is cleared separately"). **A workspace grant is not in the user library**, so `ContextAccount.revoke()` must additionally remove each owned collection's grant from its workspace library before wiping, or the workspace keeps a dangling summary. This is the one lifecycle hole a naive implementation would leave. |
-| workspace deleted | The facet disappears with the Overseer; the `WorkspaceLibraryDurableObject` becomes unreachable and its grants inert. The collection itself survives in the creator's library. No orphaned content — the deliberate payoff of the grant model over workspace ownership. |
+| create with `visibility: "workspace"` | Reject a missing/blank `workspaceId`; enforce §6.4's cap. `initialize()` with the creator as `ownerAccountId`. One index write (owner library), with `scopedToWorkspace` set. No second index, so no rollback path. |
+| metadata edit | `#propagate()` unchanged; `workspaceId` rides through the summary. |
+| delete collection | unchanged. |
+| `revokeContextCollectionWorkspace` | clear `scopedToWorkspace` and `metadata.workspaceId`, set visibility `private`, propagate. See §7.2 for the observer consequence. |
+| account `revoke()` | **unchanged.** The scope is a field on the owned record and dies with it — the dangling-grant cleanup the first draft needed no longer exists. |
+| workspace deleted | The facet disappears with the Overseer. The collection survives, still owned and editable, but readable by no agent. `resolveWorkspaceTitles` already returns `null` for a workspace the user can no longer see, so the settings pane shows "Workspace no longer available" with the revoke action beside it. |
+| workspace's owner has no Context account | Cannot arise: under §4.2 the granter is the owner, and they are using the Context UI. |
 
 ## 9. UI
 
@@ -274,88 +344,100 @@ One method on `GatekeeperAppHostImpl`:
 pickWorkspace(): Promise<{ id: string; title: string } | null>
 ```
 
-Backed by a Workshop-owned modal fed by the existing workspace listing (`listGadgets()`, surfaced
-in the frontend as the sidebar workspace list), filtered to build access — the listing already
-carries the viewer's effective `role` per workspace (`api.ts`: "The owner is always `build`"), so
-the filter needs no new backend data. Returns `null` on cancel.
+Backed by a Workshop-owned modal over the existing workspace listing (`listGadgets()`, surfaced as
+the sidebar list), filtered to workspaces the user **owns** — which is exactly
+`GadgetMetadata.owner === undefined` ([`api.ts`](../../../packages/workshop-shared/src/api.ts):
+"Presence of this field indicates the user is a collaborator, not the owner"). Note that `role` is
+*not* the right filter: the owner is always `build`, but so is a build-role collaborator. No new
+backend data is needed. Returns `null` on cancel.
 
 The create view is a **full-pane view, not a modal**, so the app is not in `setPresenting` overlay
-mode when the picker opens. If it ever is, the host declines rather than rendering the modal beneath
-a full-viewport iframe.
+mode when the picker opens. If it ever is, the host declines rather than rendering a modal beneath a
+full-viewport iframe.
 
 ### 9.2 The app ([`ContextLibraryPage.tsx`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx))
 
-- A third entry in `VISIBILITY_OPTIONS`: **Workspace** — "Available to everyone chatting in one
-  workspace." Shown to all users (unlike "Everyone", which stays admin-only).
-- Selecting it reveals the workspace control: `Choose workspace…` → host picker → the chosen title,
-  with a change affordance.
+- A third `VISIBILITY_OPTIONS` entry: **Workspace** — "Available to everyone chatting in one
+  workspace, and only there." The copy must convey exclusivity (§4.1). Offered to all users, unlike
+  "Everyone".
+- Selecting it reveals the control: `Choose workspace…` → host picker → chosen title with a change
+  affordance.
 - **Create collection stays disabled** while visibility is `workspace` and nothing is chosen.
-- The eligible-workspace count comes from the same host call; with none, the option renders disabled
-  with the hint "Create a workspace first".
-- The collection's settings pane shows the workspace chip, its title resolved live through the
-  existing `resolveWorkspaceTitles` so it never renders a stale snapshot, plus a remove-grant
-  action.
+- With no owned workspace the option renders disabled, hinted "Create a workspace first".
+- **The settings pane's Source/Access fields must stop being binary.** Today
+  [`:1240-1252`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx) renders
+  `isPublic ? … : …`, which would label a workspace-scoped collection **"You" / "Private to you"** —
+  telling the creator a collection is private while it feeds another workspace's agent. This is a
+  correctness fix, not a cosmetic one. It becomes three-valued, showing the workspace title
+  (resolved live through `resolveWorkspaceTitles`, `null` → "no longer available") plus the revoke
+  action from §7.2.
+- List rows badge from `EnabledCollectionInfo.workspaceId` at
+  [`:310`](../../../packages/gatekeeper-context/app/ContextLibraryPage.tsx); the sort at `:987` is
+  left alone (§6.3).
 
 ## 10. Deploy and migration
 
-- **No `durable_objects` binding.** This worker reaches its DO classes through `ctx.exports` and
-  declares none — `wrangler.jsonc` says so explicitly. What a new class needs is a **migration**,
-  and it must be a **new tag**: the existing `migrations` array has a single `v0` entry listing four
-  `new_sqlite_classes`, and a deployed tag must never be edited. So append
-  `{ "tag": "v1", "new_sqlite_classes": ["WorkspaceLibraryDurableObject"] }`. Multi-tag histories
-  are already normal here — other workers in the golden manifest carry two.
-- That changes the release manifest, which copies the migration history verbatim
-  (`manifest-lib.ts`) and is covered by a golden-file test. Regenerate with
-  `UPDATE_GOLDEN=1 node --test scripts/release/manifest-lib.test.ts` and review the golden diff.
-  (Note: the root `CLAUDE.md` cites `scripts/release-manifest.test.js` for this, which no longer
-  exists — the path above is the real one. Worth fixing in `CLAUDE.md` separately.)
-- The gatekeeper app bundle is generated into `src/generated/app.txt` by `build-app.mjs`; it is
+- **No `wrangler.jsonc` change, no migration tag, no release-manifest change.** §4.3 removed the new
+  DO class; this worker declares no `durable_objects` binding (it reaches DOs via `ctx.exports`) and
+  gains no new class, so the manifest's verbatim migration history is untouched and the golden-file
+  test stays green.
+- The gatekeeper app bundle is generated into `src/generated/app.txt` by `build-app.mjs` and is
   committed, so it must be rebuilt as part of the change.
-- **No data migration.** Existing collections keep `visibility: "private" | "public"` and no
-  `workspaceId`. Nothing is backfilled and no stored record changes shape.
+- **No data migration.** Existing collections keep `visibility: "private" | "public"` with
+  `scopedToWorkspace` absent, which §6.1 reads as "always enabled" — their behavior is byte-for-byte
+  what it is today.
 
 ## 11. Testing
 
-- `WorkspaceLibraryDurableObject`: grant / revoke / sync / list.
-- `workspaceEnabledCollections`: union and precedence (owned beats public beats granted; a
-  collection both owned and granted resolves as owned).
-- `ContextObserverTracker`: a granted collection skips verifier queries and never excludes an
-  observer; the same collection after revocation *does* consult the verifier and *does* reject.
-- Create/delete/propagate keep the two indexes consistent, including the rollback path when the
-  second index write fails.
-- `revoke()` clears grants — the §8 hole.
-- The facet's inherited workspace id is not the account id (mirroring the scheduler's smoke check).
+- `getEnabledCollections(domain, workspaceId?)`: unscoped always enabled; scoped enabled only for
+  its own workspace; scoped excluded when `workspaceId` is omitted; public still added; owned still
+  wins on overlap.
+- Exclusivity end to end: a collection scoped to W is absent from workspace X's session, catalog,
+  **and slash commands** (all three of §6.2).
+- `listEnabledContextCollections()` still returns the creator's scoped collections (§6.2's other
+  direction).
+- `updateOwnedCollection` preserves `scopedToWorkspace` across a metadata edit — the silent-drop bug
+  in §5.2.
+- `ContextObserverTracker`: a scoped collection skips verifier queries and never excludes an
+  observer; after revoke the verifier **is** consulted and rejects; after re-scoping,
+  `addObserver` succeeds again (§7.2).
+- The §6.4 cap rejects the 51st scope.
+- The facet's inherited workspace id is not the account id.
+- Regression guard: with no scoped collections anywhere, every read path returns exactly what it
+  returns today.
 - `pnpm lint` (oxlint + recursive `tsc --noEmit`) and `pnpm build` for the touched packages.
 
 ## 12. File inventory
 
-**`packages/gatekeeper-context`** (the bulk):
-`src/context-types.ts`, `src/workspace-library.ts` (new), `src/context-api.ts`,
-`src/context-collection.ts`, `src/library-read.ts`, `src/library-gatekeeper.ts`,
-`src/context-observers.ts`, `src/collection-kv.ts`, `src/index.ts` (export the new DO),
-`app/ContextLibraryPage.tsx`, `app/bridge.ts`, `wrangler.jsonc` (migration tag only),
-`src/generated/app.txt` (regenerated).
+**`packages/gatekeeper-context`:** `src/context-types.ts`, `src/user-library.ts`,
+`src/context-api.ts`, `src/library-read.ts`, `src/library-gatekeeper.ts`, `src/context-observers.ts`,
+`src/collection-kv.ts`, `app/ContextLibraryPage.tsx`, `app/bridge.ts`, `src/generated/app.txt`
+(regenerated). `src/context-collection.ts` is expected to need **no change** — verify, don't assume.
 
-**`packages/workshop-frontend`** (host picker only):
-`src/SandboxedGatekeeperApp.tsx`, plus the picker modal component and its workspace-list source.
+**`packages/workshop-frontend`:** `src/SandboxedGatekeeperApp.tsx`, plus the picker modal and its
+workspace-list source.
 
-**`packages/workshop-shared`**: none. The read path rides on facet id inheritance (§4.4), and the
+**`packages/workshop-shared`:** none. The read path rides on facet id inheritance (§4.5) and the
 picker is a frontend host-bridge concern, so the kernel API is untouched.
 
-**Docs**: `docs/observers.md` §9.2 (the Strategy C row).
+**No new files, no new Durable Object, no `wrangler.jsonc` change.**
+
+**Docs:** `docs/observers.md` §9.2 (Strategy C row); optionally the stale `GadgetMetadata.id`
+comment in `api.ts` (§4.5) and the stale golden-manifest command in the root `CLAUDE.md`
+(`scripts/release-manifest.test.js` → `scripts/release/manifest-lib.test.ts`).
 
 ## 13. Suggested sequencing
 
-Grouped so the security-relevant gatekeeper internals can be reviewed apart from the UI, per the
-`workshop-backend` guidance in `CLAUDE.md`.
+Grouped so the security-relevant internals can be reviewed apart from the UI.
 
-1. Types + `WorkspaceLibraryDurableObject` (exported from `src/index.ts` beside the other three
-   DOs) + the `v1` migration tag + manifest golden.
-2. Write path: create / propagate / delete / revoke keeping both indexes consistent.
-3. Read path: the resolver and all three facet call sites.
-4. Observers: skip verifier queries for granted collections; update `docs/observers.md`.
+1. Types + `getEnabledCollections` filter + the §6.4 cap + `updateOwnedCollection` persistence.
+2. Write path: create with a scope, revoke a scope.
+3. Read path: thread the workspace id through all three facet call sites.
+4. Observers: skip verifier queries for scoped collections; reword the throw; update
+   `docs/observers.md`.
 5. Host bridge `pickWorkspace()` + the Workshop picker modal.
-6. The app: third radio, dropdown, disabled-Create validation, settings-pane chip and revoke.
+6. The app: third radio, dropdown, disabled-Create validation, the three-valued Source/Access
+   fields, the list badge, and the revoke confirmation.
 
-Steps 1–4 are shippable without 5–6: the tier exists and works, just with no way to create one from
-the UI yet.
+Steps 1–4 are shippable without 5–6: the tier exists and works, with no way to create one from the
+UI yet.
