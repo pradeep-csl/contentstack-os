@@ -526,7 +526,7 @@ its resource types.
 | **confluence** | Space | **C** | Verify space access; track observed pages and blog posts because content restrictions may be narrower. |
 | **confluence** | Page / Blog Post | **C** | Verify bound-content access; track observed child pages because they may have stricter restrictions than their parent. |
 | **zoominfo** | Account | **A** | Always throw. The whole-account binding exposes licensed, entitlement-dependent and account-specific intelligence, and ZoomInfo provides no ACL oracle proving another account can read every historical result. |
-| **context** | Context Library singleton | **C** | Track observed collections; verify each is public in the sharing domain, privately owned by the observer's Context account, or scoped to *this* workspace — the last needs no verifier, since an observer is a collaborator on this workspace by construction. |
+| **context** | Context Library singleton | **C** | Track observed collections; verify each is public in the sharing domain, privately owned by the observer's Context account, or scoped to *this* workspace — the last needs no verifier, since an observer is a collaborator on this workspace by construction, and is the one revocable ground, so an observation resting on it is rechecked until the scope is gone. |
 
 ### 9.3 The "broad binding" lens
 

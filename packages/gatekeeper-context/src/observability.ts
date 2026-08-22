@@ -6,6 +6,8 @@ export type ContextObservabilityFields = {
   bodyBytes: number;
   branch: string;
   collectionId: string;
+  /** Several collection ids, comma-separated. Ids only, never titles or document content. */
+  collectionIds: string;
   commit: string;
   deleted: number;
   dir: string;

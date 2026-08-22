@@ -195,6 +195,95 @@ describe("ContextObserverTracker", () => {
     expect(second.calls).toEqual([]);
   });
 
+  it("re-verifies observers once a scope the observation rested on is revoked", async () => {
+    // One tracker per operation, as in production: a tracker memoizes the scoped set, so a later
+    // operation is what sees a revocation.
+    let scoped = new Set(["project"]);
+    let kv = makeKv();
+    let resolutions = 0;
+    let trackerFor = () => new ContextObserverTracker(kv, "workshop.example", async () => {
+      resolutions++;
+      return scoped;
+    });
+    let collaborator = verifier([]);
+    await trackerFor().addObserver("collaborator", collaborator.api);
+
+    // Read while scoped: admitted with no verifier query, and remembered as resting on the scope.
+    expect(await observe(trackerFor(), ["project"])).toBeUndefined();
+    expect(kv.get("observedCollection:project")).toBe("observed-scoped");
+    expect(collaborator.calls).toEqual([]);
+
+    // Revoked. The collection is private again, so its owner's library re-enables it in every
+    // workspace — including this one. The collaborator must stop seeing what it adds from here on.
+    scoped.delete("project");
+    let check = await trackerFor().prepareObservation(["project"]);
+    expect(check.excludeObservers).toEqual(["collaborator"]);
+    expect(collaborator.calls.map(call => call.collectionId)).toEqual(["project"]);
+    check.commit();
+    // The verifier has now spoken for it, so its ground is ownership and the recheck stops.
+    expect(kv.get("observedCollection:project")).toBe("observed");
+    // Two resolutions: the two reads. The admission needed none — nothing was observed yet.
+    expect(resolutions).toBe(2);
+
+    let settled = await trackerFor().prepareObservation(["project"]);
+    expect(settled.excludeObservers).toBeUndefined();
+    expect(collaborator.calls).toHaveLength(1);
+    // No third resolution: an observation on a monotone ground costs the read path nothing again.
+    expect(resolutions).toBe(2);
+  });
+
+  it("keeps skipping the verifier while the scope stands, however often it is read", async () => {
+    let kv = makeKv();
+    let trackerFor = () => new ContextObserverTracker(
+      kv, "workshop.example", async () => new Set(["project"]));
+    let collaborator = verifier([]);
+    await trackerFor().addObserver("collaborator", collaborator.api);
+
+    for (let i = 0; i < 3; i++) {
+      expect(await observe(trackerFor(), ["project"])).toBeUndefined();
+      expect(kv.get("observedCollection:project")).toBe("observed-scoped");
+    }
+    // Still scoped, so still nobody to ask. Rechecking costs one scoped-set resolution, which in
+    // production is a projection of the enabled map the session already resolved, not a new read.
+    expect(collaborator.calls).toEqual([]);
+  });
+
+  it("records the scope as the ground when an observer is admitted after the read", async () => {
+    // The read comes first here, so it is the admission — not the observation — that rests on the
+    // scope. Without recording it there, a later revoke would leave this observer reading on.
+    let scoped = new Set(["project"]);
+    let kv = makeKv();
+    let trackerFor = () => new ContextObserverTracker(kv, "workshop.example", async () => scoped);
+    await observe(trackerFor(), ["project"]);
+    expect(kv.get("observedCollection:project")).toBe("observed");
+
+    let collaborator = verifier([]);
+    await trackerFor().addObserver("collaborator", collaborator.api);
+    expect(kv.get("observedCollection:project")).toBe("observed-scoped");
+
+    scoped.delete("project");
+    expect(await observe(trackerFor(), ["project"])).toEqual(["collaborator"]);
+  });
+
+  it("resolves no scope when there is nothing left to check", async () => {
+    let kv = makeKv();
+    let resolutions = 0;
+    let trackerFor = () => new ContextObserverTracker(kv, "workshop.example", async () => {
+      resolutions++;
+      return new Set<string>();
+    });
+    // No observers: nothing to exclude, so neither the verifier nor the scoped set is consulted.
+    await observe(trackerFor(), ["shared"]);
+    expect(resolutions).toBe(0);
+
+    // Observed and unscoped: the fast path stays fast for every later read of it.
+    await trackerFor().addObserver("collaborator", verifier(["shared"]).api);
+    let repeat = await trackerFor().prepareObservation(["shared"]);
+    expect(repeat.pendingCollections).toEqual([]);
+    expect(repeat.excludeObservers).toBeUndefined();
+    expect(resolutions).toBe(1);
+  });
+
   it("still checks unscoped collections when a scope resolver is present", async () => {
     let tracker = new ContextObserverTracker(
       makeKv(), "workshop.example", async () => new Set(["project"]));
