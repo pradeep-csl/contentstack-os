@@ -930,62 +930,70 @@ function CreateCollectionView({
                     description: optionDescription,
                   }) => {
                     const selected = visibility === value;
+                    // The workspace option owns its chooser, so its card is a wrapper around the
+                    // radio rather than the radio itself — a button cannot contain another button.
+                    const showChooser = selected && value === "workspace";
                     return (
-                      <button
+                      <div
                         key={value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => setVisibility(value)}
-                        className={`press flex items-start gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-[border-color,background-color] duration-150 ease-out ${
+                        className={`rounded-xl border-2 transition-[border-color,background-color] duration-150 ease-out ${
                           selected
                             ? "border-kumo-brand/50 bg-kumo-brand/[0.05]"
                             : "border-kumo-line bg-kumo-base hover:border-kumo-ring/60"
                         }`}
                       >
-                        <Icon
-                          size={16}
-                          weight={selected ? "fill" : "regular"}
-                          className={`mt-0.5 shrink-0 ${selected ? "text-kumo-brand" : "text-kumo-subtle"}`}
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
-                            {optionTitle}
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => setVisibility(value)}
+                          className="press flex w-full items-start gap-3 rounded-[10px] px-3 py-2.5 text-left"
+                        >
+                          <Icon
+                            size={16}
+                            weight={selected ? "fill" : "regular"}
+                            className={`mt-0.5 shrink-0 ${selected ? "text-kumo-brand" : "text-kumo-subtle"}`}
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13px] leading-[18px] font-medium tracking-[-0.25px] text-kumo-default">
+                              {optionTitle}
+                            </span>
+                            <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+                              {optionDescription}
+                            </span>
                           </span>
-                          <span className="mt-0.5 block text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
-                            {optionDescription}
+                          <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                            {selected && (
+                              <Check size={13} weight="bold" className="text-kumo-brand" />
+                            )}
                           </span>
-                        </span>
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
-                          {selected && (
-                            <Check size={13} weight="bold" className="text-kumo-brand" />
-                          )}
-                        </span>
-                      </button>
+                        </button>
+                        {showChooser ? (
+                          // Indented to the label column, so it reads as part of this option.
+                          <div className="pb-2.5 pl-[42px] pr-3">
+                            <button
+                              type="button"
+                              onClick={chooseWorkspace}
+                              className="press flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-kumo-line bg-kumo-base px-3 text-left text-[13px] leading-[18px] tracking-[-0.25px] transition-colors hover:border-kumo-ring/60"
+                            >
+                              <span
+                                className={`truncate ${workspace ? "text-kumo-default" : "text-kumo-placeholder"}`}
+                              >
+                                {workspace ? workspace.title : "Choose workspace…"}
+                              </span>
+                              <CaretDown size={12} className="shrink-0 text-kumo-subtle" />
+                            </button>
+                            {workspace ? null : (
+                              <p className="mt-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+                                Pick the workspace whose chats can use this collection.
+                              </p>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
                     );
                   })}
               </div>
-              {visibility === "workspace" ? (
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={chooseWorkspace}
-                    className="press flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-kumo-line bg-kumo-base px-3 text-left text-[13px] leading-[18px] tracking-[-0.25px] transition-colors hover:border-kumo-ring/60"
-                  >
-                    <span
-                      className={`truncate ${workspace ? "text-kumo-default" : "text-kumo-placeholder"}`}
-                    >
-                      {workspace ? workspace.title : "Choose workspace…"}
-                    </span>
-                    <CaretDown size={12} className="shrink-0 text-kumo-subtle" />
-                  </button>
-                  {workspace ? null : (
-                    <p className="mt-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
-                      Pick the workspace whose chats can use this collection.
-                    </p>
-                  )}
-                </div>
-              ) : null}
             </div>
           </div>
 
