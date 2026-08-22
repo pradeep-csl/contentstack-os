@@ -821,8 +821,12 @@ function CreateCollectionView({
       );
       toasts.add({ title: "Collection created", variant: "success" });
       onCreated(metadata.id);
-    } catch {
-      toasts.add({ title: "Failed to create collection", variant: "error" });
+    } catch (err) {
+      // The reason matters here: the per-workspace scope cap is a limit the user can act on, and a
+      // bare "Failed to create collection" leaves them no idea what to do about it.
+      toasts.add({
+        title: `Failed to create collection: ${(err as Error).message}`, variant: "error",
+      });
       setCreating(false);
     }
   };
