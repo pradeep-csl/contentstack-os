@@ -313,6 +313,18 @@ So after a revoke, `addObserver` consults the verifier for that collection and *
 collaborator** — including collaborators with no connection to it, and with an error naming a
 collection they cannot see.
 
+Revoking must also cut off collaborators who are **already** observing, and that does not fall out
+for free. An unscoped record is enabled in every workspace its owner has, so after a revoke the
+collection stays readable in the workspace it just left; and `prepareObservation` skips exclusion
+entirely for a collection already marked observed. Left alone, an existing collaborator would keep
+seeing content added *after* the revoke until their next `open()`. Workspace scope is the first
+**revocable** ground for access — the pre-existing grounds (owner-owns, domain-public) were
+effectively monotone, which is what made a sticky observed marker sound. So the tracker records
+*which ground* admitted each observation (`"observed-scoped"`) and re-verifies once that ground
+lapses. The ground is recorded both when an observation commits and when an observer is admitted on
+the strength of a scope, because the no-observers read path deliberately resolves no scope and would
+otherwise leave the read-then-admit ordering unprotected.
+
 The saving grace, which the UI should say out loud: **re-scoping the collection to that workspace
 restores collaborator-adding immediately**, because the tracker skips the verifier again. The state
 is recoverable, mirroring the deliberately reversible lazy-revocation model in
