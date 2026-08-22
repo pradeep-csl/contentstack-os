@@ -339,7 +339,15 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
     this.storage.metadata.put({
       ...meta, visibility: "private", workspaceId: undefined, lastUpdated: new Date(),
     });
-    await this.#propagate();
+    try {
+      await this.#propagate();
+    } catch (err) {
+      // The owner-library record is what the enabled set filters on, so a failed propagation leaves
+      // the collection genuinely still scoped. Restoring the metadata keeps the two agreeing — and
+      // keeps the early return above from reporting a retry as a success that never happened.
+      this.storage.metadata.put(meta);
+      throw err;
+    }
   }
 
   // --- Document CRUD ---

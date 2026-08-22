@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env, runInDurableObject } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { ContextApiImpl, loadAgentContextCollections, loadEnabledContextCollections } from "../src/context-api.js";
 import { accountEnabledCollections } from "../src/library-read.js";
@@ -77,6 +77,43 @@ describe("workspace-scoped collections", () => {
     expect(refreshed?.workspaceId).toBeUndefined();
     // Private again means enabled everywhere, including with no workspace context.
     expect((await library("user-4").getEnabledCollections(DOMAIN)).get(meta.id)).toBe("private");
+  });
+
+  it("keeps metadata and library agreeing when a revoke fails to propagate, and retries", async () => {
+    let user = api("user-14");
+    let meta = await user.createContextCollection(
+      "Project", "Project notes.", "workspace", undefined, "web", WORKSPACE);
+
+    // The owner-library record is what the enabled set filters on, so propagation is where a revoke
+    // actually takes effect. Break it for one call to prove the metadata does not run ahead of it.
+    // Patched on the prototype, since Durable Object RPC only dispatches to prototype methods.
+    let prototype = await runInDurableObject(
+      library("user-14"),
+      (instance) => Object.getPrototypeOf(instance) as UserLibraryDurableObject);
+    let original = prototype.updateOwnedCollection;
+    prototype.updateOwnedCollection = () => {
+      throw new Error("injected propagation failure");
+    };
+    try {
+      await expect(user.revokeContextCollectionWorkspace(meta.id)).rejects.toThrow(/injected/);
+    } finally {
+      prototype.updateOwnedCollection = original;
+    }
+
+    // Still scoped in both places, rather than metadata claiming private while the library keeps
+    // enabling it in one workspace only.
+    let torn = await user.getContextCollectionMetadata(meta.id);
+    expect(torn?.visibility).toBe("workspace");
+    expect(torn?.workspaceId).toBe(WORKSPACE);
+    expect((await library("user-14").getEnabledCollections(DOMAIN, WORKSPACE)).get(meta.id))
+      .toBe("workspace");
+
+    // And the user's one repair action genuinely repairs: the retry is not short-circuited by
+    // metadata that already says "private".
+    await user.revokeContextCollectionWorkspace(meta.id);
+    expect((await user.getContextCollectionMetadata(meta.id))?.visibility).toBe("private");
+    expect((await library("user-14").getEnabledCollections(DOMAIN, OTHER_WORKSPACE)).get(meta.id))
+      .toBe("private");
   });
 
   it("refuses to revoke a collection the caller does not own", async () => {
