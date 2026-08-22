@@ -13,6 +13,7 @@ import { useTheme } from './ThemeContext'
 import { useServerConfig } from './ServerConfigContext'
 import { forwardTrustedFrameError } from './errorReporting'
 import { useAuthenticatedApi } from './AuthContext'
+import GatekeeperWorkspacePicker, { type PickableWorkspace } from './GatekeeperWorkspacePicker'
 import {
   normalizeGatekeeperAppPrompt,
   parseGatekeeperAppWorkspaceTarget,
@@ -34,6 +35,9 @@ type OpenTarget = (target: GatekeeperAppWorkspaceTarget) => void
 // Resolves workspace IDs the app already holds to their live titles; null for a workspace the user
 // can no longer see. Deliberately a lookup, not an enumeration: the app learns nothing new.
 type ResolveWorkspaceTitles = (ids: string[]) => Promise<(string | null)[]>
+// Presents the Workshop's own picker and resolves to the single workspace the user chose (null if
+// dismissed). Deliberately a pick, not an enumeration: the app learns one workspace, never the list.
+type PickWorkspace = () => Promise<PickableWorkspace | null>
 type OpenPrompt = (prompt: string) => void
 
 type OverlayState = 'full' | null
@@ -82,6 +86,7 @@ class GatekeeperAppHostImpl extends RpcTarget {
   readonly #openTarget: OpenTarget
   readonly #openPrompt: OpenPrompt
   readonly #resolveWorkspaceTitles: ResolveWorkspaceTitles
+  readonly #pickWorkspace: PickWorkspace
   #presenting = false
   #theme: GatekeeperAppTheme
   #themeReceiver: RpcStub<GatekeeperAppThemeReceiver> | null = null
@@ -97,6 +102,7 @@ class GatekeeperAppHostImpl extends RpcTarget {
     openTarget: OpenTarget,
     openPrompt: OpenPrompt,
     resolveWorkspaceTitles: ResolveWorkspaceTitles,
+    pickWorkspace: PickWorkspace,
   ) {
     super()
     this.#theme = theme
@@ -113,6 +119,7 @@ class GatekeeperAppHostImpl extends RpcTarget {
     this.#openTarget = openTarget
     this.#openPrompt = openPrompt
     this.#resolveWorkspaceTitles = resolveWorkspaceTitles
+    this.#pickWorkspace = pickWorkspace
   }
 
   get ui(): RpcStub<RpcTarget> {
@@ -132,6 +139,11 @@ class GatekeeperAppHostImpl extends RpcTarget {
       throw new TypeError('Invalid workspace title lookup.')
     }
     return this.#resolveWorkspaceTitles(ids)
+  }
+
+  // The app calls this to let the user choose one workspace. Only the pick crosses back.
+  pickWorkspace(): Promise<PickableWorkspace | null> {
+    return this.#pickWorkspace()
   }
 
   openPrompt(prompt: string): void {
@@ -291,6 +303,18 @@ export default function SandboxedGatekeeperApp({ frame, gatekeeperVendorId }: {
   const openPrompt = useCallback<OpenPrompt>((prompt) => {
     navigate({ to: '/', search: { prompt } })
   }, [navigate])
+  const [pendingPick, setPendingPick] = useState<
+    ((workspace: PickableWorkspace | null) => void) | null
+  >(null)
+  const pickWorkspace = useCallback<PickWorkspace>(() => {
+    return new Promise((resolve) => {
+      // Wrapped in an object: a bare function passed to a state setter would be *called*.
+      setPendingPick(() => (workspace: PickableWorkspace | null) => {
+        setPendingPick(null)
+        resolve(workspace)
+      })
+    })
+  }, [])
   // The gatekeeper capability is `any`: its method shape is gatekeeper-defined and opaque to us.
   const capabilityRef = useRef<any>(null)
   capabilityRef.current = frame.ui
@@ -322,6 +346,7 @@ export default function SandboxedGatekeeperApp({ frame, gatekeeperVendorId }: {
         openTarget,
         openPrompt,
         resolveWorkspaceTitles,
+        pickWorkspace,
       )
       hostRef.current = host
       sessionRef.current = newMessagePortRpcSession(port, host)
@@ -355,18 +380,21 @@ export default function SandboxedGatekeeperApp({ frame, gatekeeperVendorId }: {
     // Re-establish the session if either the HTML or the `ui` capability changes, so a new frame
     // carrying a fresh stub (even with identical HTML) never keeps talking through the stale one.
   }, [frame.iframeHtml, frame.ui, gatekeeperVendorId, openPrompt, openTarget,
-      present, resolveWorkspaceTitles, setOverlayPhase])
+      pickWorkspace, present, resolveWorkspaceTitles, setOverlayPhase])
 
   return (
-    <iframe
-      ref={iframeRef}
-      srcDoc={frame.iframeHtml}
-      // allow-scripts: run the app's JS. allow-modals: its beforeunload unsaved-changes guard. Not
-      // allow-same-origin (the frame stays an opaque origin), and the app's CSP keeps connect-src 'none'.
-      sandbox="allow-scripts allow-modals"
-      allow="clipboard-write"
-      title="Gatekeeper app"
-      style={iframeStyleForOverlay(overlay)}
-    />
+    <>
+      <iframe
+        ref={iframeRef}
+        srcDoc={frame.iframeHtml}
+        // allow-scripts: run the app's JS. allow-modals: its beforeunload unsaved-changes guard. Not
+        // allow-same-origin (the frame stays an opaque origin), and the app's CSP keeps connect-src 'none'.
+        sandbox="allow-scripts allow-modals"
+        allow="clipboard-write"
+        title="Gatekeeper app"
+        style={iframeStyleForOverlay(overlay)}
+      />
+      {pendingPick ? <GatekeeperWorkspacePicker onPick={pendingPick} /> : null}
+    </>
   )
 }

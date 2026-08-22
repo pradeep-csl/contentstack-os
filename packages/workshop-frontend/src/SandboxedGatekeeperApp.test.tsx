@@ -33,7 +33,9 @@ vi.mock("./errorReporting", () => ({
 
 const WORKSPACE_ID = "a".repeat(64);
 
-const listGadgets = vi.fn<() => Promise<{ id: string; title: string }[]>>(async () => [
+const listGadgets = vi.fn<
+  () => Promise<{ id: string; title: string; owner?: { name: string } }[]>
+>(async () => [
   { id: WORKSPACE_ID, title: "Daily Brief" },
 ]);
 const authenticatedApi = { listGadgets };
@@ -49,6 +51,7 @@ interface TestHost extends RpcTarget {
   openWorkspace(workspaceId: string, gadgetId?: number): Promise<void>;
   resolveWorkspaceTitles(ids: string[]): Promise<(string | null)[]>;
   openPrompt(prompt: string): Promise<void>;
+  pickWorkspace(): Promise<{ id: string; title: string } | null>;
 }
 
 class EmptyUi extends RpcTarget {}
@@ -153,5 +156,30 @@ describe("SandboxedGatekeeperApp navigation", () => {
       await vi.waitFor(() => expect(router.state.location.pathname).toBe("/"));
     });
     expect(router.state.location.search).toEqual({ prompt: "Create a daily brief." });
+
+    // The picker lists only workspaces the viewer owns: `owner` is set exactly when they are a
+    // collaborator instead. It renders as host chrome in the Workshop document, not in the frame.
+    const OTHERS_WORKSPACE_ID = "c".repeat(64);
+    listGadgets.mockResolvedValueOnce([
+      { id: WORKSPACE_ID, title: "Daily Brief" },
+      { id: OTHERS_WORKSPACE_ID, title: "Someone Else's", owner: { name: "Ada" } },
+    ]);
+
+    const picked = host.pickWorkspace();
+    await act(async () => { await Promise.resolve(); });
+    const options = [...document.querySelectorAll('[data-testid="workspace-option"]')];
+    expect(options.map((option) => option.textContent)).toEqual(["Daily Brief"]);
+
+    await act(async () => { (options[0] as HTMLElement).click(); });
+    await expect(picked).resolves.toEqual({ id: WORKSPACE_ID, title: "Daily Brief" });
+
+    // Dismissing resolves null rather than hanging or throwing.
+    listGadgets.mockResolvedValueOnce([{ id: WORKSPACE_ID, title: "Daily Brief" }]);
+    const dismissed = host.pickWorkspace();
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      (document.querySelector('[data-testid="workspace-picker-cancel"]') as HTMLElement).click();
+    });
+    await expect(dismissed).resolves.toBeNull();
   });
 });
