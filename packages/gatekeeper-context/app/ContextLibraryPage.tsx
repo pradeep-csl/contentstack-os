@@ -1228,6 +1228,7 @@ function CollectionOverview({
   onEditDetails,
   onManageGitTokens,
   onManageIngestTokens,
+  onShareWorkspace,
   onRevokeWorkspace,
   onDelete,
 }: {
@@ -1235,12 +1236,14 @@ function CollectionOverview({
   canWrite: boolean;
   supportsGitCollections: boolean;
   refreshingSource: boolean;
-  // Live title of the workspace this collection is scoped to; null once it is no longer visible.
-  workspaceTitle: string | null;
+  // Live title of the workspace this collection is scoped to: undefined while it is still being
+  // resolved, null once the workspace is no longer visible.
+  workspaceTitle: string | null | undefined;
   onRefreshSource: () => void;
   onEditDetails: () => void;
   onManageGitTokens: () => void;
   onManageIngestTokens: () => void;
+  onShareWorkspace: () => void;
   onRevokeWorkspace: () => void;
   onDelete: () => void;
 }) {
@@ -1315,13 +1318,24 @@ function CollectionOverview({
                     </DropdownMenu.Item>
                   )}
                   <DropdownMenu.Separator />
-                  {isWorkspaceScoped && (
+                  {/* A matched pair: a scoped collection can stop sharing, and any other
+                      collection of the viewer's own can start. Public collections are excluded —
+                      they are domain-owned, so they have no workspace scope to take. */}
+                  {isWorkspaceScoped ? (
                     <DropdownMenu.Item
                       icon={<UsersThree size={13} className="mr-2" />}
                       onClick={onRevokeWorkspace}
                       className={MENU_ITEM}
                     >
                       Stop sharing with this workspace
+                    </DropdownMenu.Item>
+                  ) : isPublic ? null : (
+                    <DropdownMenu.Item
+                      icon={<UsersThree size={13} className="mr-2" />}
+                      onClick={onShareWorkspace}
+                      className={MENU_ITEM}
+                    >
+                      Share with a workspace…
                     </DropdownMenu.Item>
                   )}
                   <DropdownMenu.Item
@@ -1353,7 +1367,11 @@ function CollectionOverview({
               {isPublic
                 ? "Everyone (required)"
                 : isWorkspaceScoped
-                ? (workspaceTitle ?? "Workspace no longer available")
+                // Neutral until the title resolves: naming the workspace is the only claim this
+                // field can make, and "no longer available" is not it while a lookup is in flight.
+                ? workspaceTitle === undefined
+                  ? "One workspace"
+                  : (workspaceTitle ?? "Workspace no longer available")
                 : "Private to you"}
             </MetaField>
             <MetaField label="Documents">{metadata.documentCount}</MetaField>
@@ -1445,8 +1463,9 @@ function CollectionSettingsModal({
   metadata: ContextCollectionMetadata;
   supportsGitCollections: boolean;
   collectionId: string;
-  // Live title of the workspace this collection is scoped to; null once it is no longer visible.
-  workspaceTitle: string | null;
+  // Live title of the workspace this collection is scoped to: undefined while it is still being
+  // resolved, null once the workspace is no longer visible.
+  workspaceTitle: string | null | undefined;
   onClose: () => void;
   onUpdated: () => void;
   onDeleted: () => void;
@@ -2663,12 +2682,13 @@ function CollectionEditor({
   // once here for both the overview and its "stop sharing" confirmation.
   const resolveWorkspaceTitles = useResolveWorkspaceTitles();
   const scopedWorkspaceId = metadata?.workspaceId;
-  const [workspaceTitle, setWorkspaceTitle] = useState<string | null>(null);
+  // Tri-state: undefined while the lookup is outstanding, null once the workspace is gone. The
+  // metadata lands before the round trip finishes, so collapsing the two would have every open of a
+  // scoped collection assert "no longer available" first and then correct itself.
+  const [workspaceTitle, setWorkspaceTitle] = useState<string | null | undefined>(undefined);
   useEffect(() => {
-    if (!scopedWorkspaceId) {
-      setWorkspaceTitle(null);
-      return;
-    }
+    setWorkspaceTitle(undefined);
+    if (!scopedWorkspaceId) return;
     let cancelled = false;
     resolveWorkspaceTitles([scopedWorkspaceId])
       .then(([resolved]) => {
@@ -2704,6 +2724,22 @@ function CollectionEditor({
   useEffect(() => {
     loadDocs();
   }, [loadDocs]);
+
+  // The host presents the picker itself, so sharing needs no dialog of its own: pick, scope, then
+  // refresh, since the Access field and both sharing actions all derive from the metadata.
+  const pickWorkspace = useWorkspacePicker();
+  const handleShareWorkspace = async () => {
+    // A dismissed picker (or a host that failed to present one) changes nothing.
+    const picked = await pickWorkspace().catch(() => null);
+    if (!picked) return;
+    try {
+      await context.setContextCollectionWorkspace(collectionId, picked.id);
+      await loadDocs();
+      toasts.add({ title: `Shared with ${picked.title}`, variant: "success" });
+    } catch (err) {
+      toasts.add({ title: `Failed to share: ${(err as Error).message}`, variant: "error" });
+    }
+  };
 
   const handleRefreshArtifactSource = async () => {
     setRefreshingSource(true);
@@ -3243,6 +3279,7 @@ function CollectionEditor({
               onEditDetails={() => openSettings("edit")}
               onManageGitTokens={() => setGitTokensOpen(true)}
               onManageIngestTokens={() => setIngestTokensOpen(true)}
+              onShareWorkspace={handleShareWorkspace}
               onRevokeWorkspace={() => openSettings("revoke")}
               onDelete={() => openSettings("delete")}
             />
