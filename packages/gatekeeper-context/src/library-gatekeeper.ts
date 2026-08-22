@@ -15,12 +15,12 @@ import type {
 import { LibraryReadSession, accountEnabledCollections } from "./library-read.js";
 import { ContextApiImpl, loadAgentContextCollections } from "./context-api.js";
 import { ContextObserverTracker } from "./context-observers.js";
-import type { ContextVerifierApi } from "./context-observers.js";
+import type { ContextVerifierApi, ResolveScopedCollections } from "./context-observers.js";
 import {
   buildAgentSkillCommands, buildAgentSkillMessage, buildContextCatalog, parseSkillManifest,
   type CollectionSkills,
 } from "./agent-skill.js";
-import type { EnabledCollectionInfo } from "./context-types.js";
+import type { EnabledCollectionInfo, ContextCollectionVisibility } from "./context-types.js";
 import { domainName, DEFAULT_SHARING_DOMAIN } from "./domain.js";
 import APP_HTML from "./generated/app.txt";
 
@@ -221,8 +221,29 @@ export class ContextGatekeeper
     implements Gatekeeper<LibraryReadSession> {
   #collections() { return this.ctx.exports.ContextCollectionDurableObject; }
   #userLibraries() { return this.ctx.exports.UserLibraryDurableObject; }
-  #observers() {
-    return new ContextObserverTracker(this.ctx.storage.kv, this.ctx.props.sharingDomain);
+
+  /**
+   * The observer tracker for this facet. Callers that have already resolved this workspace's
+   * enabled set pass a derivation of it, so the read hot path costs no extra Durable Object reads;
+   * `addObserver`/`removeObserver`, which have nothing at hand, fall back to reading the library.
+   */
+  #observers(resolveScoped?: ResolveScopedCollections) {
+    return new ContextObserverTracker(
+      this.ctx.storage.kv, this.ctx.props.sharingDomain,
+      resolveScoped ?? (() => this.#scopedCollectionIds()));
+  }
+
+  // Fallback: the collections scoped to this facet's workspace, straight from the owner's library —
+  // the same source the enabled set uses, so the two can never disagree.
+  async #scopedCollectionIds(): Promise<Set<string>> {
+    let domain = this.ctx.props.sharingDomain;
+    let userLibrary = this.#userLibraries().get(
+      this.#userLibraries().idFromName(domainName(domain, this.ctx.props.accountId)));
+    let workspaceId = this.#workspaceId();
+    return new Set(
+      (await userLibrary.listOwnedCollections())
+        .filter(collection => collection.scopedToWorkspace === workspaceId)
+        .map(collection => collection.id));
   }
 
   /**
@@ -287,13 +308,20 @@ export class ContextGatekeeper
     // The read session uses this authorizer after startSession() returns, so it owns a duplicate.
     let ownedAuthorizer = authorizer.dup();
     try {
+      let resolve = accountEnabledCollections(
+        this.#userLibraries(), this.ctx.props.sharingDomain, this.ctx.props.accountId,
+        this.#workspaceId());
+      // Resolved at most once and shared: the tracker's scoped set is a projection of the very map
+      // the session reads, so no second round trip and no chance of the two disagreeing.
+      let enabledOnce: Promise<Map<string, ContextCollectionVisibility>> | undefined;
+      let enabled = () => (enabledOnce ??= resolve());
+      let observers = this.#observers(async () => new Set(
+        [...await enabled()]
+          .filter(([, visibility]) => visibility === "workspace")
+          .map(([collectionId]) => collectionId)));
       return new LibraryReadSession(
-        this.#collections(),
-        accountEnabledCollections(
-          this.#userLibraries(), this.ctx.props.sharingDomain, this.ctx.props.accountId,
-          this.#workspaceId()),
-        this.ctx.props.sharingDomain, ownedAuthorizer,
-        collectionIds => this.#observers().prepareObservation(collectionIds));
+        this.#collections(), enabled, this.ctx.props.sharingDomain, ownedAuthorizer,
+        collectionIds => observers.prepareObservation(collectionIds));
     } catch (err) {
       ownedAuthorizer[Symbol.dispose]?.();
       throw err;
@@ -348,7 +376,10 @@ export class ContextGatekeeper
         let slash = entry.id.indexOf("/");
         return slash < 0 ? entry.id : entry.id.slice(0, slash);
       }))];
-      let check = await this.#observers().prepareObservation(collectionIds);
+      let workspaceId = this.#workspaceId();
+      let check = await this.#observers(async () => new Set(
+        collections.filter(collection => collection.workspaceId === workspaceId)
+          .map(collection => collection.id))).prepareObservation(collectionIds);
       await authorizer.authorizeObservation({
         title: "Context catalog",
         description: `Listed ${catalog.entries.length} available Context item(s).`,

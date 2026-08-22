@@ -147,4 +147,57 @@ describe("ContextObserverTracker", () => {
     expect((await tracker.prepareObservation(["legacy", "pending", "new"]))
       .pendingCollections).toEqual([]);
   });
+
+  it("never asks a verifier about a collection scoped to this workspace", async () => {
+    let scoped = new Set(["project"]);
+    let tracker = new ContextObserverTracker(makeKv(), "workshop.example", async () => scoped);
+    let denied = verifier([]);
+    await tracker.addObserver("collaborator", denied.api);
+
+    // A scoped collection is accessible to every observer of this facet by construction: an
+    // observer *is* a collaborator on this workspace.
+    expect(await observe(tracker, ["project"])).toBeUndefined();
+    expect(denied.calls).toEqual([]);
+  });
+
+  it("admits an observer even when a scoped collection was already read", async () => {
+    let scoped = new Set(["project"]);
+    let tracker = new ContextObserverTracker(makeKv(), "workshop.example", async () => scoped);
+    await observe(tracker, ["project"]);
+
+    let denied = verifier([]);
+    await expect(tracker.addObserver("collaborator", denied.api)).resolves.toBeUndefined();
+    expect(denied.calls).toEqual([]);
+  });
+
+  it("consults the verifier again once the scope is revoked, and stops when it is restored", async () => {
+    let scoped = new Set(["project"]);
+    let kv = makeKv();
+    let tracker = new ContextObserverTracker(kv, "workshop.example", async () => scoped);
+    await observe(tracker, ["project"]);
+
+    // Revoked: the workspace's log still holds the data, so a new collaborator must be checked.
+    scoped.delete("project");
+    let denied = verifier([]);
+    await expect(tracker.addObserver("collaborator", denied.api)).rejects.toThrow(
+      /no longer shared with this workspace|does not have access/,
+    );
+    expect(denied.calls.map(call => call.collectionId)).toEqual(["project"]);
+
+    // Re-scoped: admission works again. This is the documented remedy.
+    scoped.add("project");
+    let second = verifier([]);
+    await expect(tracker.addObserver("collaborator", second.api)).resolves.toBeUndefined();
+    expect(second.calls).toEqual([]);
+  });
+
+  it("still checks unscoped collections when a scope resolver is present", async () => {
+    let tracker = new ContextObserverTracker(
+      makeKv(), "workshop.example", async () => new Set(["project"]));
+    await observe(tracker, ["project", "shared"]);
+
+    let limited = verifier([]);
+    await expect(tracker.addObserver("collaborator", limited.api)).rejects.toThrow();
+    expect(limited.calls.map(call => call.collectionId)).toEqual(["shared"]);
+  });
 });

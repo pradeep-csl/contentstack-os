@@ -18,12 +18,41 @@ export type ContextObservationCheck = {
 
 type ObservedCollectionState = true | "pending" | "observed";
 
+/** Resolves the collections scoped to this facet's own workspace. */
+export type ResolveScopedCollections = () => Promise<Set<string>>;
+
 /**
  * Strategy C observer state for the broad Context Library singleton. Collections are the data sets:
- * public collections are domain-wide, while each private collection belongs to one account.
+ * public collections are domain-wide, each private collection belongs to one account, and a
+ * workspace-scoped collection belongs to this facet's workspace.
+ *
+ * Workspace-scoped collections are accessible to every observer *structurally* — an observer is a
+ * collaborator on this workspace by construction — so they are never sent to a verifier. This is a
+ * third ground for access alongside "public in the domain" and "privately owned by the observer"
+ * (see docs/observers.md §9.2), and it is what lets a workspace share curated knowledge and add
+ * collaborators at the same time.
  */
 export class ContextObserverTracker {
-  constructor(private kv: ObserverKv, private sharingDomain: string) {}
+  constructor(
+    private kv: ObserverKv,
+    private sharingDomain: string,
+    private resolveScoped?: ResolveScopedCollections,
+  ) {}
+
+  #scopedPromise?: Promise<Set<string>>;
+
+  // Memoized per tracker instance. A tracker is built per operation, so a later operation sees any
+  // revocation that happened in between.
+  #scoped(): Promise<Set<string>> {
+    return (this.#scopedPromise ??= this.resolveScoped?.() ?? Promise.resolve(new Set()));
+  }
+
+  // Collections a verifier must actually be asked about: everything not scoped to this workspace.
+  async #needingVerification(collectionIds: string[]): Promise<string[]> {
+    if (!this.resolveScoped) return collectionIds;
+    let scoped = await this.#scoped();
+    return collectionIds.filter(collectionId => !scoped.has(collectionId));
+  }
 
   #observerKey(id: string): string { return `observer:${id}`; }
   #observedCollectionKey(collectionId: string): string {
@@ -55,8 +84,14 @@ export class ContextObserverTracker {
   async addObserver(id: string, verifier: Fetcher<ContextVerifierApi>): Promise<void> {
     let checked = new Set<string>();
     while (true) {
-      let collections = this.#listTrackedCollections()
+      let tracked = this.#listTrackedCollections()
           .filter(collectionId => !checked.has(collectionId));
+      // Nothing observed yet: admit without resolving scope. Keeps the empty case free.
+      if (tracked.length === 0) {
+        this.kv.put(this.#observerKey(id), verifier);
+        return;
+      }
+      let collections = await this.#needingVerification(tracked);
       if (collections.length === 0) {
         this.kv.put(this.#observerKey(id), verifier);
         return;
@@ -89,8 +124,17 @@ export class ContextObserverTracker {
       }
     }
 
-    let observerAccess = await Promise.all([...this.#listObservers()].map(async ([id, verifier]) => {
-      let access = await Promise.all(pendingCollections.map(
+    let observers = [...this.#listObservers()];
+    // No observers (the common single-user case) means nothing to exclude and no scope to resolve.
+    if (observers.length === 0) {
+      return {
+        pendingCollections,
+        commit: () => this.commitObservation(pendingCollections),
+      };
+    }
+    let toVerify = await this.#needingVerification(pendingCollections);
+    let observerAccess = await Promise.all(observers.map(async ([id, verifier]) => {
+      let access = await Promise.all(toVerify.map(
         collectionId => verifier.hasCollectionAccess(this.sharingDomain, collectionId),
       ));
       return [id, access.every(hasAccess => hasAccess)] as const;
