@@ -24,6 +24,7 @@ import {
   FilePlus,
   FolderPlus,
   User,
+  UsersThree,
   X,
   CloudArrowUp,
 } from "@phosphor-icons/react";
@@ -72,7 +73,14 @@ import { json } from "@codemirror/lang-json";
 import { yaml } from "@codemirror/lang-yaml";
 import { tags as t } from "@lezer/highlight";
 import type { Extension } from "@codemirror/state";
-import { useContextApi, usePresentWhileOpen, useResolvedThemeMode } from "./bridge";
+import {
+  useContextApi,
+  usePresentWhileOpen,
+  useResolveWorkspaceTitles,
+  useResolvedThemeMode,
+  useWorkspacePicker,
+  type PickedWorkspace,
+} from "./bridge";
 import { extractDescription } from "../src/description-extractors";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -305,20 +313,44 @@ function IconPickerButton({
 // ---------------------------------------------------------------------------
 
 // Provenance for a row, framed as authorship: public collections are admin-published (and always
-// on), the rest are ones the user created.
-function CollectionProvenance({ source }: { source: EnabledCollectionInfo["source"] }) {
+// on), the rest are ones the user created — either for themselves or for one of their workspaces.
+//
+// No workspace title here: the list renders many rows, and a title is a host round trip per row. The
+// title belongs in the collection's overview, which shows one collection at a time.
+function CollectionProvenance({
+  source,
+  workspaceId,
+}: {
+  source: EnabledCollectionInfo["source"];
+  workspaceId?: string;
+}) {
   const isPublic = source === "public";
+  // Scoped collections are always the viewer's own, so `source` stays "private"; the extra bit rides
+  // on `workspaceId` instead of widening a union the list's sort compares.
+  const isWorkspaceScoped = !!workspaceId;
   return (
     <span
       className="flex w-52 items-center gap-1 whitespace-nowrap"
       title={
         isPublic
           ? "Provided by your organization for everyone"
+          : isWorkspaceScoped
+          ? "A collection you created, usable only in one workspace"
           : "A collection you created"
       }
     >
-      {isPublic ? <Buildings size={11} /> : <User size={11} />}
-      {isPublic ? "Required by your organization" : "Created by you"}
+      {isPublic ? (
+        <Buildings size={11} />
+      ) : isWorkspaceScoped ? (
+        <UsersThree size={11} />
+      ) : (
+        <User size={11} />
+      )}
+      {isPublic
+        ? "Required by your organization"
+        : isWorkspaceScoped
+        ? "Shared with a workspace"
+        : "Created by you"}
     </span>
   );
 }
@@ -397,7 +429,10 @@ function CollectionRow({
       </div>
       {/* Fixed-width meta columns so rows line up like a table. */}
       <div className="hidden shrink-0 items-center gap-6 text-xs text-kumo-subtle lg:flex">
-        <CollectionProvenance source={collection.source} />
+        <CollectionProvenance
+          source={collection.source}
+          workspaceId={collection.workspaceId}
+        />
         <span className="flex w-16 items-center justify-end gap-1 whitespace-nowrap">
           <Clock size={10} />
           {formatRelativeTime(collection.lastUpdated)}
@@ -669,13 +704,22 @@ function DeletePermanentlyDescription({
   );
 }
 
-// Visibility choices (admins only — non-admins can only make private collections).
+// Visibility choices, narrow → wide. "Everyone" is admin-only (filtered where this is mapped); the
+// other two are scoped to the user's own account or their own workspace.
 const VISIBILITY_OPTIONS = [
   {
     value: "private" as const,
     Icon: Lock,
     title: "Only me",
     description: "Private to your account. Only you can view and edit it.",
+  },
+  {
+    value: "workspace" as const,
+    Icon: UsersThree,
+    title: "Workspace",
+    description:
+      "Available to everyone chatting in one workspace, and only there. Your agents in other " +
+      "workspaces won't see it.",
   },
   {
     value: "public" as const,
@@ -726,6 +770,16 @@ function CreateCollectionView({
   // Only admins may create public collections.
   const [isAdmin, setIsAdmin] = useState(false);
   const [supportsGitCollections, setSupportsGitCollections] = useState(false);
+  const pickWorkspace = useWorkspacePicker();
+  // The workspace a "workspace" collection will be scoped to. The app never sees the workspace
+  // list: the host presents its own picker and hands back the one the user chose.
+  const [workspace, setWorkspace] = useState<PickedWorkspace | null>(null);
+
+  const chooseWorkspace = async () => {
+    // A dismissed picker (or a host that failed to present one) leaves the selection untouched.
+    const picked = await pickWorkspace().catch(() => null);
+    if (picked) setWorkspace(picked);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -748,8 +802,12 @@ function CreateCollectionView({
     };
   }, [context]);
 
+  // A workspace collection with no workspace would be readable by nobody, so Create stays disabled.
+  const canCreate = !!title.trim() && !creating &&
+    (visibility !== "workspace" || !!workspace);
+
   const handleCreate = async () => {
-    if (!title.trim() || creating) return;
+    if (!canCreate) return;
     setCreating(true);
     try {
       const metadata = await context.createContextCollection(
@@ -758,6 +816,8 @@ function CreateCollectionView({
         visibility,
         icon,
         source,
+        // canCreate guarantees a workspace is picked whenever the scoped visibility is selected.
+        visibility === "workspace" ? workspace?.id : undefined,
       );
       toasts.add({ title: "Collection created", variant: "success" });
       onCreated(metadata.id);
@@ -852,11 +912,14 @@ function CreateCollectionView({
                 })}
               </div>
             </div>
-            {isAdmin && (
-              <div className="ctx-rise" style={{ animationDelay: "200ms" }}>
-                <FieldLabel>Visibility</FieldLabel>
-                <div role="radiogroup" aria-label="Visibility" className="grid gap-2">
-                  {VISIBILITY_OPTIONS.map(({
+            <div className="ctx-rise" style={{ animationDelay: "200ms" }}>
+              <FieldLabel>Visibility</FieldLabel>
+              <div role="radiogroup" aria-label="Visibility" className="grid gap-2">
+                {VISIBILITY_OPTIONS
+                  // "Everyone" is a deployment-wide publication, so it stays admin-only. The other
+                  // two are scoped to the user's own account or their own workspace.
+                  .filter((option) => option.value !== "public" || isAdmin)
+                  .map(({
                     value,
                     Icon,
                     title: optionTitle,
@@ -897,9 +960,29 @@ function CreateCollectionView({
                       </button>
                     );
                   })}
-                </div>
               </div>
-            )}
+              {visibility === "workspace" ? (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={chooseWorkspace}
+                    className="press flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-kumo-line bg-kumo-base px-3 text-left text-[13px] leading-[18px] tracking-[-0.25px] transition-colors hover:border-kumo-ring/60"
+                  >
+                    <span
+                      className={`truncate ${workspace ? "text-kumo-default" : "text-kumo-placeholder"}`}
+                    >
+                      {workspace ? workspace.title : "Choose workspace…"}
+                    </span>
+                    <CaretDown size={12} className="shrink-0 text-kumo-subtle" />
+                  </button>
+                  {workspace ? null : (
+                    <p className="mt-1.5 text-[12px] leading-4 tracking-[-0.2px] text-kumo-subtle">
+                      Pick the workspace whose chats can use this collection.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div
@@ -921,7 +1004,7 @@ function CreateCollectionView({
               tone="primary"
               onClick={handleCreate}
               loading={creating}
-              disabled={!title.trim()}
+              disabled={!canCreate}
               className="press !bg-kumo-brand text-white enabled:hover:!bg-kumo-brand-hover disabled:!bg-kumo-fill disabled:!text-kumo-inactive disabled:!opacity-100"
             >
               Create collection
@@ -1140,23 +1223,29 @@ function CollectionOverview({
   canWrite,
   supportsGitCollections,
   refreshingSource,
+  workspaceTitle,
   onRefreshSource,
   onEditDetails,
   onManageGitTokens,
   onManageIngestTokens,
+  onRevokeWorkspace,
   onDelete,
 }: {
   metadata: ContextCollectionMetadata;
   canWrite: boolean;
   supportsGitCollections: boolean;
   refreshingSource: boolean;
+  // Live title of the workspace this collection is scoped to; null once it is no longer visible.
+  workspaceTitle: string | null;
   onRefreshSource: () => void;
   onEditDetails: () => void;
   onManageGitTokens: () => void;
   onManageIngestTokens: () => void;
+  onRevokeWorkspace: () => void;
   onDelete: () => void;
 }) {
   const isPublic = metadata.visibility === "public";
+  const isWorkspaceScoped = metadata.visibility === "workspace";
   const isGit = metadata.content.source === "git";
   const isPush = metadata.content.source === "push";
   // Content managed outside the UI, whatever the mechanism.
@@ -1226,6 +1315,15 @@ function CollectionOverview({
                     </DropdownMenu.Item>
                   )}
                   <DropdownMenu.Separator />
+                  {isWorkspaceScoped && (
+                    <DropdownMenu.Item
+                      icon={<UsersThree size={13} className="mr-2" />}
+                      onClick={onRevokeWorkspace}
+                      className={MENU_ITEM}
+                    >
+                      Stop sharing with this workspace
+                    </DropdownMenu.Item>
+                  )}
                   <DropdownMenu.Item
                     icon={<Trash size={13} className="mr-2" />}
                     onClick={onDelete}
@@ -1241,12 +1339,22 @@ function CollectionOverview({
           <div className="mt-9 grid grid-cols-2 gap-x-8 gap-y-5 @xl:grid-cols-4">
             <MetaField label="Source">
               <span className="inline-flex items-center gap-1.5">
-                {isPublic ? <Buildings size={12} className="shrink-0" /> : <User size={12} className="shrink-0" />}
+                {isPublic ? (
+                  <Buildings size={12} className="shrink-0" />
+                ) : isWorkspaceScoped ? (
+                  <UsersThree size={12} className="shrink-0" />
+                ) : (
+                  <User size={12} className="shrink-0" />
+                )}
                 {isPublic ? "Your organization" : "You"}
               </span>
             </MetaField>
             <MetaField label="Access">
-              {isPublic ? "Everyone (required)" : "Private to you"}
+              {isPublic
+                ? "Everyone (required)"
+                : isWorkspaceScoped
+                ? (workspaceTitle ?? "Workspace no longer available")
+                : "Private to you"}
             </MetaField>
             <MetaField label="Documents">{metadata.documentCount}</MetaField>
             <MetaField label={isGit ? "Refreshed" : "Updated"} align="right">
@@ -1314,25 +1422,31 @@ function CollectionOverview({
 }
 
 // ---------------------------------------------------------------------------
-// Collection Settings modal (edit metadata + delete)
+// Collection Settings modal (edit metadata + delete + drop a workspace scope)
 // ---------------------------------------------------------------------------
+
+/** Which step the settings modal opens on; each confirmation step is its own mode. */
+type CollectionSettingsMode = "edit" | "delete" | "revoke";
 
 function CollectionSettingsModal({
   open,
-  // Which step to open on. "delete" lands on the type-to-confirm step, not immediate deletion.
+  // Which step to open on. "delete" and "revoke" land on their confirmation steps, not on the action.
   initialMode,
   metadata,
   supportsGitCollections,
   collectionId,
+  workspaceTitle,
   onClose,
   onUpdated,
   onDeleted,
 }: {
   open: boolean;
-  initialMode: "edit" | "delete";
+  initialMode: CollectionSettingsMode;
   metadata: ContextCollectionMetadata;
   supportsGitCollections: boolean;
   collectionId: string;
+  // Live title of the workspace this collection is scoped to; null once it is no longer visible.
+  workspaceTitle: string | null;
   onClose: () => void;
   onUpdated: () => void;
   onDeleted: () => void;
@@ -1341,7 +1455,7 @@ function CollectionSettingsModal({
   const toasts = useKumoToastManager();
   const { presenting, onOpenChangeComplete } = usePresentWhileOpen(open);
 
-  const [mode, setMode] = useState<"edit" | "delete">(initialMode);
+  const [mode, setMode] = useState<CollectionSettingsMode>(initialMode);
   const [title, setTitle] = useState(metadata.title);
   const [description, setDescription] = useState(metadata.description);
   const [icon, setIcon] = useState(metadata.icon ?? DEFAULT_COLLECTION_ICON);
@@ -1349,6 +1463,7 @@ function CollectionSettingsModal({
   const [confirmText, setConfirmText] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [revoking, setRevoking] = useState(false);
 
   // Reset state each time the modal opens, syncing to the latest metadata.
   useEffect(() => {
@@ -1361,10 +1476,11 @@ function CollectionSettingsModal({
       setConfirmText("");
       setSaving(false);
       setDeleting(false);
+      setRevoking(false);
     }
   }, [open, initialMode, metadata.title, metadata.description, metadata.icon, metadata.content]);
 
-  const busy = saving || deleting;
+  const busy = saving || deleting || revoking;
 
   // Save is only meaningful once something actually differs from the saved collection.
   const hasChanges =
@@ -1418,6 +1534,22 @@ function CollectionSettingsModal({
     } catch {
       toasts.add({ title: "Failed to delete collection", variant: "error" });
       setDeleting(false);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (revoking) return;
+    setRevoking(true);
+    try {
+      await context.revokeContextCollectionWorkspace(collectionId);
+      // The overview's Access field and this action both derive from metadata, so the parent's
+      // refresh is what makes the collection read as private again.
+      onUpdated();
+      toasts.add({ title: "Collection is now private", variant: "success" });
+      onClose();
+    } catch {
+      toasts.add({ title: "Failed to stop sharing", variant: "error" });
+      setRevoking(false);
     }
   };
 
@@ -1483,6 +1615,43 @@ function CollectionSettingsModal({
                 disabled={!hasChanges || !title.trim()}
               >
                 Save
+              </WorkshopButton>
+            </div>
+          </>
+        ) : mode === "revoke" ? (
+          <>
+            <ModalHeader
+              title="Stop sharing with this workspace"
+              description={
+                <>
+                  This collection becomes private to you, and{" "}
+                  <span className="font-medium text-kumo-default">
+                    {workspaceTitle ?? "that workspace"}
+                  </span>{" "}
+                  stops using it. Because its agent has already read this collection, new
+                  collaborators can’t be added to that workspace until you share this collection
+                  with it again.
+                </>
+              }
+            />
+
+            <div className="flex items-center justify-end gap-2 border-t border-kumo-line px-4 py-3 sm:px-6">
+              <WorkshopButton
+                tone="secondary"
+                className="!h-9"
+                disabled={revoking}
+                onClick={onClose}
+              >
+                Cancel
+              </WorkshopButton>
+              <WorkshopButton
+                tone="danger"
+                className="!h-9"
+                onClick={handleRevoke}
+                loading={revoking}
+                disabled={revoking}
+              >
+                Stop sharing
               </WorkshopButton>
             </div>
           </>
@@ -2427,10 +2596,10 @@ function CollectionEditor({
   );
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsMode, setSettingsMode] = useState<"edit" | "delete">("edit");
+  const [settingsMode, setSettingsMode] = useState<CollectionSettingsMode>("edit");
   const [gitTokensOpen, setGitTokensOpen] = useState(false);
   const [ingestTokensOpen, setIngestTokensOpen] = useState(false);
-  const openSettings = (m: "edit" | "delete") => {
+  const openSettings = (m: CollectionSettingsMode) => {
     setSettingsMode(m);
     setSettingsOpen(true);
   };
@@ -2488,6 +2657,30 @@ function CollectionEditor({
   const dirInputRef = useRef<HTMLInputElement>(null);
   // Only web collections are editable here; git and push content is owned elsewhere.
   const canEditDocuments = canWrite && metadata?.content.source === "web";
+
+  // Resolved live rather than stored, so a renamed or deleted workspace is never shown from a stale
+  // snapshot — the host's lookup returns null for a workspace the user can no longer see. Resolved
+  // once here for both the overview and its "stop sharing" confirmation.
+  const resolveWorkspaceTitles = useResolveWorkspaceTitles();
+  const scopedWorkspaceId = metadata?.workspaceId;
+  const [workspaceTitle, setWorkspaceTitle] = useState<string | null>(null);
+  useEffect(() => {
+    if (!scopedWorkspaceId) {
+      setWorkspaceTitle(null);
+      return;
+    }
+    let cancelled = false;
+    resolveWorkspaceTitles([scopedWorkspaceId])
+      .then(([resolved]) => {
+        if (!cancelled) setWorkspaceTitle(resolved);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkspaceTitle(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scopedWorkspaceId, resolveWorkspaceTitles]);
 
   const loadDocs = useCallback(async () => {
     try {
@@ -2805,6 +2998,7 @@ function CollectionEditor({
           metadata={metadata}
           supportsGitCollections={supportsGitCollections}
           collectionId={collectionId}
+          workspaceTitle={workspaceTitle}
           onClose={() => setSettingsOpen(false)}
           onUpdated={loadDocs}
           onDeleted={onBack}
@@ -3044,10 +3238,12 @@ function CollectionEditor({
               canWrite={canWrite}
               supportsGitCollections={supportsGitCollections}
               refreshingSource={refreshingSource}
+              workspaceTitle={workspaceTitle}
               onRefreshSource={handleRefreshArtifactSource}
               onEditDetails={() => openSettings("edit")}
               onManageGitTokens={() => setGitTokensOpen(true)}
               onManageIngestTokens={() => setIngestTokensOpen(true)}
+              onRevokeWorkspace={() => openSettings("revoke")}
               onDelete={() => openSettings("delete")}
             />
           ) : null}

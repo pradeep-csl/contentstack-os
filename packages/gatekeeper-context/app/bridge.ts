@@ -35,6 +35,58 @@ export function useContextApi(): RpcStub<ContextApi> {
 }
 
 // ---------------------------------------------------------------------------
+// Workspace host capabilities
+//
+// The app never learns which workspaces exist: the host presents its own picker and hands back the
+// one the user chose, and titles are resolved by id on demand.
+// ---------------------------------------------------------------------------
+
+/**
+ * One workspace the user chose in the Workshop's picker. Named separately from the frontend's
+ * `PickableWorkspace`: the sandboxed app cannot import from workshop-frontend, so the two packages
+ * describe the same wire shape independently.
+ */
+export type PickedWorkspace = { id: string; title: string }
+
+/**
+ * Ask the host to present its workspace picker. Resolves to the chosen workspace, or null if the
+ * user dismissed it. The app never receives the workspace list — by design.
+ */
+export type WorkspacePicker = () => Promise<PickedWorkspace | null>
+
+/** Resolve workspace ids the app already holds to live titles; null if no longer visible. */
+export type WorkspaceTitleResolver = (ids: string[]) => Promise<(string | null)[]>
+
+const WorkspacePickerContext = createContext<WorkspacePicker>(async () => null)
+const WorkspaceTitlesContext = createContext<WorkspaceTitleResolver>(
+  async (ids) => ids.map(() => null))
+
+export function useWorkspacePicker(): WorkspacePicker {
+  return useContext(WorkspacePickerContext)
+}
+
+export function useResolveWorkspaceTitles(): WorkspaceTitleResolver {
+  return useContext(WorkspaceTitlesContext)
+}
+
+/** Supplies the two workspace host capabilities to the app tree. */
+export function WorkspaceHostProvider({
+  pickWorkspace,
+  resolveWorkspaceTitles,
+  children,
+}: {
+  pickWorkspace: WorkspacePicker
+  resolveWorkspaceTitles: WorkspaceTitleResolver
+  children: ReactNode
+}) {
+  return createElement(
+    WorkspacePickerContext.Provider,
+    { value: pickWorkspace },
+    createElement(WorkspaceTitlesContext.Provider, { value: resolveWorkspaceTitles }, children),
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Modal presentation (full-viewport overlay)
 //
 // The app iframe fills only the Workshop's content pane. To show a modal over the whole app, the

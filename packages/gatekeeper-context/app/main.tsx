@@ -11,7 +11,12 @@ import type {
   GatekeeperAppThemeReceiver,
 } from '@gadgets/workshop-shared/theme'
 import ContextLibraryPage from './ContextLibraryPage'
-import { ContextApiProvider, PresentationProvider, type PresentAck } from './bridge'
+import {
+  ContextApiProvider,
+  PresentationProvider,
+  WorkspaceHostProvider,
+  type PresentAck,
+} from './bridge'
 import { applyAppTheme } from './theme'
 import './styles.css'
 import ErrorBoundary from './ErrorBoundary'
@@ -32,6 +37,10 @@ interface HostCapability extends RpcTarget {
   setPresenting(active: boolean): Promise<PresentAck>
   // Returns the current theme and calls back on `receiver` whenever it changes.
   subscribeTheme(receiver: GatekeeperAppThemeReceiver): Promise<GatekeeperAppTheme>
+  // Presents the Workshop's workspace picker; resolves to the chosen workspace or null.
+  pickWorkspace(): Promise<{ id: string; title: string } | null>
+  // Resolves workspace ids this app already holds to their live titles.
+  resolveWorkspaceTitles(ids: string[]): Promise<(string | null)[]>
 }
 
 function main() {
@@ -54,11 +63,16 @@ function main() {
   }).render(
     <ErrorBoundary><ContextApiProvider value={host.ui}>
       <PresentationProvider setPresenting={(active) => host.setPresenting(active)}>
-        <TooltipProvider>
-          <Toasty>
-            <ContextLibraryPage />
-          </Toasty>
-        </TooltipProvider>
+        <WorkspaceHostProvider
+          pickWorkspace={() => host.pickWorkspace()}
+          resolveWorkspaceTitles={(ids) => host.resolveWorkspaceTitles(ids)}
+        >
+          <TooltipProvider>
+            <Toasty>
+              <ContextLibraryPage />
+            </Toasty>
+          </TooltipProvider>
+        </WorkspaceHostProvider>
       </PresentationProvider>
     </ContextApiProvider></ErrorBoundary>,
   )
