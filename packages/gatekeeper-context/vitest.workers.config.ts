@@ -16,6 +16,9 @@ export default defineConfig({
           CONTEXT_COLLECTIONS_TEST: { className: "ContextCollectionDurableObject", useSQLite: true },
           USER_LIBRARIES_TEST: { className: "UserLibraryDurableObject", useSQLite: true },
           REGISTRIES_TEST: { className: "LibraryRegistryDurableObject", useSQLite: true },
+          // The facet parent/child pair behind facet-scope.workers.test.ts.
+          CONTEXT_SCOPE_TEST_PARENT: { className: "ContextScopeTestParent", useSQLite: true },
+          CONTEXT_SCOPE_TEST_FACET: { className: "ContextScopeTestFacet", useSQLite: true },
         },
         // The registry writes its public-collections snapshot here (see registry-do.ts).
         kvNamespaces: ["CONTEXT_COLLECTIONS"],
