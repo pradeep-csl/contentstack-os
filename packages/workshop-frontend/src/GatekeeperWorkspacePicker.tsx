@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react'
 export type PickableWorkspace = { id: string; title: string }
 
 /**
+ * A failed listing is not an empty one. Telling someone who owns ten workspaces that they own none
+ * would send them off to create an eleventh, so the two are kept apart.
+ */
+type WorkspaceListing =
+  | { status: 'loading' }
+  | { status: 'failed' }
+  | { status: 'loaded'; workspaces: PickableWorkspace[] }
+
+/**
  * Workshop-owned workspace picker, presented on behalf of a sandboxed gatekeeper app.
  *
  * The app never receives the list — only the single workspace the user picks. This keeps the
@@ -20,16 +29,16 @@ export default function GatekeeperWorkspacePicker({
   listWorkspaces: () => Promise<PickableWorkspace[]>
   onPick: (workspace: PickableWorkspace | null) => void
 }) {
-  const [workspaces, setWorkspaces] = useState<PickableWorkspace[] | null>(null)
+  const [listing, setListing] = useState<WorkspaceListing>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
     listWorkspaces()
       .then((owned) => {
-        if (!cancelled) setWorkspaces(owned)
+        if (!cancelled) setListing({ status: 'loaded', workspaces: owned })
       })
       .catch(() => {
-        if (!cancelled) setWorkspaces([])
+        if (!cancelled) setListing({ status: 'failed' })
       })
     return () => {
       cancelled = true
@@ -50,14 +59,22 @@ export default function GatekeeperWorkspacePicker({
         </p>
 
         <div className="mt-4 flex max-h-72 flex-col gap-1 overflow-y-auto">
-          {workspaces === null ? (
+          {listing.status === 'loading' ? (
             <p className="px-2 py-3 text-ui-sm text-kumo-subtle">Loading…</p>
-          ) : workspaces.length === 0 ? (
+          ) : listing.status === 'failed' ? (
+            <p
+              role="alert"
+              data-testid="workspace-picker-error"
+              className="px-2 py-3 text-ui-sm text-kumo-danger"
+            >
+              Your workspaces couldn’t be loaded. Close this and try again.
+            </p>
+          ) : listing.workspaces.length === 0 ? (
             <p className="px-2 py-3 text-ui-sm text-kumo-subtle">
               You don’t own any workspaces yet. Create one first.
             </p>
           ) : (
-            workspaces.map((workspace) => (
+            listing.workspaces.map((workspace) => (
               <button
                 key={workspace.id}
                 type="button"

@@ -200,5 +200,18 @@ describe("SandboxedGatekeeperApp navigation", () => {
     expect(supersedingOptions.map((option) => option.textContent)).toEqual(["Daily Brief"]);
     await act(async () => { (supersedingOptions[0] as HTMLElement).click(); });
     await expect(secondPick).resolves.toEqual({ id: WORKSPACE_ID, title: "Daily Brief" });
+
+    // A listing that fails is not an empty one. Saying "you don't own any workspaces yet" to
+    // someone who owns several would send them off to create another.
+    now.mockReturnValue(120_000);
+    listGadgets.mockRejectedValueOnce(new Error("offline"));
+    const failedPick = host.pickWorkspace();
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(document.querySelector('[data-testid="workspace-picker-error"]')).not.toBeNull();
+    expect(document.querySelectorAll('[data-testid="workspace-option"]')).toHaveLength(0);
+    await act(async () => {
+      (document.querySelector('[data-testid="workspace-picker-cancel"]') as HTMLElement).click();
+    });
+    await expect(failedPick).resolves.toBeNull();
   });
 });
