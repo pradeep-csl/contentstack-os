@@ -181,5 +181,22 @@ describe("SandboxedGatekeeperApp navigation", () => {
       (document.querySelector('[data-testid="workspace-picker-cancel"]') as HTMLElement).click();
     });
     await expect(dismissed).resolves.toBeNull();
+
+    // A second pick started before the first resolves supersedes it: the first resolves to null
+    // (as if dismissed) instead of hanging forever with no host left to answer it.
+    listGadgets.mockResolvedValueOnce([{ id: WORKSPACE_ID, title: "Daily Brief" }]);
+    const firstPick = host.pickWorkspace();
+    await act(async () => { await Promise.resolve(); });
+
+    listGadgets.mockResolvedValueOnce([{ id: WORKSPACE_ID, title: "Daily Brief" }]);
+    const secondPick = host.pickWorkspace();
+    await act(async () => { await Promise.resolve(); });
+
+    await expect(firstPick).resolves.toBeNull();
+
+    const supersedingOptions = [...document.querySelectorAll('[data-testid="workspace-option"]')];
+    expect(supersedingOptions.map((option) => option.textContent)).toEqual(["Daily Brief"]);
+    await act(async () => { (supersedingOptions[0] as HTMLElement).click(); });
+    await expect(secondPick).resolves.toEqual({ id: WORKSPACE_ID, title: "Daily Brief" });
   });
 });

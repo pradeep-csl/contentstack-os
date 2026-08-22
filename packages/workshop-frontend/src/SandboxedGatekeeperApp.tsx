@@ -306,14 +306,29 @@ export default function SandboxedGatekeeperApp({ frame, gatekeeperVendorId }: {
   const [pendingPick, setPendingPick] = useState<
     ((workspace: PickableWorkspace | null) => void) | null
   >(null)
+  // Mirrors `pendingPick` outside React state so a superseding pick or an unmount can resolve the
+  // still-outstanding one synchronously, without waiting on a render to see it.
+  const pendingPickRef = useRef<((workspace: PickableWorkspace | null) => void) | null>(null)
   const pickWorkspace = useCallback<PickWorkspace>(() => {
     return new Promise((resolve) => {
-      // Wrapped in an object: a bare function passed to a state setter would be *called*.
-      setPendingPick(() => (workspace: PickableWorkspace | null) => {
+      // A pick started while another is still outstanding supersedes it: the earlier request
+      // resolves to null (the same value a dismissal produces) rather than hanging forever with
+      // no host left to answer it.
+      pendingPickRef.current?.(null)
+      const resolveOnce = (workspace: PickableWorkspace | null) => {
+        pendingPickRef.current = null
         setPendingPick(null)
         resolve(workspace)
-      })
+      }
+      pendingPickRef.current = resolveOnce
+      // Wrapped in an object: a bare function passed to a state setter would be *called*.
+      setPendingPick(() => resolveOnce)
     })
+  }, [])
+  // A pick left pending when the component unmounts is resolved the same way, rather than
+  // depending on teardown ordering elsewhere (e.g. the capnweb session aborting) to notice it.
+  useEffect(() => {
+    return () => pendingPickRef.current?.(null)
   }, [])
   // The gatekeeper capability is `any`: its method shape is gatekeeper-defined and opaque to us.
   const capabilityRef = useRef<any>(null)
