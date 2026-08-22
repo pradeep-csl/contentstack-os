@@ -12,8 +12,9 @@ const DOMAIN = "scope-domain";
 // Public collections are visible to every account in their domain, so the one public case below
 // gets a domain of its own rather than leaking into the other tests' enabled sets.
 const PUBLIC_DOMAIN = "scope-domain-public";
-const WORKSPACE = "w".repeat(64);
-const OTHER_WORKSPACE = "x".repeat(64);
+// Workspace ids are Durable Object ID strings, and the API boundary validates that shape.
+const WORKSPACE = "0f".repeat(32);
+const OTHER_WORKSPACE = "1a".repeat(32);
 
 function api(accountId: string, isAdmin = false, domain = DOMAIN) {
   return new ContextApiImpl(
@@ -129,7 +130,23 @@ describe("workspace-scoped collections", () => {
     expect((await user.getContextCollectionMetadata(meta.id))?.visibility).toBe("private");
   });
 
-  it("refuses to scope a public collection, which has no owner library to hold the scope", async () => {
+  it("refuses a workspace id that is not a Durable Object id", async () => {
+    let user = api("user-15");
+    let meta = await user.createContextCollection("Mine", "Personal notes.", "private");
+
+    await expect(user.setContextCollectionWorkspace(meta.id, "not-a-workspace"))
+      .rejects.toThrow(/not a valid workspace id/i);
+    // A 64-character id that isn't hex is rejected too, not just a short one.
+    await expect(user.setContextCollectionWorkspace(meta.id, "z".repeat(64)))
+      .rejects.toThrow(/not a valid workspace id/i);
+    expect((await user.getContextCollectionMetadata(meta.id))?.visibility).toBe("private");
+
+    await expect(user.createContextCollection(
+      "Project", "Project notes.", "workspace", undefined, "web", "ws-1"))
+      .rejects.toThrow(/not a valid workspace id/i);
+  });
+
+  it("refuses to scope a public collection, which has no owner library to hold the scope", async () =>{
     let admin = api("admin-1", true, PUBLIC_DOMAIN);
     let meta = await admin.createContextCollection("Handbook", "Company handbook.", "public");
 

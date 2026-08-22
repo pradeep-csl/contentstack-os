@@ -73,6 +73,19 @@ export async function loadAgentContextCollections(
       .filter(collection => isVisibleInWorkspace(collection.workspaceId, workspaceId));
 }
 
+// A Durable Object ID string, which is what a workspace ID is. The iframe supplies it, so its shape
+// is checked here, at the API boundary, before it reaches a collection's metadata or the
+// owner-library record. The Durable Objects themselves stay unvalidated: they are internal, and a
+// malformed scope there is only ever unreadable, never a grant (see the design doc §7.1).
+const WORKSPACE_ID_PATTERN = /^[0-9a-f]{64}$/;
+
+/** Rejects a workspace id the frame cannot have obtained from the host picker. */
+function assertWorkspaceId(workspaceId: string): void {
+  if (!WORKSPACE_ID_PATTERN.test(workspaceId)) {
+    throw new Error("That is not a valid workspace id.");
+  }
+}
+
 @validateRpc()
 export class ContextApiImpl extends RpcTarget implements ContextApi {
   constructor(
@@ -153,6 +166,7 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     if (visibility === "public") this.#assertAdmin();
     if (visibility === "workspace") {
       if (!workspaceId) throw new Error("A workspace must be chosen for a workspace collection.");
+      assertWorkspaceId(workspaceId);
     } else if (workspaceId) {
       throw new Error("Only workspace-scoped collections accept a workspace id.");
     }
@@ -266,6 +280,7 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     await this.#assertCanWrite(collectionId);
     let workspace = workspaceId?.trim();
     if (!workspace) throw new Error("A workspace must be chosen to share this collection.");
+    assertWorkspaceId(workspace);
     // A public collection is domain-owned and has no owner library to carry a scope, so scoping it
     // would strand it in an index nothing reads. The per-workspace cap needs no check here:
     // updateOwnedCollection consults it on every scope change, which is what propagation performs.
