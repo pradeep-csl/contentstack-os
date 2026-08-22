@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthenticatedApi } from './AuthContext'
 
 /** One selectable workspace. Only workspaces the user owns are ever listed. */
 export type PickableWorkspace = { id: string; title: string }
@@ -10,28 +9,24 @@ export type PickableWorkspace = { id: string; title: string }
  * The app never receives the list — only the single workspace the user picks. This keeps the
  * host-bridge invariant that the frame learns nothing it was not handed (see
  * SandboxedGatekeeperApp's resolveWorkspaceTitles: "Deliberately a lookup, not an enumeration").
+ *
+ * The listing is supplied rather than fetched here: the frame decides how often this opens, so it
+ * shares the host's bounded-lifetime gadget listing instead of a request per open.
  */
 export default function GatekeeperWorkspacePicker({
+  listWorkspaces,
   onPick,
 }: {
+  listWorkspaces: () => Promise<PickableWorkspace[]>
   onPick: (workspace: PickableWorkspace | null) => void
 }) {
-  const { authenticatedApi } = useAuthenticatedApi()
   const [workspaces, setWorkspaces] = useState<PickableWorkspace[] | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    authenticatedApi
-      .listGadgets()
-      // `owner` is set only when the viewer is a collaborator, so its absence means they own it.
-      // `role` is the wrong filter here: the owner is always "build", but so is a build collaborator.
-      .then((gadgets) => {
-        if (cancelled) return
-        setWorkspaces(
-          gadgets
-            .filter((gadget) => !gadget.owner)
-            .map((gadget) => ({ id: gadget.id, title: gadget.title })),
-        )
+    listWorkspaces()
+      .then((owned) => {
+        if (!cancelled) setWorkspaces(owned)
       })
       .catch(() => {
         if (!cancelled) setWorkspaces([])
@@ -39,7 +34,7 @@ export default function GatekeeperWorkspacePicker({
     return () => {
       cancelled = true
     }
-  }, [authenticatedApi])
+  }, [listWorkspaces])
 
   return (
     <div

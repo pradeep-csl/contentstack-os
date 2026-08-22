@@ -159,6 +159,8 @@ describe("SandboxedGatekeeperApp navigation", () => {
 
     // The picker lists only workspaces the viewer owns: `owner` is set exactly when they are a
     // collaborator instead. It renders as host chrome in the Workshop document, not in the frame.
+    // Opened past the shared listing's TTL, so this is a fresh listing to filter.
+    now.mockReturnValue(60_000);
     const OTHERS_WORKSPACE_ID = "c".repeat(64);
     listGadgets.mockResolvedValueOnce([
       { id: WORKSPACE_ID, title: "Daily Brief" },
@@ -172,23 +174,23 @@ describe("SandboxedGatekeeperApp navigation", () => {
 
     await act(async () => { (options[0] as HTMLElement).click(); });
     await expect(picked).resolves.toEqual({ id: WORKSPACE_ID, title: "Daily Brief" });
+    expect(listGadgets).toHaveBeenCalledTimes(3);
 
-    // Dismissing resolves null rather than hanging or throwing.
-    listGadgets.mockResolvedValueOnce([{ id: WORKSPACE_ID, title: "Daily Brief" }]);
+    // Dismissing resolves null rather than hanging or throwing. Reopening within the TTL reuses the
+    // listing the pick above fetched: the frame decides how often the picker opens.
     const dismissed = host.pickWorkspace();
     await act(async () => { await Promise.resolve(); });
     await act(async () => {
       (document.querySelector('[data-testid="workspace-picker-cancel"]') as HTMLElement).click();
     });
     await expect(dismissed).resolves.toBeNull();
+    expect(listGadgets).toHaveBeenCalledTimes(3);
 
     // A second pick started before the first resolves supersedes it: the first resolves to null
     // (as if dismissed) instead of hanging forever with no host left to answer it.
-    listGadgets.mockResolvedValueOnce([{ id: WORKSPACE_ID, title: "Daily Brief" }]);
     const firstPick = host.pickWorkspace();
     await act(async () => { await Promise.resolve(); });
 
-    listGadgets.mockResolvedValueOnce([{ id: WORKSPACE_ID, title: "Daily Brief" }]);
     const secondPick = host.pickWorkspace();
     await act(async () => { await Promise.resolve(); });
 

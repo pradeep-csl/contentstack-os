@@ -7,7 +7,7 @@ import type {
   GatekeeperAppTheme,
   GatekeeperAppThemeReceiver,
 } from '@gadgets/workshop-shared/theme'
-import { isHexColor } from '@gadgets/workshop-shared/api'
+import { isHexColor, type GadgetMetadataWithTimestamps } from '@gadgets/workshop-shared/api'
 import { createRateLimitedCapability } from './rateLimitedCapability'
 import { useTheme } from './ThemeContext'
 import { useServerConfig } from './ServerConfigContext'
@@ -45,9 +45,10 @@ type OverlayState = 'full' | null
 // Upper bound on one workspace-title lookup, matching the app's page size.
 const MAX_RESOLVED_WORKSPACES = 100
 
-// How long one gadget listing is reused across title lookups. The untrusted frame calls this once
-// per page of rows (and could call it in a loop), so the listing is shared rather than repeated.
-const WORKSPACE_TITLES_TTL_MS = 10_000
+// How long one gadget listing is reused across both workspace capabilities. The untrusted frame
+// looks titles up once per page of rows and can reopen the picker as often as it likes (either in a
+// loop), so the two share one bounded-lifetime listing rather than each repeating it.
+const WORKSPACE_LISTING_TTL_MS = 10_000
 
 // Near the max int, so the full-viewport iframe sits above all Workshop chrome.
 const overlayZIndex = 2147483000
@@ -281,25 +282,35 @@ export default function SandboxedGatekeeperApp({ frame, gatekeeperVendorId }: {
       search: gadgetId === undefined ? {} : { w: gadgetId },
     })
   }, [navigate])
-  const titlesRef = useRef<{ at: number, titles: Promise<Map<string, string>> } | null>(null)
-  const resolveWorkspaceTitles = useCallback<ResolveWorkspaceTitles>(async (ids) => {
-    let entry = titlesRef.current
-    if (!entry || Date.now() - entry.at >= WORKSPACE_TITLES_TTL_MS) {
-      entry = {
-        at: Date.now(),
-        titles: authenticatedApi.listGadgets()
-          .then((gadgets) => new Map(gadgets.map((gadget) => [gadget.id, gadget.title]))),
-      }
-      titlesRef.current = entry
-      // Don't cache a failure: drop it so the next lookup retries.
+  const listingRef = useRef<
+    { at: number, gadgets: Promise<GadgetMetadataWithTimestamps[]> } | null
+  >(null)
+  const listWorkspaces = useCallback(() => {
+    let entry = listingRef.current
+    if (!entry || Date.now() - entry.at >= WORKSPACE_LISTING_TTL_MS) {
+      entry = { at: Date.now(), gadgets: authenticatedApi.listGadgets() }
+      listingRef.current = entry
+      // Don't cache a failure: drop it so the next caller retries.
       const failed = entry
-      entry.titles.catch(() => {
-        if (titlesRef.current === failed) titlesRef.current = null
+      entry.gadgets.catch(() => {
+        if (listingRef.current === failed) listingRef.current = null
       })
     }
-    const titles = await entry.titles
-    return ids.map((id) => titles.get(id) ?? null)
+    return entry.gadgets
   }, [authenticatedApi])
+  const resolveWorkspaceTitles = useCallback<ResolveWorkspaceTitles>(async (ids) => {
+    const gadgets = await listWorkspaces()
+    const titles = new Map(gadgets.map((gadget) => [gadget.id, gadget.title]))
+    return ids.map((id) => titles.get(id) ?? null)
+  }, [listWorkspaces])
+  // Only workspaces the user owns are offered: `owner` is set exactly when the viewer is a
+  // collaborator instead. `role` is the wrong filter here — the owner is always "build", but so is
+  // a build-role collaborator.
+  const listOwnedWorkspaces = useCallback(async (): Promise<PickableWorkspace[]> => {
+    return (await listWorkspaces())
+      .filter((gadget) => !gadget.owner)
+      .map((gadget) => ({ id: gadget.id, title: gadget.title }))
+  }, [listWorkspaces])
   const openPrompt = useCallback<OpenPrompt>((prompt) => {
     navigate({ to: '/', search: { prompt } })
   }, [navigate])
@@ -409,7 +420,9 @@ export default function SandboxedGatekeeperApp({ frame, gatekeeperVendorId }: {
         title="Gatekeeper app"
         style={iframeStyleForOverlay(overlay)}
       />
-      {pendingPick ? <GatekeeperWorkspacePicker onPick={pendingPick} /> : null}
+      {pendingPick ? (
+        <GatekeeperWorkspacePicker listWorkspaces={listOwnedWorkspaces} onPick={pendingPick} />
+      ) : null}
     </>
   )
 }
