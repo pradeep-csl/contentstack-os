@@ -40,7 +40,7 @@ describe("ContextObserverTracker", () => {
     let denied = verifier(["private"]);
 
     await expect(tracker.addObserver("observer", denied.api)).rejects.toThrow(
-      /does not have access to a Context collection/,
+      /has read a Context collection that this collaborator cannot access/,
     );
     expect(denied.calls).toEqual([
       { sharingDomain: "workshop.example", collectionId: "public" },
@@ -101,7 +101,9 @@ describe("ContextObserverTracker", () => {
     let preparing = tracker.prepareObservation(["new"]);
     expect(kv.get("observedCollection:new")).toBe("pending");
     let denied = verifier([]);
-    await expect(tracker.addObserver("new", denied.api)).rejects.toThrow(/does not have access/);
+    await expect(tracker.addObserver("new", denied.api)).rejects.toThrow(
+      /has read a Context collection that this collaborator cannot access/,
+    );
     release();
     (await preparing).commit();
     expect(denied.calls.map(call => call.collectionId)).toEqual(["new"]);
@@ -124,7 +126,9 @@ describe("ContextObserverTracker", () => {
     let admission = tracker.addObserver("candidate", candidate);
     await tracker.prepareObservation(["new"]);
     release();
-    await expect(admission).rejects.toThrow(/does not have access/);
+    await expect(admission).rejects.toThrow(
+      /has read a Context collection that this collaborator cannot access/,
+    );
     expect(calls).toEqual(["old", "new"]);
   });
 
@@ -180,7 +184,7 @@ describe("ContextObserverTracker", () => {
     scoped.delete("project");
     let denied = verifier([]);
     await expect(tracker.addObserver("collaborator", denied.api)).rejects.toThrow(
-      /no longer shared with this workspace|does not have access/,
+      /no longer shared with this workspace/,
     );
     expect(denied.calls.map(call => call.collectionId)).toEqual(["project"]);
 

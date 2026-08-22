@@ -101,8 +101,9 @@ export class ContextObserverTracker {
       ));
       if (access.some(hasAccess => !hasAccess)) {
         throw new Error(
-          "This collaborator does not have access to a Context collection whose data this workspace " +
-          "has read, so they cannot be allowed to observe it.",
+          "This workspace has read a Context collection that this collaborator cannot access — " +
+          "either a private collection of another user, or one no longer shared with this " +
+          "workspace. Re-sharing that collection with this workspace restores collaborator access.",
         );
       }
       for (let collectionId of collections) checked.add(collectionId);
