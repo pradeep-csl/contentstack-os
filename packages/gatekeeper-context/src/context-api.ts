@@ -7,7 +7,7 @@ import {
   ContextApi, ContextCollectionContent, ContextCollectionMetadata, ContextCollectionVisibility,
   ContextDocument, ContextDocumentSummary, ContextGitTokenCreateResult, ContextGitTokenList,
   ContextIngestTokenCreateResult, ContextIngestTokenList,
-  DEFAULT_GIT_BRANCH, EnabledCollectionInfo,
+  DEFAULT_GIT_BRANCH, EnabledCollectionInfo, isVisibleInWorkspace,
 } from "./context-types.js";
 import type { ContextCollectionDurableObject } from "./context-collection.js";
 import type { UserLibraryDurableObject } from "./user-library.js";
@@ -17,7 +17,11 @@ import {
 } from "./collection-kv.js";
 import { domainName } from "./domain.js";
 
-/** Collections visible to this account's agents. */
+/**
+ * The unfiltered management listing: every collection this account owns (private or
+ * workspace-scoped) plus every public collection in the domain. Used for the account's own
+ * library page, where a workspace-scoped collection must still show up for its creator.
+ */
 export async function loadEnabledContextCollections(
     env: Pick<Cloudflare.Env, "CONTEXT_COLLECTIONS">,
     domain: string,
@@ -54,6 +58,19 @@ export async function loadEnabledContextCollections(
     });
   }
   return result;
+}
+
+/**
+ * The collections an agent acting in `workspaceId` may use: the management listing minus every
+ * collection scoped to a different workspace. Public collections carry no scope and always pass.
+ */
+export async function loadAgentContextCollections(
+    env: Pick<Cloudflare.Env, "CONTEXT_COLLECTIONS">,
+    domain: string,
+    userLibrary: DurableObjectStub<UserLibraryDurableObject>,
+    workspaceId: string): Promise<EnabledCollectionInfo[]> {
+  return (await loadEnabledContextCollections(env, domain, userLibrary))
+      .filter(collection => isVisibleInWorkspace(collection.workspaceId, workspaceId));
 }
 
 @validateRpc()

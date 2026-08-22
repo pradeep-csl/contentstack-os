@@ -13,7 +13,7 @@ import type {
   SlashCommandDescriptor, SlashCommandProvider, SlashCommandResult,
 } from "@gadgets/workshop-shared/gatekeeper";
 import { LibraryReadSession, accountEnabledCollections } from "./library-read.js";
-import { ContextApiImpl, loadEnabledContextCollections } from "./context-api.js";
+import { ContextApiImpl, loadAgentContextCollections } from "./context-api.js";
 import { ContextObserverTracker } from "./context-observers.js";
 import type { ContextVerifierApi } from "./context-observers.js";
 import {
@@ -225,6 +225,22 @@ export class ContextGatekeeper
     return new ContextObserverTracker(this.ctx.storage.kv, this.ctx.props.sharingDomain);
   }
 
+  /**
+   * The workspace this facet serves. Gatekeepers are installed as Facets under the workspace's
+   * Overseer (see overseer.ts `ctx.facets.get("gatekeeper<id>")`), and a facet inherits its
+   * parent's Durable Object id — which is exactly the id the Workshop calls a workspace id
+   * (workspaces are created with `newUniqueId().toString()`). Verified by
+   * gatekeeper-scheduler's __tests__/scheduler-scope.test.ts.
+   */
+  #workspaceId(): string {
+    let workspaceId = this.ctx.id.toString();
+    // Smoke check only, mirroring gatekeeper-scheduler: proves we did not get the account scope.
+    if (!workspaceId || workspaceId === this.ctx.props.accountId) {
+      throw new Error("Invalid inherited Context workspace scope.");
+    }
+    return workspaceId;
+  }
+
   async #loadSkills(
       collections: EnabledCollectionInfo[]):
       Promise<CollectionSkills[]> {
@@ -274,7 +290,8 @@ export class ContextGatekeeper
       return new LibraryReadSession(
         this.#collections(),
         accountEnabledCollections(
-          this.#userLibraries(), this.ctx.props.sharingDomain, this.ctx.props.accountId),
+          this.#userLibraries(), this.ctx.props.sharingDomain, this.ctx.props.accountId,
+          this.#workspaceId()),
         this.ctx.props.sharingDomain, ownedAuthorizer,
         collectionIds => this.#observers().prepareObservation(collectionIds));
     } catch (err) {
@@ -298,7 +315,8 @@ export class ContextGatekeeper
     let domain = this.ctx.props.sharingDomain;
     let userLibrary = this.#userLibraries().get(
         this.#userLibraries().idFromName(domainName(domain, this.ctx.props.accountId)));
-    let collections = (await loadEnabledContextCollections(this.env, domain, userLibrary))
+    let collections = (await loadAgentContextCollections(
+          this.env, domain, userLibrary, this.#workspaceId()))
         .toSorted((left, right) =>
           left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
     return buildAgentSkillCommands(await this.#loadSkills(collections));
@@ -322,7 +340,8 @@ export class ContextGatekeeper
     let domain = this.ctx.props.sharingDomain;
     let userLibrary = this.#userLibraries().get(
       this.#userLibraries().idFromName(domainName(domain, this.ctx.props.accountId)));
-    let collections = await loadEnabledContextCollections(this.env, domain, userLibrary);
+    let collections = await loadAgentContextCollections(
+      this.env, domain, userLibrary, this.#workspaceId());
     let catalog = buildContextCatalog(collections, await this.#loadSkills(collections));
     if (catalog.entries.length > 0) {
       let collectionIds = [...new Set(catalog.entries.map(entry => {

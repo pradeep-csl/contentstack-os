@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { ContextApiImpl } from "../src/context-api.js";
+import { ContextApiImpl, loadAgentContextCollections, loadEnabledContextCollections } from "../src/context-api.js";
+import { accountEnabledCollections } from "../src/library-read.js";
 import type { ContextCollectionDurableObject } from "../src/context-collection.js";
 import type { UserLibraryDurableObject } from "../src/user-library.js";
 import type { LibraryRegistryDurableObject } from "../src/registry-do.js";
@@ -92,5 +93,43 @@ describe("workspace-scoped collections", () => {
     expect(entry?.workspaceId).toBe(WORKSPACE);
     // Never widened: the management UI's sort comparator depends on `source` being two-valued.
     expect(entry?.source).toBe("private");
+  });
+});
+
+describe("agent-facing collection listing", () => {
+  it("filters scoped collections by workspace, and never filters the management listing", async () => {
+    let user = api("user-7");
+    let scoped = await user.createContextCollection(
+      "Project", "Project notes.", "workspace", undefined, "web", WORKSPACE);
+    let plain = await user.createContextCollection("Mine", "Personal notes.", "private");
+
+    let inScope = await loadAgentContextCollections(
+      env as unknown as Cloudflare.Env, DOMAIN, library("user-7"), WORKSPACE);
+    expect(inScope.map(entry => entry.id).toSorted()).toEqual([plain.id, scoped.id].toSorted());
+
+    let elsewhere = await loadAgentContextCollections(
+      env as unknown as Cloudflare.Env, DOMAIN, library("user-7"), OTHER_WORKSPACE);
+    expect(elsewhere.map(entry => entry.id)).toEqual([plain.id]);
+
+    // The management listing is deliberately unfiltered: hiding the creator's own scoped
+    // collection from their own library page would be a bug, not exclusivity.
+    let managed = await loadEnabledContextCollections(
+      env as unknown as Cloudflare.Env, DOMAIN, library("user-7"));
+    expect(managed.map(entry => entry.id).toSorted()).toEqual([plain.id, scoped.id].toSorted());
+  });
+
+  it("pins a read session to the collections enabled in its workspace", async () => {
+    let user = api("user-8");
+    let scoped = await user.createContextCollection(
+      "Project", "Project notes.", "workspace", undefined, "web", WORKSPACE);
+    await user.putContextDocument(scoped.id, "notes.md", {
+      description: "Notes.", body: "# Secret project notes",
+    });
+
+    let libraries = env.USER_LIBRARIES_TEST as DurableObjectNamespace<UserLibraryDurableObject>;
+    let inScope = await accountEnabledCollections(libraries, DOMAIN, "user-8", WORKSPACE)();
+    expect(inScope.has(scoped.id)).toBe(true);
+    let elsewhere = await accountEnabledCollections(libraries, DOMAIN, "user-8", OTHER_WORKSPACE)();
+    expect(elsewhere.has(scoped.id)).toBe(false);
   });
 });

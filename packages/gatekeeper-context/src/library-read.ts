@@ -36,15 +36,17 @@ type ObserveCollections = (collectionIds: string[]) => Promise<{
 export type ResolveEnabledCollections = () => Promise<Map<string, ContextCollectionVisibility>>;
 
 /**
- * Default resolution: the account's own private collections plus every public collection in the
- * domain — the global knowledge model.
+ * Default resolution: the account's own collections plus every public collection in the domain.
+ * `workspaceId` is the workspace the session acts in; collections scoped to a different workspace
+ * are excluded, which is what makes workspace visibility exclusive.
  */
 export function accountEnabledCollections(
     userLibraries: DurableObjectNamespace<UserLibraryDurableObject>,
     domain: string,
-    accountId: string): ResolveEnabledCollections {
+    accountId: string,
+    workspaceId?: string): ResolveEnabledCollections {
   return () => userLibraries.get(userLibraries.idFromName(domainName(domain, accountId)))
-      .getEnabledCollections(domain);
+      .getEnabledCollections(domain, workspaceId);
 }
 
 @validateRpc()
