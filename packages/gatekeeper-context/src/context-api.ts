@@ -262,9 +262,18 @@ export class ContextApiImpl extends RpcTarget implements ContextApi {
     await this.#collection(collectionId).deleteSelf();
   }
 
-  async getContextCollectionWorkspace(collectionId: string): Promise<string | null> {
-    await this.#assertCanRead(collectionId);
-    return (await this.#collection(collectionId).getMetadata()).workspaceId ?? null;
+  async setContextCollectionWorkspace(collectionId: string, workspaceId: string): Promise<void> {
+    await this.#assertCanWrite(collectionId);
+    let workspace = workspaceId?.trim();
+    if (!workspace) throw new Error("A workspace must be chosen to share this collection.");
+    // A public collection is domain-owned and has no owner library to carry a scope, so scoping it
+    // would strand it in an index nothing reads. The per-workspace cap needs no check here:
+    // updateOwnedCollection consults it on every scope change, which is what propagation performs.
+    let metadata = await this.#collection(collectionId).getMetadata();
+    if (metadata.visibility === "public") {
+      throw new Error("A collection shared with everyone can't be scoped to a workspace.");
+    }
+    await this.#collection(collectionId).setWorkspaceScope(workspace);
   }
 
   async revokeContextCollectionWorkspace(collectionId: string): Promise<void> {

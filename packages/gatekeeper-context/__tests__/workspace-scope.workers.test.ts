@@ -6,15 +6,19 @@ import type { ContextCollectionDurableObject } from "../src/context-collection.j
 import type { UserLibraryDurableObject } from "../src/user-library.js";
 import type { LibraryRegistryDurableObject } from "../src/registry-do.js";
 import { domainName } from "../src/domain.js";
+import { MAX_SCOPED_COLLECTIONS_PER_WORKSPACE } from "../src/context-types.js";
 
 const DOMAIN = "scope-domain";
+// Public collections are visible to every account in their domain, so the one public case below
+// gets a domain of its own rather than leaking into the other tests' enabled sets.
+const PUBLIC_DOMAIN = "scope-domain-public";
 const WORKSPACE = "w".repeat(64);
 const OTHER_WORKSPACE = "x".repeat(64);
 
-function api(accountId: string, isAdmin = false) {
+function api(accountId: string, isAdmin = false, domain = DOMAIN) {
   return new ContextApiImpl(
     env as unknown as Cloudflare.Env,
-    DOMAIN,
+    domain,
     accountId,
     isAdmin,
     env.CONTEXT_COLLECTIONS_TEST as DurableObjectNamespace<ContextCollectionDurableObject>,
@@ -60,15 +64,13 @@ describe("workspace-scoped collections", () => {
       .toBe(false);
   });
 
-  it("reports and revokes the scope, returning the collection to private", async () => {
+  it("revokes the scope, returning the collection to private", async () => {
     let user = api("user-4");
     let meta = await user.createContextCollection(
       "Project", "Project notes.", "workspace", undefined, "web", WORKSPACE);
-    expect(await user.getContextCollectionWorkspace(meta.id)).toBe(WORKSPACE);
 
     await user.revokeContextCollectionWorkspace(meta.id);
 
-    expect(await user.getContextCollectionWorkspace(meta.id)).toBeNull();
     let refreshed = await user.getContextCollectionMetadata(meta.id);
     expect(refreshed?.visibility).toBe("private");
     expect(refreshed?.workspaceId).toBeUndefined();
@@ -81,6 +83,79 @@ describe("workspace-scoped collections", () => {
       "Project", "Project notes.", "workspace", undefined, "web", WORKSPACE);
     await expect(api("stranger").revokeContextCollectionWorkspace(meta.id))
       .rejects.toThrow(/don't have access/);
+  });
+
+  it("scopes a private collection to a workspace, enabling it only there", async () => {
+    let user = api("user-9");
+    let meta = await user.createContextCollection("Mine", "Personal notes.", "private");
+
+    await user.setContextCollectionWorkspace(meta.id, WORKSPACE);
+
+    let refreshed = await user.getContextCollectionMetadata(meta.id);
+    expect(refreshed?.visibility).toBe("workspace");
+    expect(refreshed?.workspaceId).toBe(WORKSPACE);
+    expect((await library("user-9").getEnabledCollections(DOMAIN, WORKSPACE)).get(meta.id))
+      .toBe("workspace");
+    expect((await library("user-9").getEnabledCollections(DOMAIN, OTHER_WORKSPACE)).has(meta.id))
+      .toBe(false);
+  });
+
+  it("re-scopes a revoked collection back to its workspace, and takes the same scope twice", async () => {
+    // The documented remedy for a revoke: a workspace whose new collaborators are blocked because
+    // its agent already read this collection gets them back the moment it is shared again.
+    let user = api("user-10");
+    let meta = await user.createContextCollection(
+      "Project", "Project notes.", "workspace", undefined, "web", WORKSPACE);
+    await user.revokeContextCollectionWorkspace(meta.id);
+    expect((await library("user-10").getEnabledCollections(DOMAIN, WORKSPACE)).get(meta.id))
+      .toBe("private");
+
+    await user.setContextCollectionWorkspace(meta.id, WORKSPACE);
+
+    expect((await user.getContextCollectionMetadata(meta.id))?.workspaceId).toBe(WORKSPACE);
+    expect((await library("user-10").getEnabledCollections(DOMAIN, WORKSPACE)).get(meta.id))
+      .toBe("workspace");
+    // Idempotent: re-sharing with the workspace it already has is a no-op, not an error.
+    await expect(user.setContextCollectionWorkspace(meta.id, WORKSPACE)).resolves.toBeUndefined();
+    expect((await library("user-10").getEnabledCollections(DOMAIN, WORKSPACE)).get(meta.id))
+      .toBe("workspace");
+  });
+
+  it("refuses a blank workspace id", async () => {
+    let user = api("user-11");
+    let meta = await user.createContextCollection("Mine", "Personal notes.", "private");
+    await expect(user.setContextCollectionWorkspace(meta.id, "   "))
+      .rejects.toThrow(/workspace must be chosen/i);
+    expect((await user.getContextCollectionMetadata(meta.id))?.visibility).toBe("private");
+  });
+
+  it("refuses to scope a public collection, which has no owner library to hold the scope", async () => {
+    let admin = api("admin-1", true, PUBLIC_DOMAIN);
+    let meta = await admin.createContextCollection("Handbook", "Company handbook.", "public");
+
+    await expect(admin.setContextCollectionWorkspace(meta.id, WORKSPACE))
+      .rejects.toThrow(/shared with everyone/i);
+    expect((await admin.getContextCollectionMetadata(meta.id))?.visibility).toBe("public");
+  });
+
+  it("refuses to scope a collection the caller does not own", async () => {
+    let meta = await api("user-12").createContextCollection("Mine", "Personal notes.", "private");
+    await expect(api("stranger").setContextCollectionWorkspace(meta.id, WORKSPACE))
+      .rejects.toThrow(/don't have access/);
+  });
+
+  it("rejects a scope into a workspace already holding the cap", async () => {
+    let user = api("user-13");
+    let meta = await user.createContextCollection("Mine", "Personal notes.", "private");
+    // Filled through the library directly: this exercises the existing cap on the scope-change path
+    // (updateOwnedCollection), not a second check of its own.
+    for (let i = 0; i < MAX_SCOPED_COLLECTIONS_PER_WORKSPACE; i++) {
+      await library("user-13").createOwnedCollection(`filler-${i}`, `C${i}`, "", undefined, WORKSPACE);
+    }
+
+    await expect(user.setContextCollectionWorkspace(meta.id, WORKSPACE))
+      .rejects.toThrow(/too many/i);
+    expect((await user.getContextCollectionMetadata(meta.id))?.visibility).toBe("private");
   });
 
   it("keeps the management listing showing the creator's scoped collections", async () => {

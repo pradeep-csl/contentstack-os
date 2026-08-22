@@ -308,6 +308,28 @@ export class ContextCollectionDurableObject extends DurableObject<Cloudflare.Env
   }
 
   /**
+   * Scope this collection to one workspace. Propagation carries the new `workspaceId` into the
+   * owner-library record, which is what actually enables the collection in that workspace — and,
+   * for a collection whose scope was revoked, what lets its workspace take collaborators again.
+   * Callers reject public collections first (they have no owner library to hold a scope).
+   */
+  async setWorkspaceScope(workspaceId: string): Promise<void> {
+    let meta = this.storage.metadata.get();
+    if (meta.visibility === "workspace" && meta.workspaceId === workspaceId) return;
+    this.storage.metadata.put({
+      ...meta, visibility: "workspace", workspaceId, lastUpdated: new Date(),
+    });
+    try {
+      await this.#propagate();
+    } catch (err) {
+      // Propagation is where the per-workspace cap is enforced, so a rejected scope must not leave
+      // metadata advertising a workspace the owner library never recorded.
+      this.storage.metadata.put(meta);
+      throw err;
+    }
+  }
+
+  /**
    * Return a workspace-scoped collection to private. Propagation carries the cleared `workspaceId`
    * into the owner-library record, which is what actually re-enables the collection everywhere.
    */

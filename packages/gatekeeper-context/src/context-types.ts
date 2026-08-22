@@ -389,11 +389,12 @@ export interface ContextApi extends RpcTarget {
   ): Promise<ContextCollectionMetadata>;
 
   /**
-   * The workspace this collection is scoped to, or null if it is not workspace-scoped. Readable by
-   * the owner (and, for a public collection, anyone) — an admin who does not own a workspace-scoped
-   * collection cannot read it, the same position they are in for private collections.
+   * Scope a collection to one workspace, so exactly that workspace's agent reads it. Owner only,
+   * and never for a public collection: a public collection is domain-owned with no owner library to
+   * hold the scope, so scoping it would strand it. Re-scoping is also the remedy for the blocked
+   * collaborator state described below, so this must stay reachable for a revoked collection.
    */
-  getContextCollectionWorkspace(collectionId: string): Promise<string | null>;
+  setContextCollectionWorkspace(collectionId: string, workspaceId: string): Promise<void>;
 
   /**
    * Drop the workspace scope, returning the collection to private.
