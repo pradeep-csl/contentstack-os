@@ -40,7 +40,7 @@
     // Hide username/password login and signup. Leave false until gatekeeper sign-in is verified
     // working -- the backend ignores this flag while `gatekeepers` is empty precisely so a
     // misconfiguration cannot lock everyone out, but it will honour it once the list is non-empty.
-    "disablePassword": false
+    "disablePassword": false,
 
     // Optional: restrict sign-in to these email domains, matched exactly against the
     // provider-verified address (no subdomains -- list one per domain you mean). Setting this

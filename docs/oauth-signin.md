@@ -38,7 +38,12 @@ Two consequences are deliberate:
   without an expiry, a token issued once works forever and the identity provider is never consulted
   again — so offboarding someone there would not end their access here. The lifetime is absolute
   from issue time rather than idle-based, because an idle timeout would never expire for an active
-  user, which is precisely the case that matters.
+  user, which is precisely the case that matters. The bound is enforced only when a session is
+  established — `PublicApi.authenticate()` checks it once and hands back an `AuthenticatedApi`
+  capability that then lives as long as the WebSocket, with no re-check per request. A tab that is
+  already connected when the max age passes keeps that capability, admin included, until its socket
+  drops; the expiry governs new connections (page load, reconnect), not existing ones. Offboarding
+  someone is therefore not instant if they have a live connection open.
 
 An email domain is not proof of organisation membership: a consumer Google account can be registered
 against a company address, and the gatekeeper reads the verified `email` claim without inspecting

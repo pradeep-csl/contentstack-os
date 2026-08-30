@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { GatekeeperUser } from "@gadgets/workshop-shared/gatekeeper";
 import { LoginConnectCallbackImpl } from "../src/auth/login-flow.js";
 
 // complete() reads the deployment's signup switch from KV. Stubbing it keeps this test to the
@@ -41,12 +42,13 @@ function makeCallback(env: Record<string, string>): {
       UserDurableObject: { idFromName: (name: string) => name, get: () => userStub },
     },
   };
-  const callback = new (LoginConnectCallbackImpl as unknown as new (
-    ctx: unknown, env: unknown) => { complete(account: unknown): Promise<void> })(ctx, env);
+  const callback = new LoginConnectCallbackImpl(
+      ctx as unknown as ExecutionContext, env as unknown as Cloudflare.Env);
 
   return {
     recorder,
-    complete: (email) => callback.complete({ getAuthenticatedEmail: async () => email }),
+    complete: (email) => callback.complete(
+        { getAuthenticatedEmail: async () => email } as unknown as Fetcher<GatekeeperUser>),
   };
 }
 
