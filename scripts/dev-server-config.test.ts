@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   getDevServerConfig,
   getWranglerPortFromBackendHost,
+  parseDevAdmins,
 } from "./dev-server-config.ts";
 
 describe("getWranglerPortFromBackendHost", () => {
@@ -71,4 +72,36 @@ describe("getDevServerConfig", () => {
       assert.throws(() => getDevServerConfig(args), /--port must be an integer between 1 and 65535/);
     });
   }
+});
+
+// Local dev forced ["admin"], which was fine while password login existed. Once sign-in is
+// gatekeeper-only the signed-in identity is a verified email, so a hardcoded username can never
+// match one and /admin becomes unreachable locally.
+describe("parseDevAdmins", () => {
+  it("defaults to the local admin account when unset", () => {
+    assert.deepEqual(parseDevAdmins(undefined), ["admin"]);
+    assert.deepEqual(parseDevAdmins(""), ["admin"]);
+    assert.deepEqual(parseDevAdmins("   "), ["admin"]);
+  });
+
+  // `.dev.vars` is KEY=VALUE, where getting JSON quoting right is fiddly, so a bare list works too.
+  it("accepts a comma-separated list", () => {
+    assert.deepEqual(parseDevAdmins("person@example.com"), ["person@example.com"]);
+    assert.deepEqual(
+      parseDevAdmins(" person@example.com , other@example.com ,, "),
+      ["person@example.com", "other@example.com"]);
+  });
+
+  it("accepts the JSON array the deployed form uses", () => {
+    assert.deepEqual(
+      parseDevAdmins('["person@example.com","other@example.com"]'),
+      ["person@example.com", "other@example.com"]);
+  });
+
+  // A JSON array of anything but strings would reach the backend and fail its own type check
+  // there, where the error names neither this file nor the variable that caused it.
+  it("rejects a value that is not a list of names", () => {
+    assert.throws(() => parseDevAdmins("[1,2]"), /ADMINS must be/);
+    assert.throws(() => parseDevAdmins('{"a":1}'), /ADMINS must be/);
+  });
 });

@@ -24,7 +24,7 @@ import { resolveBinEntry } from "./bin-entry.ts";
 import {
   DEPLOYMENT_CONFIG_NAME, modelCatalogVars, parseJsonc, type DeploymentConfig,
 } from "./deploy/deployment-config.ts";
-import { getDevServerConfig } from "./dev-server-config.ts";
+import { getDevServerConfig, parseDevAdmins } from "./dev-server-config.ts";
 import { killProcessTree } from "./kill-process-tree.ts";
 import { pnpmCommand } from "./pnpm-command.ts";
 import type { ServiceBinding, WranglerBuild } from "./release/manifest-lib.ts";
@@ -497,9 +497,11 @@ for (const gk of gatekeepers) {
 
   config.services = config.services || [];
 
-  // For local testing, create an account named "admin" to test admin features.
+  // For local testing, the account named "admin" gets admin features. Set ADMINS to override it —
+  // necessary once the dev server signs people in through a gatekeeper, since the backend matches
+  // admins against the signed-in profile id, which is then a verified email rather than a username.
   config.vars = config.vars || {};
-  config.vars.ADMINS = ["admin"];
+  config.vars.ADMINS = parseDevAdmins(process.env.ADMINS);
 
   // Pass through the optional OAuth sign-in / AI Gateway billing env vars from the shell
   // environment, so you can run e.g.

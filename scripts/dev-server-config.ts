@@ -29,6 +29,40 @@ export function getWranglerPortFromBackendHost(backendHost: string): string | nu
   return url.port;
 }
 
+/** Who local dev treats as a deployment admin when `ADMINS` says nothing. */
+const DEFAULT_DEV_ADMINS = ["admin"];
+
+/**
+ * The admin list for local dev, from an `ADMINS` shell or `.dev.vars` value.
+ *
+ * Accepts the JSON array a deployment uses, or a bare comma-separated list, since `.dev.vars` is
+ * `KEY=VALUE` and quoting JSON there is easy to get wrong. Unset keeps the local `admin` account,
+ * which is the only admin a password-login dev server ever had.
+ *
+ * Forwarding this matters once a dev server signs people in through a gatekeeper: the backend
+ * matches admins against the signed-in profile id, which is then a verified email, so the default
+ * username can never match one.
+ */
+export function parseDevAdmins(raw: string | undefined): string[] {
+  const trimmed = raw?.trim();
+  if (!trimmed) return DEFAULT_DEV_ADMINS;
+
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      throw new Error("ADMINS must be a JSON array of names, or a comma-separated list.");
+    }
+    if (!Array.isArray(parsed) || parsed.some(name => typeof name !== "string")) {
+      throw new Error("ADMINS must be a JSON array of names, or a comma-separated list.");
+    }
+    return parsed as string[];
+  }
+
+  return trimmed.split(",").map(name => name.trim()).filter(Boolean);
+}
+
 /**
  * Resolve where the dev server's backend lives: an explicit `--port` wins, else
  * `VITE_BACKEND_HOST`, else `localhost:8787`.
