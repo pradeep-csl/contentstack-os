@@ -1153,7 +1153,7 @@ here is committed; `deployment.jsonc` is gitignored.
 **Not part of the plan's tasks — these steps change cloud state and need an explicit go-ahead.**
 
 1. Create the Google OAuth app in the Contentstack Google account: user type **Internal**, redirect
-   URI `https://cs-os-router.lytics-demandbase.workers.dev/gatekeeper/google/oauth`, scopes
+   URI `https://os.contentstacklabs.workers.dev/gatekeeper/google/oauth`, scopes
    `openid email profile`. Put the client id and secret in the gitignored `.deploy.vars` under the
    `gatekeeper-google` key.
 2. `pnpm deploy` with the step-1 configuration (Google listed, password auth still on). Verify

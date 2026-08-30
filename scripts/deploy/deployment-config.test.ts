@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import { readWranglerConfig } from "../release/manifest-lib.ts";
 import {
   DEFAULT_GATEKEEPER_SECRETS,
+  assertOnlyRouterIsPublic,
   deploymentTiers,
   gatekeeperBindingName,
   gatekeeperShortName,
@@ -12,6 +13,7 @@ import {
   generateProdConfig,
   modelCatalogVars,
   parseJsonc,
+  publicHostnames,
   requiredResources,
   requiredSecretsFor,
   resourceNameFor,
@@ -338,6 +340,64 @@ describe("generated gatekeeper config", () => {
     const on = generateProdConfig("gatekeeper-context", base("gatekeeper-context"),
         baseDeployment({ context: { sharingDomain: null, artifacts: { enabled: true, namespace: null } } }));
     assert.deepEqual(on.artifacts, { binding: "ARTIFACTS" });
+  });
+});
+
+describe("public exposure", () => {
+  function generateAll(config: DeploymentConfig) {
+    return Object.fromEntries(Object.keys(config.workers)
+        .map(pkgName => [pkgName, generateProdConfig(pkgName, base(pkgName), config)]));
+  }
+
+  // The deployment's security boundary is that exactly one worker answers from the internet.
+  // Wrangler gives a routeless worker a workers.dev URL by *default*, so this has to be stated in
+  // every generated config -- omitting it is not "no opinion", it is "publish it".
+  it("gives no worker but the router a public hostname", () => {
+    const config = baseDeployment({
+      workers: {
+        router: "os", "workshop-backend": "os-workshop",
+        "gatekeeper-context": "os-context", "gatekeeper-github": "os-github",
+      },
+    });
+    const generated = generateAll(config);
+    for (const [pkgName, out] of Object.entries(generated)) {
+      if (pkgName === "router") continue;
+      assert.equal(out.workers_dev, false, `${pkgName} must not be publicly reachable`);
+      assert.equal(out.routes, undefined, `${pkgName} must declare no routes`);
+    }
+    assert.deepEqual(publicHostnames(generated), {});
+    assert.doesNotThrow(() => assertOnlyRouterIsPublic(generated));
+  });
+
+  it("keeps the router public, by workers.dev or by custom domain", () => {
+    const workersDev = generateAll(baseDeployment()).router;
+    assert.equal(workersDev.workers_dev, true);
+
+    const custom = generateProdConfig("router", base("router"), baseDeployment({
+      route: { customDomain: "os.example.com" }, publicBaseUrl: "https://os.example.com",
+    }));
+    assert.equal(custom.workers_dev, false);
+    assert.deepEqual(custom.routes, [{ pattern: "os.example.com", custom_domain: true }]);
+  });
+
+  // A second public hostname is not a degraded deployment: it is the backend's whole RPC API
+  // answering with the router bypassed. The assertion must catch it rather than warn.
+  it("refuses a second public hostname, naming every one it finds", () => {
+    const generated = generateAll(baseDeployment());
+    generated["workshop-backend"].workers_dev = true;
+    generated["gatekeeper-github"].routes = [{ pattern: "gk.example.com", custom_domain: true }];
+
+    assert.deepEqual(Object.keys(publicHostnames(generated)).toSorted(),
+        ["gatekeeper-github", "workshop-backend"]);
+    assert.throws(() => assertOnlyRouterIsPublic(generated), /workshop-backend[\s\S]*gatekeeper-github|gatekeeper-github[\s\S]*workshop-backend/);
+  });
+
+  // `undefined` is the dangerous value, not `true` -- it is what an omitted key looks like, and
+  // wrangler reads it as "publish".
+  it("treats an unset workers_dev as exposed", () => {
+    const generated = generateAll(baseDeployment());
+    delete generated["workshop-backend"].workers_dev;
+    assert.ok(publicHostnames(generated)["workshop-backend"]);
   });
 });
 

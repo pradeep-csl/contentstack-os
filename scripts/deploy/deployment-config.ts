@@ -309,6 +309,43 @@ export function requiredSecretsFor(config: DeploymentConfig, pkgName: string): s
 }
 
 /**
+ * Every worker in `generated` that would answer on a public hostname, as `<package>: <why>`.
+ *
+ * The deployment's security boundary is that exactly one worker — the router — is reachable from
+ * the internet. A second public hostname is not a degraded deployment, it is a different one: the
+ * backend's whole RPC API answering without the router in front of it, or a gatekeeper's OAuth
+ * flow answering under a hostname its OAuth app never registered.
+ *
+ * Returns everything it finds rather than throwing on the first, so a misconfiguration is reported
+ * once and in full.
+ */
+export function publicHostnames(generated: Record<string, ProdWranglerConfig>): Record<string, string> {
+  const found: Record<string, string> = {};
+  for (const [pkgName, config] of Object.entries(generated)) {
+    if (pkgName === "router") continue;
+    if (config.workers_dev !== false) {
+      found[pkgName] = `workers_dev is ${config.workers_dev} (wrangler treats anything but false as a public workers.dev URL)`;
+    } else if (config.routes?.length) {
+      found[pkgName] = `${config.routes.length} route(s) declared`;
+    }
+  }
+  return found;
+}
+
+/**
+ * Throw unless the router is the only worker with a public hostname. Called on both the check and
+ * the deploy path -- this is the one invariant worth refusing to generate a config over.
+ */
+export function assertOnlyRouterIsPublic(generated: Record<string, ProdWranglerConfig>): void {
+  const exposed = publicHostnames(generated);
+  const names = Object.keys(exposed);
+  if (names.length === 0) return;
+  throw new Error(
+    "only the router may be reachable from the internet, but these would be too:\n" +
+    names.map(name => `  ${name}: ${exposed[name]}`).join("\n"));
+}
+
+/**
  * The non-secret model-catalog vars a deployment describes, as environment variables.
  *
  * Shared with `run-dev-server.ts` so the catalog is stated once and local development inherits it
@@ -385,6 +422,16 @@ export function generateProdConfig(
   if (base.services) out.services = retargetServices(base.services, config);
 
   const vars: Record<string, unknown> = { ...base.vars };
+
+  // The router owns the only public hostname in the deployment. Everything else is reached over a
+  // service binding, and that is the security boundary rather than an accident of configuration:
+  // a workers.dev URL on the backend is the whole RPC API reachable without passing the router,
+  // and one on a gatekeeper is its OAuth flow reachable under a hostname no OAuth app expects.
+  //
+  // Wrangler defaults `workers_dev` to true for a worker with no routes, so this must be stated
+  // rather than omitted. `assertOnlyRouterIsPublic` checks the generated set, and the deploy
+  // re-checks the account afterwards.
+  out.workers_dev = false;
 
   if (pkgName === "workshop-backend") {
     applyBackendConfig(out, vars, config);

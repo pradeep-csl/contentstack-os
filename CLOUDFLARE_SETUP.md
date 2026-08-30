@@ -33,23 +33,23 @@ name what the tier before it produced.
 
 | Tier | Package | Worker | Role |
 | --- | --- | --- | --- |
-| 1 | `gatekeeper-context` | `cs-os-context` | Context Library — collections agents read as observations. Ambient. |
-| 1 | `gatekeeper-scheduler` | `cs-os-scheduler` | Scheduled Tasks — persistent workspace callbacks. Ambient. |
-| 1 | `gatekeeper-github` | `cs-os-github` | GitHub connector **and** GitHub sign-in |
-| 1 | `gatekeeper-google` | `cs-os-google` | Google connector **and** Google sign-in |
-| 2 | `workshop-backend` | `cs-os-workshop` | The kernel. Binds every gatekeeper over `GatekeeperVendor`. |
-| 3 | `router` | `cs-os-router` | The public origin. Serves the frontend, proxies `/api` and `/gatekeeper/<name>`. |
+| 1 | `gatekeeper-context` | `os-context` | Context Library — collections agents read as observations. Ambient. |
+| 1 | `gatekeeper-scheduler` | `os-scheduler` | Scheduled Tasks — persistent workspace callbacks. Ambient. |
+| 1 | `gatekeeper-github` | `os-github` | GitHub connector **and** GitHub sign-in |
+| 1 | `gatekeeper-google` | `os-google` | Google connector **and** Google sign-in |
+| 2 | `workshop-backend` | `os-workshop` | The kernel. Binds every gatekeeper over `GatekeeperVendor`. |
+| 3 | `router` | `os` | The public origin. Serves the frontend, proxies `/api` and `/gatekeeper/<name>`. |
 
 Plus four storage resources, provisioned automatically on first deploy:
 
 | Kind | Name | Binding | Holds |
 | --- | --- | --- | --- |
-| KV | `cs-os-workshop-blueprints` | `BLUEPRINTS` | blueprint metadata |
-| KV | `cs-os-workshop-avatars` | `AVATARS` | user avatars |
-| KV | `cs-os-context-context-collections` | `CONTEXT_COLLECTIONS` | public collection snapshots |
-| R2 | `cs-os-workshop-blueprint-content` | `BLUEPRINT_CONTENT` | blueprint code snapshots |
+| KV | `os-workshop-blueprints` | `BLUEPRINTS` | blueprint metadata |
+| KV | `os-workshop-avatars` | `AVATARS` | user avatars |
+| KV | `os-context-context-collections` | `CONTEXT_COLLECTIONS` | public collection snapshots |
+| R2 | `os-workshop-blueprint-content` | `BLUEPRINT_CONTENT` | blueprint code snapshots |
 
-**Public origin:** `https://cs-os-router.lytics-demandbase.workers.dev`
+**Public origin:** `https://os.contentstacklabs.workers.dev`
 
 Only the router is publicly reachable. The other five have no hostname and are reached over service
 bindings — that is the security boundary, not an accident of configuration.
@@ -176,7 +176,7 @@ source .envrc && curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain"
 ```
 
-For `Contentstack-Labs` it is `lytics-demandbase`.
+For `Contentstack-Labs` it is `contentstacklabs`.
 
 **`workers`** — the key set *is* the deployment. `router` and `workshop-backend` are required; every
 `gatekeeper-*` key present is deployed and bound into both. Adding a connector later is one more key
@@ -185,7 +185,7 @@ plus a redeploy, with no code change.
 > **Worker names are permanent service identities**, and the KV/R2 resource names derive from them.
 > Renaming a worker after the first deploy points it at fresh, empty storage. Choose once. Keep them
 > clear of any worker already in the account — `Contentstack-Labs` has an unrelated
-> `demandbase-pipeline`, hence the `cs-os-` prefix.
+> `demandbase-pipeline`, hence the `os-` prefix. Only the router's name is user-facing.
 
 ### Sign-in
 
@@ -283,7 +283,7 @@ Create the gateway first — `Contentstack-Labs` has none today:
 source .envrc && curl -sS -X POST \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
   "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai-gateway/gateways" \
-  -d '{"id":"cs-os-ai","cache_ttl":0,"collect_logs":true,"rate_limiting_interval":0,"rate_limiting_limit":0,"rate_limiting_technique":"fixed"}'
+  -d '{"id":"os-ai","cache_ttl":0,"collect_logs":true,"rate_limiting_interval":0,"rate_limiting_limit":0,"rate_limiting_technique":"fixed"}'
 ```
 
 The backend reaches the gateway over its `WORKERS_AI` binding, which is pre-authenticated inside
@@ -342,8 +342,8 @@ Redirect URIs — `pnpm deploy` prints these at the end:
 
 | Provider | Redirect URI |
 | --- | --- |
-| GitHub | `https://cs-os-router.lytics-demandbase.workers.dev/gatekeeper/github/oauth` |
-| Google | `https://cs-os-router.lytics-demandbase.workers.dev/gatekeeper/google/oauth` |
+| GitHub | `https://os.contentstacklabs.workers.dev/gatekeeper/github/oauth` |
+| Google | `https://os.contentstacklabs.workers.dev/gatekeeper/google/oauth` |
 
 > **Register the Google app as Internal** to the Contentstack workspace. `allowedEmailDomains`
 > checks the domain of the address Google reports as verified, and a *consumer* Google account can
@@ -404,7 +404,7 @@ First run takes several minutes, most of it the frontend and gatekeeper UI build
 
 ## 9. Verify
 
-- [ ] `https://cs-os-router.lytics-demandbase.workers.dev` serves the sign-in page.
+- [ ] `https://os.contentstacklabs.workers.dev` serves the sign-in page.
 - [ ] Sign in. With `auth.gatekeepers` set you get a "Continue with …" button per gatekeeper
       alongside the password form.
 - [ ] `/admin` loads as one of `admins`. Set site name, logo and accent; confirm which connectors
@@ -418,7 +418,7 @@ First run takes several minutes, most of it the frontend and gatekeeper UI build
       present with no user action.
 - [ ] Connect a GitHub repo and a Google doc, to exercise each OAuth flow end to end.
 - [ ] Export a gadget to PDF, to exercise the `BROWSER` binding.
-- [ ] `pnpm exec wrangler tail cs-os-workshop` shows structured logs with no startup errors.
+- [ ] `pnpm exec wrangler tail os-workshop` shows structured logs with no startup errors.
 - [ ] Sign in with a non-`@contentstack.com` Google account: the popup reports
       "Only @contentstack.com accounts can sign in to this deployment." and no account is created.
 - [ ] The password form is gone from both the login and signup pages.
@@ -435,7 +435,7 @@ survives.
 gatekeepers by scanning its own `GATEKEEPER_*` bindings, so no routing code changes. Then register
 its OAuth app and add its two `.deploy.vars` keys.
 
-**Adding the MCP portal:** add `"gatekeeper-mcp-portal": "cs-os-mcp-portal"` to `workers` and set
+**Adding the MCP portal:** add `"gatekeeper-mcp-portal": "os-mcp-portal"` to `workers` and set
 `mcpPortal.url` to the portal's Streamable HTTP endpoint. Users never type a URL — that field is the
 entire configuration of the connector. Leave `trustAnnotations` off unless every upstream server
 behind the portal is itself trusted: a portal is an aggregator, and those annotations are written by

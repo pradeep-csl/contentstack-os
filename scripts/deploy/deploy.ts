@@ -35,6 +35,7 @@ import {
   PROD_CONFIG_NAME,
   deploymentTiers,
   gatekeepersOf,
+  assertOnlyRouterIsPublic,
   generateProdConfig,
   readBaseConfigs,
   readDeploymentConfig,
@@ -43,6 +44,7 @@ import {
   sharingDomainOf,
   validateDeployment,
   type DeploymentConfig,
+  type ProdWranglerConfig,
   type RequiredResource,
 } from "./deployment-config.ts";
 
@@ -373,8 +375,10 @@ function writeProdConfigs(
   requireResolved: boolean,
 ): string[] {
   const written: string[] = [];
+  const generatedAll: Record<string, ProdWranglerConfig> = {};
   for (const pkgName of Object.keys(config.workers)) {
     const generated = generateProdConfig(pkgName, baseConfigs[pkgName], config, resourceIds[pkgName]);
+    generatedAll[pkgName] = generated;
     if (requireResolved) {
       for (const binding of [...(generated.kv_namespaces ?? []), ...(generated.r2_buckets ?? [])]) {
         const resolved = (binding as { id?: string; bucket_name?: string });
@@ -390,7 +394,56 @@ function writeProdConfigs(
     writeFileSync(path, JSON.stringify(generated, null, 2) + "\n");
     written.push(path);
   }
+
+  // Checked over the whole set rather than per worker: the invariant is about which *one* of them
+  // is public, which no single config can establish on its own.
+  try {
+    assertOnlyRouterIsPublic(generatedAll);
+  } catch (err) {
+    fail((err as Error).message);
+  }
   return written;
+}
+
+/**
+ * After deploying, confirm the account agrees that only the router answers on workers.dev.
+ *
+ * The generated configs are checked before the deploy, but they are not the authority -- a worker
+ * that already existed with its subdomain enabled, or one enabled by hand in the dashboard, is
+ * exposed regardless of what this run asked for. So the property is verified where it actually
+ * lives. Reported loudly rather than fixed: silently disabling a route somebody enabled on purpose
+ * would be its own surprise.
+ */
+async function verifyOnlyRouterIsPublic(config: DeploymentConfig, packages: string[]): Promise<void> {
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  if (!token) return;
+  console.log("\n=== verifying only the router is publicly reachable ===");
+
+  const exposed: string[] = [];
+  for (const pkgName of packages) {
+    if (pkgName === "router") continue;
+    const workerName = config.workers[pkgName];
+    try {
+      const response = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${config.accountId}` +
+        `/workers/scripts/${workerName}/subdomain`,
+        { headers: { Authorization: `Bearer ${token}` } });
+      const body = await response.json() as { result?: { enabled?: boolean } };
+      if (body.result?.enabled) exposed.push(`  ${workerName} answers on workers.dev`);
+      else console.log(`  ${workerName}: not publicly reachable`);
+    } catch (err) {
+      console.warn(`  ${workerName}: could not verify (${(err as Error).message})`);
+    }
+  }
+
+  if (exposed.length > 0) {
+    fail(
+      "these workers are reachable from the internet, bypassing the router:\n" +
+      exposed.join("\n") +
+      "\n\nDisable their workers.dev route in the dashboard (Settings -> Domains & Routes). The " +
+      "backend's RPC API and each gatekeeper's OAuth flow are meant to be reachable only over a " +
+      "service binding.");
+  }
 }
 
 /** Deploy one worker from its generated config, with the package directory as wrangler's cwd. */
@@ -616,6 +669,7 @@ for (const tier of deploymentTiers(config)) {
 }
 
 uploadSecrets(config, packages);
+await verifyOnlyRouterIsPublic(config, packages);
 printRedirectUris(config, packages);
 
 console.log(`\nDeployed. Open ${config.publicBaseUrl}`);

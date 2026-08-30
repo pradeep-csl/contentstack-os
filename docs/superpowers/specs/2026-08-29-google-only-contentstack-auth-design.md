@@ -57,8 +57,8 @@ makes Google's answer keep counting.
 },
 "workers": {
   // gatekeeper-github stays: connector only, no longer a sign-in provider
-  "gatekeeper-github": "cs-os-github",
-  "gatekeeper-google": "cs-os-google"
+  "gatekeeper-github": "os-github",
+  "gatekeeper-google": "os-google"
 }
 ```
 
@@ -293,7 +293,7 @@ secret.
 **Google OAuth app** (created by the operator, in the Contentstack Google account):
 
 - User type **Internal** — load-bearing, see the limit stated above
-- Redirect URI `https://cs-os-router.lytics-demandbase.workers.dev/gatekeeper/google/oauth`
+- Redirect URI `https://os.contentstacklabs.workers.dev/gatekeeper/google/oauth`
 - Scopes: `openid email profile` for sign-in; the connector's fuller scopes are requested later, only
   when a user explicitly connects Google
 - Client id and secret go in the gitignored `.deploy.vars` under the `gatekeeper-google` key — never
