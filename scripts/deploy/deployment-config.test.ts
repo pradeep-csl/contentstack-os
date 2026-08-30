@@ -249,6 +249,26 @@ describe("generated backend config", () => {
     assert.equal(generated.vars?.DISABLE_PASSWORD_AUTH, undefined);
   });
 
+  it("omits the restriction vars when the deployment does not ask for them", () => {
+    assert.equal(generated.vars?.ALLOWED_EMAIL_DOMAINS, undefined);
+    assert.equal(generated.vars?.SESSION_MAX_AGE_HOURS, undefined);
+  });
+
+  it("passes an email allowlist and session max age to the backend", () => {
+    const config = baseDeployment({
+      admins: ["admin@contentstack.com"],
+      auth: {
+        gatekeepers: ["github"],
+        disablePassword: true,
+        allowedEmailDomains: ["contentstack.com"],
+        sessionMaxAgeHours: 24,
+      },
+    });
+    const out = generateProdConfig("workshop-backend", base("workshop-backend"), config);
+    assert.equal(out.vars?.ALLOWED_EMAIL_DOMAINS, "contentstack.com");
+    assert.equal(out.vars?.SESSION_MAX_AGE_HOURS, "24");
+  });
+
   it("keeps the committed migration history verbatim", () => {
     assert.deepEqual(generated.migrations, base("workshop-backend").migrations);
   });
@@ -426,6 +446,56 @@ describe("validation", () => {
     const config = baseDeployment({ auth: { gatekeepers: [], disablePassword: true } });
     const errors = validateDeployment(config, ROOT);
     assert.ok(errors.some(e => e.includes("no way to sign in")), errors.join("\n"));
+  });
+
+  // Password accounts are keyed by username, so no email check can gate them: an allowlist with
+  // password signup still open would be a restriction anyone could walk around.
+  // Note the in-domain admin in these two: baseDeployment's default admin is admin@example.com,
+  // which the allowlist would separately reject, and that error also mentions allowedEmailDomains.
+  // Pinning the admin keeps each case failing for the one reason it is testing.
+  it("rejects an email allowlist while password signup is still open", () => {
+    const config = baseDeployment({
+      admins: ["admin@contentstack.com"],
+      auth: {
+        gatekeepers: ["github"], disablePassword: false,
+        allowedEmailDomains: ["contentstack.com"],
+      },
+    });
+    const errors = validateDeployment(config, ROOT);
+    assert.ok(errors.some(e => e.includes("cannot be domain-restricted")), errors.join("\n"));
+  });
+
+  it("rejects a malformed entry in the email allowlist", () => {
+    const config = baseDeployment({
+      admins: ["admin@contentstack.com"],
+      auth: {
+        gatekeepers: ["github"], disablePassword: true,
+        allowedEmailDomains: ["@contentstack.com"],
+      },
+    });
+    const errors = validateDeployment(config, ROOT);
+    assert.ok(errors.some(e => e.includes("bare domain")), errors.join("\n"));
+  });
+
+  // An admin who cannot sign in is a footgun that only surfaces when someone needs /admin.
+  it("rejects an admin outside the email allowlist", () => {
+    const config = baseDeployment({
+      admins: ["admin@example.com"],
+      auth: {
+        gatekeepers: ["github"], disablePassword: true,
+        allowedEmailDomains: ["contentstack.com"],
+      },
+    });
+    const errors = validateDeployment(config, ROOT);
+    assert.ok(errors.some(e => e.includes("cannot sign in")), errors.join("\n"));
+  });
+
+  it("rejects a non-positive session max age", () => {
+    const config = baseDeployment({
+      auth: { gatekeepers: ["github"], disablePassword: false, sessionMaxAgeHours: 0 },
+    });
+    const errors = validateDeployment(config, ROOT);
+    assert.ok(errors.some(e => e.includes("sessionMaxAgeHours")), errors.join("\n"));
   });
 
   it("rejects an unknown AI Gateway provider", () => {

@@ -41,6 +41,19 @@ export interface AuthConfig {
    * `isPasswordAuthEnabled()` in the backend, so a misconfiguration cannot lock everyone out.
    */
   disablePassword: boolean;
+  /**
+   * Email domains permitted to sign in, e.g. `["contentstack.com"]`. Matched exactly against the
+   * provider-verified email's domain, so subdomains need listing of their own. Omit to let any
+   * address in. Setting this requires `disablePassword`, because password accounts are keyed by
+   * username and no email check can gate them.
+   */
+  allowedEmailDomains?: string[];
+  /**
+   * How long a session lasts before the user must sign in again, in hours. Omit for sessions that
+   * never expire. A bounded session is what makes `allowedEmailDomains` -- and the identity
+   * provider's own offboarding -- keep counting after the first sign-in.
+   */
+  sessionMaxAgeHours?: number;
 }
 
 /** Cloudflare AI Gateway settings: the platform-managed model catalog. */
@@ -397,6 +410,12 @@ function applyBackendConfig(
     vars.AUTH_GATEKEEPERS = config.auth.gatekeepers.join(",");
     if (config.auth.disablePassword) vars.DISABLE_PASSWORD_AUTH = "true";
   }
+  if (config.auth.allowedEmailDomains?.length) {
+    vars.ALLOWED_EMAIL_DOMAINS = config.auth.allowedEmailDomains.join(",");
+  }
+  if (config.auth.sessionMaxAgeHours !== undefined) {
+    vars.SESSION_MAX_AGE_HOURS = String(config.auth.sessionMaxAgeHours);
+  }
 
   if (config.aiGateway.enabled) {
     const gatewayAccount = config.aiGateway.accountId ?? config.accountId;
@@ -596,6 +615,40 @@ function validateAuth(config: DeploymentConfig): string[] {
     errors.push(
       "auth.disablePassword is set with no auth.gatekeepers, which would leave no way to sign in; " +
       "the backend ignores it in this state, so either list a gatekeeper or clear the flag");
+  }
+  const domains = config.auth.allowedEmailDomains ?? [];
+  for (const domain of domains) {
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
+      errors.push(
+        `auth.allowedEmailDomains contains "${domain}", which is not a lowercase bare domain ` +
+        "like \"contentstack.com\" -- no \"@\", no leading dot, no whitespace");
+    }
+  }
+  // Password accounts are keyed by username rather than email, so an allowlist cannot gate them.
+  // The backend refuses password auth outright once an allowlist is set; saying so here means the
+  // config states what it does rather than being silently overridden.
+  if (domains.length > 0 && !config.auth.disablePassword) {
+    errors.push(
+      "auth.allowedEmailDomains is set but auth.disablePassword is not; password accounts are " +
+      "keyed by username, so they cannot be domain-restricted and would bypass the allowlist");
+  }
+  if (domains.length > 0) {
+    const locked = (config.admins ?? []).filter(admin => {
+      const at = admin.lastIndexOf("@");
+      return at < 0 || !domains.includes(admin.slice(at + 1).toLowerCase());
+    });
+    for (const admin of locked) {
+      errors.push(
+        `admins lists "${admin}", which auth.allowedEmailDomains cannot sign in; that admin ` +
+        "would never be able to reach /admin");
+    }
+  }
+  if (config.auth.sessionMaxAgeHours !== undefined
+      && !(Number.isFinite(config.auth.sessionMaxAgeHours) && config.auth.sessionMaxAgeHours > 0)) {
+    errors.push(
+      `auth.sessionMaxAgeHours must be a positive number of hours, not ` +
+      `${config.auth.sessionMaxAgeHours}; the backend ignores anything else, leaving sessions ` +
+      "that never expire");
   }
   return errors;
 }

@@ -41,6 +41,18 @@
     // working -- the backend ignores this flag while `gatekeepers` is empty precisely so a
     // misconfiguration cannot lock everyone out, but it will honour it once the list is non-empty.
     "disablePassword": false
+
+    // Optional: restrict sign-in to these email domains, matched exactly against the
+    // provider-verified address (no subdomains -- list one per domain you mean). Setting this
+    // requires disablePassword: password accounts are keyed by username, so no email check can
+    // gate them, and the backend refuses password auth outright once this is set.
+    // "allowedEmailDomains": ["example.com"],
+
+    // Optional: how long a session lasts before the user signs in again, in hours. Omitted means
+    // sessions never expire -- which also means removing someone at your identity provider does
+    // not end their access here, since the provider is never consulted again after the first
+    // sign-in.
+    // "sessionMaxAgeHours": 24
   },
 
   // Worker name per deployed package. THE KEY SET IS THE DEPLOYMENT: "router" and
