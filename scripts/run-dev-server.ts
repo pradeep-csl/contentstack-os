@@ -21,6 +21,9 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "jsonc-parser";
 import { resolveBinEntry } from "./bin-entry.ts";
+import {
+  DEPLOYMENT_CONFIG_NAME, modelCatalogVars, parseJsonc, type DeploymentConfig,
+} from "./deploy/deployment-config.ts";
 import { getDevServerConfig } from "./dev-server-config.ts";
 import { killProcessTree } from "./kill-process-tree.ts";
 import { pnpmCommand } from "./pnpm-command.ts";
@@ -60,6 +63,32 @@ function loadDevVars(): void {
   }
 }
 loadDevVars();
+
+// Seed the non-secret model-catalog settings from `deployment.jsonc`, so the deployment describes
+// its model catalog once and local development inherits it rather than restating it.
+//
+// Lowest precedence of the three sources -- shell, then `.dev.vars`, then this -- so an experiment
+// is still a one-line override and never has to touch the deployment description. Only the
+// non-secret half is read: `OPENROUTER_API_KEY` stays in `.dev.vars`, because `deployment.jsonc`
+// deliberately holds no secrets (see scripts/deploy/deploy.ts).
+//
+// Entirely optional. A checkout with no `deployment.jsonc` -- which is every fresh clone, since it
+// is gitignored -- must still start, so anything unreadable here is skipped rather than fatal.
+function loadDeploymentModelVars(): void {
+  const path = join(ROOT, DEPLOYMENT_CONFIG_NAME);
+  if (!existsSync(path)) return;
+  let vars: Record<string, string>;
+  try {
+    vars = modelCatalogVars(parseJsonc<DeploymentConfig>(readFileSync(path, "utf8"), path));
+  } catch (err) {
+    console.warn(`ignoring ${DEPLOYMENT_CONFIG_NAME}: ${(err as Error).message}`);
+    return;
+  }
+  for (const [key, value] of Object.entries(vars)) {
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
+}
+loadDeploymentModelVars();
 
 const useWorkersAi = process.argv.includes("--use-workers-ai-binding");
 

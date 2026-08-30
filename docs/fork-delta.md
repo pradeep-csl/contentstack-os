@@ -52,6 +52,12 @@ Intents currently enforced. Adding fork behaviour worth defending means adding a
 | **F6** | **Chat timeline rail and composer** | |
 | F6.1 | The timeline rail is derived by its own module, not inline | `workshop-frontend/src/chatRail.ts` |
 | F6.2 | The composer surface is flat, with no top border | `workshop-frontend/src/ChatInterface.tsx` |
+| **F7** | **A self-hosting deploy harness for this checkout** | |
+| F7.1 | The harness, its tracked template and both guides exist | `scripts/deploy/`, `deployment.example.jsonc`, `CLOUDFLARE_SETUP.md`, `docs/self-hosting.md` |
+| F7.2 | Topology is derived from the committed wrangler configs, not restated | `scripts/deploy/deployment-config.ts` |
+| F7.3 | A deployment is reachable from the root scripts | `package.json` |
+| F7.4 | One deployment's own description and secrets stay untracked | `.gitignore` |
+| F7.5 | Local dev inherits the deployment's model catalog rather than restating it | `scripts/deploy/deployment-config.ts`, `scripts/run-dev-server.ts` |
 
 ## Ceded
 

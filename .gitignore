@@ -22,6 +22,7 @@ packages/workshop-backend/src/generated/browser-export-page.js
 # Cloudflare Workers
 .wrangler/
 .env
+.envrc
 
 # Local dev secrets (loaded by run-dev-server.ts)
 .dev.vars*
@@ -29,6 +30,12 @@ packages/workshop-backend/src/generated/browser-export-page.js
 # Site-specific deployment configs.
 wrangler.prod.jsonc
 wrangler.staging.jsonc
+
+# Self-hosting: one deployment's own description (account id, worker names, admins) and the
+# secrets it uploads. deployment.example.jsonc is the tracked template.
+deployment.jsonc
+.deploy.vars
+.deploy.vars.*
 
 # Site-specific dev server configs.
 wrangler.dev.jsonc

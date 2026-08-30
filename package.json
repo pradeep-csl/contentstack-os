@@ -7,6 +7,9 @@
   "scripts": {
     "build": "vp run -r --cache build",
     "run-local": "node scripts/run-local.ts",
+    "deploy": "node scripts/deploy/deploy.ts",
+    "deploy:check": "node scripts/deploy/deploy.ts --check",
+    "deploy:secrets": "node scripts/deploy/deploy.ts --secrets",
     "test": "node --test 'scripts/**/*.test.ts' && vp run --filter '!cloudflare-os' --cache test",
     "preview:config": "node scripts/preview/preview.ts config",
     "preview:deploy": "node scripts/preview/preview.ts deploy",

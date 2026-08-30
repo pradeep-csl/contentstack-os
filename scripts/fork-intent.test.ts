@@ -155,6 +155,27 @@ const INTENTS: Intent[] = [
               && matches('packages/workshop-frontend/src/ChatInterface.tsx', /chatRail|railToneFor|RailNode/) },
   { id: 'F6.2', intent: 'the composer surface is flat, with no top border',
     holds: () => matches('packages/workshop-frontend/src/ChatInterface.tsx', /shrink-0 bg-kumo-base/) },
+
+  // ---- F7  Self-hosting deploy harness -------------------------------------------------------
+  // Upstream ships no way to deploy a fork: `scripts/release/` targets Cloudflare's own hosted
+  // deploy service, and the sanctioned alternative is a separate starter repository that pins
+  // upstream as a submodule. This fork deploys its own checkout, so the harness lives here.
+  { id: 'F7.1', intent: 'the deploy harness, its tracked template and both guides exist',
+    holds: () => has('scripts/deploy/deploy.ts')
+              && has('scripts/deploy/deployment-config.ts')
+              && has('deployment.example.jsonc')
+              && has('CLOUDFLARE_SETUP.md')
+              && has('docs/self-hosting.md') },
+  { id: 'F7.2', intent: 'the harness derives its topology from the committed wrangler configs',
+    holds: () => matches('scripts/deploy/deployment-config.ts', /from "\.\.\/release\/manifest-lib\.ts"/) },
+  { id: 'F7.3', intent: 'a deployment is reachable from the root scripts',
+    holds: () => matches('package.json', /"deploy:check": *"node scripts\/deploy\/deploy\.ts --check"/) },
+  { id: 'F7.4', intent: 'one deployment\'s own description and secrets stay untracked',
+    holds: () => matches('.gitignore', /^deployment\.jsonc$/m)
+              && matches('.gitignore', /^\.deploy\.vars$/m) },
+  { id: 'F7.5', intent: 'local dev inherits the deployment\'s model catalog rather than restating it',
+    holds: () => matches('scripts/deploy/deployment-config.ts', /export function modelCatalogVars/)
+              && matches('scripts/run-dev-server.ts', /modelCatalogVars/) },
 ]
 
 test('every fork intent has a unique, stable id', () => {

@@ -1,0 +1,149 @@
+// Template for a self-hosted deployment of this repo into one Cloudflare account.
+//
+// Copy this file to `deployment.jsonc` (gitignored) and fill it in, then:
+//
+//     pnpm deploy:check     validate + generate the per-worker configs, no network calls
+//     pnpm deploy           build, provision storage, deploy every worker
+//
+// Secrets are NOT configured here -- they go in `.deploy.vars` (also gitignored). See
+// docs/self-hosting.md for the full walkthrough.
+{
+  // The Cloudflare account that owns every Worker and provisioned resource. 32 hex characters.
+  // Find it: https://developers.cloudflare.com/fundamentals/account/find-account-and-zone-ids/
+  "accountId": "<CLOUDFLARE_ACCOUNT_ID>",
+
+  // The deployment's public origin: a bare https origin, no path, no trailing slash.
+  //
+  // Two things read it and both are load-bearing. Every gatekeeper's OAuth redirect URI is built
+  // from it, and it is the Context Library's default `sharingDomain` -- a data-isolation boundary,
+  // so a value that changes later hides existing collections rather than breaking a link.
+  //
+  // On workers.dev this is https://<router worker name>.<your account subdomain>.workers.dev.
+  // The subdomain is not derivable from this file; read it once from Workers & Pages -> your
+  // subdomain in the dashboard.
+  "publicBaseUrl": "https://<ROUTER_WORKER_NAME>.<ACCOUNT_SUBDOMAIN>.workers.dev",
+
+  // How the router is published. `workersDev` needs no zone; `customDomain` needs a hostname in an
+  // active Cloudflare zone in this account, and wrangler creates the DNS record and certificate.
+  "route": { "workersDev": true },
+  // "route": { "customDomain": "os.example.com" },
+
+  // Deployment-wide admins, who get /admin. With gatekeeper sign-in these are verified email
+  // addresses; with password accounts they are usernames.
+  "admins": ["<ADMIN_EMAIL>"],
+
+  "auth": {
+    // Gatekeeper vendor ids permitted to drive sign-in. Each must be deployed below and must
+    // advertise `providesAuth`. Available: "github", "google", "cloudflare".
+    "gatekeepers": ["github", "google"],
+
+    // Hide username/password login and signup. Leave false until gatekeeper sign-in is verified
+    // working -- the backend ignores this flag while `gatekeepers` is empty precisely so a
+    // misconfiguration cannot lock everyone out, but it will honour it once the list is non-empty.
+    "disablePassword": false
+  },
+
+  // Worker name per deployed package. THE KEY SET IS THE DEPLOYMENT: "router" and
+  // "workshop-backend" are required, and every "gatekeeper-*" key here is deployed and bound into
+  // both of them. Adding a connector later is one more key plus `pnpm deploy`.
+  //
+  // Worker names are permanent service identities and the storage names are derived from them, so
+  // renaming one after the first deploy points it at fresh, empty storage. Choose once.
+  "workers": {
+    "router": "<ROUTER_WORKER_NAME>",
+    "workshop-backend": "<WORKSHOP_WORKER_NAME>",
+
+    // Ambient gatekeepers. Both auto-provision an account per user and provide an agent singleton,
+    // so each may be deployed at most once per instance.
+    "gatekeeper-context": "<CONTEXT_WORKER_NAME>",
+    "gatekeeper-scheduler": "<SCHEDULER_WORKER_NAME>",
+
+    // Connectors. Each needs an OAuth app whose redirect URI is
+    // <publicBaseUrl>/gatekeeper/<name>/oauth -- `pnpm deploy` prints the exact list at the end.
+    "gatekeeper-github": "<GITHUB_WORKER_NAME>",
+    "gatekeeper-google": "<GOOGLE_WORKER_NAME>",
+
+    // One admin-configured MCP portal reaching your internal MCP tooling. Needs no OAuth app of
+    // its own (MCP OAuth uses dynamic client registration), but does need mcpPortal.url below.
+    "gatekeeper-mcp-portal": "<MCP_PORTAL_WORKER_NAME>"
+  },
+
+  // Cloudflare AI Gateway: a platform-managed model catalog, so users do not need their own keys.
+  // Disabled here means every user brings their own key, which is the simplest thing that works.
+  //
+  // When enabled, the backend reaches the Gateway over its WORKERS_AI binding, which is
+  // pre-authenticated inside your own account -- no API token needed. Two exceptions, both of
+  // which make CF_AI_GATEWAY_API_TOKEN in .deploy.vars mandatory: a gateway in another account
+  // (set `accountId`), and the "google" provider, whose SDK adapter refuses the binding's fetch.
+  //
+  // "cloudflare" is Workers AI and needs no key of your own. anthropic/openai/google need keys
+  // stored on the Gateway itself, in the dashboard.
+  "aiGateway": {
+    "enabled": false,
+    "name": "default",
+    "accountId": null,
+    "providers": ["cloudflare"]
+  },
+
+  // OpenRouter: a peer of the AI Gateway. Enable either, both, or neither; with both, the model
+  // lists merge. Requires OPENROUTER_API_KEY in .deploy.vars -- there is no per-user key for it.
+  //
+  // This block is the single source for the model catalog: `run-dev-server.ts` seeds the three
+  // non-secret settings into local development from here, so `.dev.vars` needs only the API key.
+  // Setting one in the shell or in `.dev.vars` still overrides it locally.
+  "openRouter": {
+    "enabled": false,
+    // Model id override replacing the curated catalog. null keeps the built-in list.
+    "models": null,
+    // Model used for quick tasks (chat titles, and so on). null uses the built-in default.
+    "quickModel": null,
+    // API base, for a proxy in front of OpenRouter. null uses https://openrouter.ai/api/v1.
+    "baseUrl": null
+  },
+
+  // The MCP portal `gatekeeper-mcp-portal` fronts. Users never type a URL; this is the whole
+  // configuration of that connector. Leave `url` null and drop the worker from `workers` above if
+  // you have no portal -- unset, the connector advertises no resources and stays hidden.
+  "mcpPortal": {
+    "url": "<MCP_PORTAL_URL>",
+    "name": null,
+    "auth": "oauth",
+
+    // Let tool annotations from behind the portal auto-approve writes. Off by default: a portal is
+    // an aggregator, and those annotations are written by whichever upstream server it proxies,
+    // not by you. Only set it where every upstream is itself trusted.
+    "trustAnnotations": false
+  },
+
+  "context": {
+    // Namespace every context collection is scoped to. null derives it from publicBaseUrl, which
+    // is what the hosted deploy does. Changing it later hides existing collections.
+    "sharingDomain": null,
+
+    // Git-backed context collections. Requires Artifacts access on the account; leave null
+    // without it and the gatekeeper degrades gracefully.
+    "artifacts": null
+    // "artifacts": { "enabled": true, "namespace": null }
+  },
+
+  // Adopt storage you already own, keyed "<package>.<BINDING>". A null or absent entry is derived
+  // from the worker name and provisioned on first deploy, which is what you want for a fresh
+  // instance. An explicit name is only ever adopted, never created: a typo would otherwise hand a
+  // worker empty storage without saying so.
+  "resources": {
+    "workshop-backend.BLUEPRINTS": null,
+    "workshop-backend.AVATARS": null,
+    "workshop-backend.BLUEPRINT_CONTENT": null,
+    "gatekeeper-context.CONTEXT_COLLECTIONS": null
+  },
+
+  // Applied to every worker. Structured custom logs stay on; invocation logs and traces are
+  // separate volume controls. Traces are free during the beta but bill against the Logs quota
+  // from 2026-10-01.
+  "observability": {
+    "enabled": true,
+    "headSamplingRate": 1,
+    "invocationLogs": false,
+    "traces": { "enabled": false, "headSamplingRate": 0.1 }
+  }
+}

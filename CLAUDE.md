@@ -39,6 +39,14 @@ Deployment admin settings (the `/admin` panel) follow a few conventions worth kn
 - Admin operations are exposed as an `AdminApi` capability obtained via `AuthenticatedApi.getAdminApi()` (returns null for non-admins). The `#isAdmin()` check happens once when the capability is minted, so the individual methods don't re-check.
 - `user.ts:getGatekeeperClassFor()` is the single core chokepoint where disabled gatekeepers/resources are enforced before a capability is minted (gadget/agent code can't reach it directly).
 
+Self-hosting (`scripts/deploy/`) — how *this checkout* gets deployed to one account you own:
+
+- `deploy.ts` reads a gitignored `deployment.jsonc` (template: `deployment.example.jsonc`), generates a `wrangler.prod.jsonc` per deployed package, and runs `wrangler deploy` in three tiers — gatekeepers, then `workshop-backend`, then `router` — because each tier's service bindings must name what the tier before it produced. `deployment-config.ts` holds the whole thing as pure functions so `deployment-config.test.ts` pins the topology with no account.
+- It is the third resolution of one binding topology: `run-dev-server.ts` resolves it to localhost, `release/manifest-lib.ts` to `$PLACEHOLDER` templates, this to concrete values. A new binding on a deployable worker needs a decision in all three.
+- `deployment.jsonc`'s `workers` map **is** the deployment: its key set decides what is deployed and bound. Worker names are permanent — the KV/R2 names are derived from them, so renaming one points it at empty storage.
+- Storage is provisioned explicitly by deterministic name, never through wrangler's automatic provisioning, which writes invented ids back into a config this harness regenerates (the next deploy would then bind new, empty storage). `writeProdConfigs` fails closed on an unresolved binding rather than letting that happen.
+- Secrets never enter a generated config (wrangler prints config values); they come from a gitignored `.deploy.vars`, keyed per package, uploaded over stdin by `wrangler secret put`. See `docs/self-hosting.md`.
+
 Release pipeline (`scripts/release/`) — how customer instances get deployed:
 
 - `build-release.mjs` bundles every deployable worker byte-identically (wrangler dry-run with the pinned wrangler), builds the Access-mode frontend asset build, and generates the release manifest — the contract between this repo's CI and the deploy service, produced by `manifest-lib.mjs` from each package's wrangler.jsonc with account-specific values replaced by placeholders (`$ACCOUNT_ID`, `$WORKER_NAME(...)`, `$SECRET(...)`, `$PUBLIC_BASE_URL`, ...).

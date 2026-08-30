@@ -181,6 +181,20 @@ Or, for more sophisticated deployment, with your gatekeepers and potentially cod
 
 https://github.com/cloudflare/cloudflare-os-starter
 
+### Deploy this checkout to your own Cloudflare account
+
+Neither of the above deploys *this* repository: the hosted flow deploys upstream releases, and the
+starter repo pins upstream as a submodule. To deploy the code you have here — fork changes included
+— use the self-hosting harness:
+
+    cp deployment.example.jsonc deployment.jsonc   # fill it in
+    pnpm deploy:check                              # validate, no network calls
+    pnpm deploy
+
+See [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) for the full runbook — account requirements, API
+token scopes, model gateways, OAuth app setup, the verification checklist and troubleshooting.
+[docs/self-hosting.md](docs/self-hosting.md) covers how the harness itself works.
+
 ### Run locally
 
 To quickly run Contentstack OS locally, [install pnpm](https://pnpm.io/), then do:
