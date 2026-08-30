@@ -24,6 +24,7 @@ import { GatekeeperConnectCallback, GatekeeperUser } from "@gadgets/workshop-sha
 import { createWorkshopLogger } from "../observability";
 import { CLOUDFLARE_VENDOR_ID } from "../user.js";
 import { readAdminConfig } from "../admin-config.js";
+import { emailDomainRejectionMessage, isEmailAllowed } from "./config.js";
 
 const logger = createWorkshopLogger("workshop.auth");
 
@@ -105,6 +106,15 @@ export class LoginConnectCallbackImpl
           event: "gatekeeper.login.finished", outcome: "no_email",
         });
         await pending.fail("This account has no verified email, so it can't be used to sign in.");
+        return;
+      }
+      // Refuse an address outside the deployment's allowlist here, ahead of resolving the user DO,
+      // so a rejected sign-in leaves no account behind. The message names the permitted domains.
+      if (!isEmailAllowed(email, this.env)) {
+        loginLogger.info("gatekeeper login finished", {
+          event: "gatekeeper.login.finished", outcome: "domain_not_allowed",
+        });
+        await pending.fail(emailDomainRejectionMessage(this.env));
         return;
       }
       const userStub = this.ctx.exports.UserDurableObject.get(
