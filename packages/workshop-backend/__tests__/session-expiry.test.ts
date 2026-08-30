@@ -65,4 +65,23 @@ describe("session expiry", () => {
       await expect(user.authenticate("bm90LWEtcmVhbC10b2tlbg==")).rejects.toThrow();
     });
   });
+
+  it("never expires a session when SESSION_MAX_AGE_HOURS is genuinely unset", async () => {
+    // The suite-wide binding (see vitest.config.ts) exists so the *other* tests above can exercise
+    // the expiry path; it would otherwise mask the "unset" behaviour this test exists to prove. Pull
+    // it off env for the duration of this test only, restoring it even if an assertion throws so the
+    // mutation can't leak into any other test in this file.
+    const previous = env.SESSION_MAX_AGE_HOURS;
+    delete (env as { SESSION_MAX_AGE_HOURS?: string }).SESSION_MAX_AGE_HOURS;
+    try {
+      await runInDurableObject(env.TEST_USER.getByName("immortal@example.com"), async (user) => {
+        const token = await user.loginOrCreateViaGatekeeper("immortal@example.com", true);
+        ageSessions(user, 24 * 365 * 10); // 10 years -- far past any plausible max age
+
+        await expect(user.authenticate(token!)).resolves.toBeUndefined();
+      });
+    } finally {
+      (env as { SESSION_MAX_AGE_HOURS?: string }).SESSION_MAX_AGE_HOURS = previous;
+    }
+  });
 });
