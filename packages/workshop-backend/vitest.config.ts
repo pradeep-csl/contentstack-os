@@ -16,6 +16,9 @@ export default defineConfig({
       miniflare: {
         compatibilityDate: '2026-02-02',
         compatibilityFlags: ['experimental', 'nodejs_compat'],
+        // Session expiry is env-driven and off by default; the suite sets it so the expiry path is
+        // exercised. Tests that create a session and use it immediately are unaffected.
+        bindings: { SESSION_MAX_AGE_HOURS: '24' },
         durableObjects: {
           TEST_OVERSEER: { className: 'OverseerDurableObject', useSQLite: true },
           TEST_USER: { className: 'UserDurableObject', useSQLite: true },

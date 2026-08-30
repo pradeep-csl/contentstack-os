@@ -13,6 +13,7 @@ import type { AdminSettings } from "./admin-settings.js";
 import { isReservedBlueprintKey, readBlueprintKvRecord } from "./blueprint-archive.js";
 import { filterEnabledResources, isResourceDisabled, readAdminConfig } from "./admin-config.js";
 import { buildGatekeeperVendorMap } from "./auth/auth-vendors.js";
+import { getSessionMaxAgeMs } from "./auth/config.js";
 
 const logger = createWorkshopLogger("workshop.user");
 
@@ -315,6 +316,14 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     let tokenId = new Uint8Array(hash).toHex();
     let session = this.storage.sessions.get(tokenId);
     if (!session) {
+      throw createAuthError(AUTH_ERROR_CODES.invalidSessionToken);
+    }
+    // A session that outlives its max age must be re-established through the sign-in provider, which
+    // is what keeps the provider's answer about who may sign in true after the first login. Deleting
+    // the record on the way out is also the only thing that prunes this collection.
+    let maxAgeMs = getSessionMaxAgeMs(this.env);
+    if (maxAgeMs !== null && Date.now() - session.created.getTime() > maxAgeMs) {
+      this.storage.sessions.delete(tokenId);
       throw createAuthError(AUTH_ERROR_CODES.invalidSessionToken);
     }
   }
