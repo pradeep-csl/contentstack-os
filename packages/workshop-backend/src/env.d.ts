@@ -79,6 +79,17 @@ declare global {
       // on to avoid locking everyone out).
       DISABLE_PASSWORD_AUTH?: string;
 
+      // Comma-separated allowlist of email domains permitted to sign in, e.g. "contentstack.com".
+      // Matched exactly (no subdomains) against the verified email's domain, at every point that
+      // resolves an email to a user. Empty = unrestricted. Setting this also disables password auth
+      // outright, since password accounts are keyed by username and cannot be domain-checked.
+      ALLOWED_EMAIL_DOMAINS?: string;
+
+      // How long a session token stays valid, in hours. Unset = sessions never expire. Bounded
+      // sessions are what make ALLOWED_EMAIL_DOMAINS (and the identity provider's own offboarding)
+      // keep counting after the first sign-in.
+      SESSION_MAX_AGE_HOURS?: string;
+
       // Enables the Cloudflare free-tier limits + top-up flow when set to "true".
       ENABLE_CLOUDFLARE_LIMITS?: string;
 
