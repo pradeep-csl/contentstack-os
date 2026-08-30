@@ -58,6 +58,12 @@ Intents currently enforced. Adding fork behaviour worth defending means adding a
 | F7.3 | A deployment is reachable from the root scripts | `package.json` |
 | F7.4 | One deployment's own description and secrets stay untracked | `.gitignore` |
 | F7.5 | Local dev inherits the deployment's model catalog rather than restating it | `scripts/deploy/deployment-config.ts`, `scripts/run-dev-server.ts` |
+| **F8** | **A deployment-scoped sign-in restriction** | |
+| F8.1 | Every email-keyed entry point enforces the domain allowlist | `workshop-backend/src/auth/login-flow.ts`, `workshop-backend/src/server.ts` |
+| F8.2 | The allowlist is env-driven, never part of `AdminConfig` | `workshop-backend/src/auth/config.ts` |
+| F8.3 | A configured allowlist disables password auth, failing closed rather than open | `workshop-backend/src/auth/config.ts` |
+| F8.4 | Session tokens expire against a configurable maximum age | `workshop-backend/src/user.ts` |
+| F8.5 | The deploy harness rejects a config whose admins cannot sign in | `scripts/deploy/deployment-config.ts` |
 
 ## Ceded
 

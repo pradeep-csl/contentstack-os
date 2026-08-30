@@ -50,6 +50,12 @@ into the backend and router. This is not a convenience: the router discovers gat
 its own `GATEKEEPER_*` bindings at runtime, so "installed" genuinely means "bound", and a config
 that says otherwise would be lying.
 
+**The `auth` block also carries who may sign in and for how long:** `allowedEmailDomains` restricts
+sign-in to an exact set of email domains (and requires `disablePassword`, since password accounts
+are keyed by username and cannot be domain-checked), and `sessionMaxAgeHours` bounds how long a
+session lasts before the provider is consulted again. Omit both for upstream behaviour — anyone the
+provider vouches for, in a session that never expires.
+
 **Storage names are derived from worker names, and worker names are permanent.** The alternative —
 deriving them from anything mutable, or letting them be independently configurable — makes it
 possible to point a redeploy at empty storage without any error. An explicit entry in `resources` is

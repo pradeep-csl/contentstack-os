@@ -21,6 +21,30 @@ is addressed by `idFromName(email)` (the same scheme as Cloudflare Access). Each
 return an email the provider has verified (Google `email_verified`, a GitHub primary+verified email,
 the Cloudflare account email); otherwise it returns null and can't be used to sign in.
 
+## Restricting who may sign in
+
+`ALLOWED_EMAIL_DOMAINS` limits sign-in to a set of email domains, matched **exactly** (no
+wildcards, no subdomains) against the provider-verified address. It is enforced in
+`LoginConnectCallbackImpl.complete()` — ahead of resolving the user DO, so a refused address leaves
+no account behind — and again on the Cloudflare Access path, so there is no second door.
+
+Two consequences are deliberate:
+
+- **A domain allowlist disables password auth outright**, overriding the usual "ignored unless a
+  gatekeeper is allowlisted" rule. Password accounts are keyed by username, not email, so no domain
+  check can gate them; leaving password signup open would void the allowlist. A misconfigured
+  deployment therefore refuses everyone rather than quietly admitting strangers.
+- **`SESSION_MAX_AGE_HOURS` is what makes the restriction stick.** The domain check runs at login;
+  without an expiry, a token issued once works forever and the identity provider is never consulted
+  again — so offboarding someone there would not end their access here. The lifetime is absolute
+  from issue time rather than idle-based, because an idle timeout would never expire for an active
+  user, which is precisely the case that matters.
+
+An email domain is not proof of organisation membership: a consumer Google account can be registered
+against a company address, and the gatekeeper reads the verified `email` claim without inspecting
+`hd`. When the guarantee has to be organisation membership, register the OAuth app as **Internal**
+to the workspace so the provider refuses outside accounts before we ever see them.
+
 ## Incremental scopes
 
 Sign-in requests only the **minimal scopes** needed to verify the user's email (e.g. GitHub
@@ -59,6 +83,10 @@ AUTH_GATEKEEPERS=cloudflare,google,github   # which gatekeepers may sign users i
 
 # Optional: gatekeeper sign-in only (hide username/password).
 DISABLE_PASSWORD_AUTH=true
+
+# Optional: restrict sign-in to one or more email domains, and bound how long a session lasts.
+ALLOWED_EMAIL_DOMAINS=contentstack.com
+SESSION_MAX_AGE_HOURS=24
 ```
 
 OAuth app credentials live on the **gatekeeper Workers**, not the backend. Register each gatekeeper's

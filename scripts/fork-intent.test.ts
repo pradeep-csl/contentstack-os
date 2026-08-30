@@ -176,6 +176,26 @@ const INTENTS: Intent[] = [
   { id: 'F7.5', intent: 'local dev inherits the deployment\'s model catalog rather than restating it',
     holds: () => matches('scripts/deploy/deployment-config.ts', /export function modelCatalogVars/)
               && matches('scripts/run-dev-server.ts', /modelCatalogVars/) },
+
+  // ---- F8  Deployment-scoped sign-in restriction --------------------------------------------
+  // Upstream's sign-in is open to anyone the provider will vouch for, and its sessions never
+  // expire. This deployment admits one email domain and re-checks with the provider on a schedule.
+  { id: 'F8.1', intent: 'every email-keyed entry point enforces the domain allowlist',
+    holds: () => matches('packages/workshop-backend/src/auth/login-flow.ts', /isEmailAllowed/)
+              && matches('packages/workshop-backend/src/server.ts', /isEmailAllowed/) },
+  // The `has` check is load-bearing: matches() reports false for a missing file, so a bare
+  // negation would pass vacuously if admin-config.ts were ever renamed.
+  { id: 'F8.2', intent: 'the allowlist is env-driven, never part of AdminConfig',
+    holds: () => matches('packages/workshop-backend/src/auth/config.ts', /ALLOWED_EMAIL_DOMAINS/)
+              && has('packages/workshop-backend/src/admin-config.ts')
+              && !matches('packages/workshop-backend/src/admin-config.ts', /ALLOWED_EMAIL_DOMAINS/) },
+  { id: 'F8.3', intent: 'a configured allowlist disables password auth, failing closed not open',
+    holds: () => matches('packages/workshop-backend/src/auth/config.ts',
+                         /getAllowedEmailDomains\(env\)\.length > 0\) return false/) },
+  { id: 'F8.4', intent: 'session tokens expire against a configurable maximum age',
+    holds: () => matches('packages/workshop-backend/src/user.ts', /getSessionMaxAgeMs/) },
+  { id: 'F8.5', intent: 'the deploy harness rejects a config whose admins cannot sign in',
+    holds: () => matches('scripts/deploy/deployment-config.ts', /would never be able to reach/) },
 ]
 
 test('every fork intent has a unique, stable id', () => {

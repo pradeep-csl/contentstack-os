@@ -192,8 +192,10 @@ plus a redeploy, with no code change.
 ```jsonc
 "admins": ["pradeep.mishra@contentstack.com"],
 "auth": {
-  "gatekeepers": ["github", "google"],
-  "disablePassword": false
+  "gatekeepers": ["google"],
+  "disablePassword": true,
+  "allowedEmailDomains": ["contentstack.com"],
+  "sessionMaxAgeHours": 24
 }
 ```
 
@@ -207,6 +209,9 @@ instead, if you use password accounts).
 Leave `disablePassword: false` for the first deploy so you can reach `/admin` before the OAuth apps
 exist. Flip it once gatekeeper sign-in is verified. The backend ignores the flag while
 `gatekeepers` is empty, specifically so a misconfiguration cannot lock everyone out.
+`allowedEmailDomains` and `sessionMaxAgeHours` go in together with that flip, on the *second* deploy
+— not the first — because `deploy:check` refuses a config that sets an allowlist while password auth
+is still open.
 
 > **Authentication config is deliberately not in `/admin`.** It becomes Worker vars, so changing it
 > needs a redeploy — that is the point: a compromised admin session cannot change how people sign in.
@@ -340,6 +345,13 @@ Redirect URIs — `pnpm deploy` prints these at the end:
 | GitHub | `https://cs-os-router.lytics-demandbase.workers.dev/gatekeeper/github/oauth` |
 | Google | `https://cs-os-router.lytics-demandbase.workers.dev/gatekeeper/google/oauth` |
 
+> **Register the Google app as Internal** to the Contentstack workspace. `allowedEmailDomains`
+> checks the domain of the address Google reports as verified, and a *consumer* Google account can
+> be registered against a company address — including one whose workspace account has since been
+> deleted. Internal is what makes `@contentstack.com` mean workspace membership rather than an
+> address that merely ends in those characters, because Google then refuses outside accounts before
+> the Workshop ever sees them.
+
 Provider-specific steps (scopes, consent screen, org approval) are in each package's README:
 [github](packages/gatekeeper-github/README.md) ·
 [google](packages/gatekeeper-google/README.md) ·
@@ -407,6 +419,9 @@ First run takes several minutes, most of it the frontend and gatekeeper UI build
 - [ ] Connect a GitHub repo and a Google doc, to exercise each OAuth flow end to end.
 - [ ] Export a gadget to PDF, to exercise the `BROWSER` binding.
 - [ ] `pnpm exec wrangler tail cs-os-workshop` shows structured logs with no startup errors.
+- [ ] Sign in with a non-`@contentstack.com` Google account: the popup reports
+      "Only @contentstack.com accounts can sign in to this deployment." and no account is created.
+- [ ] The password form is gone from both the login and signup pages.
 
 ---
 
@@ -501,6 +516,8 @@ Logs: `pnpm exec wrangler tail <worker name>`.
 | `admins` | backend `ADMINS` (a JSON array binding) |
 | `auth.gatekeepers` | backend `AUTH_GATEKEEPERS` |
 | `auth.disablePassword` | backend `DISABLE_PASSWORD_AUTH` |
+| `auth.allowedEmailDomains` | backend `ALLOWED_EMAIL_DOMAINS` |
+| `auth.sessionMaxAgeHours` | backend `SESSION_MAX_AGE_HOURS` |
 | `workers` | worker names, and the `GATEKEEPER_*` service bindings on backend and router |
 | `aiGateway.*` | backend `CF_AI_GATEWAY*` |
 | `openRouter.*` | backend `OPENROUTER_MODELS` / `_QUICK_MODEL` / `_BASE_URL` |
