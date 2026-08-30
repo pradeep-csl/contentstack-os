@@ -1,195 +1,137 @@
 // @vitest-environment jsdom
 /* eslint-disable react/react-in-jsx-scope */
 
-import { act } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { RpcStub } from 'capnweb'
-import type { PublicApi, AiChatAuthorInfo } from '@gadgets/workshop-shared/api'
-import { setReportedUserId } from './errorReporting'
-import { useAuth } from './useAuth'
+// `publicApi.authenticate()` is pipelined, so the stub it returns is truthy long before the server
+// has accepted the token. Without watching that promise, a stored token the server rejects leaves
+// the app rendering its authenticated shell, and the failure surfaces as unexplained errors on
+// whatever the app happens to call first.
 
-vi.mock('./errorReporting', () => ({
-  setReportedUserId: vi.fn<(reportedUserId: string | undefined) => void>(),
-}))
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { RpcStub } from "capnweb";
+import { AUTH_ERROR_CODES, createAuthError, type PublicApi } from "@gadgets/workshop-shared/api";
+import { useAuth } from "./useAuth";
 
-;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
-
-const person: AiChatAuthorInfo = { type: 'user', id: 'person@example.com', name: 'Person' }
-
-/** A public API whose authenticated stub resolves `whoami` to `author`, or rejects without one. */
-function stubPublicApi(author?: AiChatAuthorInfo): RpcStub<PublicApi> {
-  const authenticated = {
-    whoami: async () => {
-      if (!author) throw new Error('session gone')
-      return author
-    },
-    amIAdmin: async () => false,
-    [Symbol.dispose]: () => {},
-  }
-  return {
-    authenticate: () => authenticated,
-    authenticateFromCfAccess: () => authenticated,
-  } as unknown as RpcStub<PublicApi>
-}
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /**
- * A public API whose `whoami` stays pending until released, for the window in which an answer can
- * arrive after a logout or a newer authentication has superseded it.
- *
- * Each authentication gets its own deferred, so `release(nth, ...)` can answer an earlier lookup
- * after a later one — the ordering a shared promise could not express.
+ * Stands in for the stub `authenticate()` returns. An `RpcPromise` is both the pending call and the
+ * stub for its result, so the fake is a real promise carrying the capability's methods — using an
+ * actual promise rather than a hand-rolled `then` keeps it a genuine thenable.
  */
-function deferredPublicApi(): {
-  api: RpcStub<PublicApi>
-  release: (nth: number, author: AiChatAuthorInfo) => void
-} {
-  const releases: ((author: AiChatAuthorInfo) => void)[] = []
-  const authenticate = () => {
-    let release: (author: AiChatAuthorInfo) => void = () => {}
-    const pending = new Promise<AiChatAuthorInfo>((resolve) => { release = resolve })
-    releases.push(release)
-    return { whoami: () => pending, [Symbol.dispose]: () => {} }
-  }
+function fakePublicApi(rejection: unknown): { api: RpcStub<PublicApi>; disposed: () => number } {
+  let disposals = 0;
+
+  const authenticated = Object.assign(Promise.reject(rejection), {
+    whoami: () => Promise.reject(rejection),
+    [Symbol.dispose]: () => { disposals++; },
+  });
+  // The hook attaches its own handler; this only silences Node's unhandled-rejection warning.
+  authenticated.catch(() => {});
+
   return {
-    api: { authenticate, authenticateFromCfAccess: authenticate } as unknown as RpcStub<PublicApi>,
-    release: (nth, author) => releases[nth](author),
-  }
+    api: { authenticate: () => authenticated } as unknown as RpcStub<PublicApi>,
+    disposed: () => disposals,
+  };
 }
 
-type Controls = { login: (token: string) => void; logout: () => void }
+let latest: ReturnType<typeof useAuth> | null = null;
 
-describe('useAuth error reporting identity', () => {
-  const roots: Root[] = []
-  const containers: HTMLDivElement[] = []
+function Probe({ api }: { api: RpcStub<PublicApi> }) {
+  latest = useAuth(api);
+  return null;
+}
 
-  afterEach(() => {
-    act(() => roots.forEach(root => root.unmount()))
-    roots.length = 0
-    containers.forEach(container => container.remove())
-    containers.length = 0
-    localStorage.clear()
-    vi.unstubAllEnvs()
-    vi.clearAllMocks()
-  })
+let root: Root | null = null;
 
-  /** Mounts an independent `useAuth` instance, returning its login/logout handles. */
-  async function mount(
-    publicApi: RpcStub<PublicApi>,
-    hook: typeof useAuth = useAuth,
-  ): Promise<{ controls: Controls; root: Root }> {
-    const captured: { controls?: Controls } = {}
-    function Consumer() {
-      const { login, logout } = hook(publicApi)
-      captured.controls = { login, logout }
-      return null
+async function mountWithStoredToken(api: RpcStub<PublicApi>): Promise<void> {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  await act(async () => {
+    root = createRoot(container);
+    root.render(<Probe api={api} />);
+  });
+  // Let the rejection the hook is watching settle.
+  await act(async () => { await Promise.resolve(); });
+}
+
+afterEach(() => {
+  act(() => { root?.unmount(); });
+  root = null;
+  latest = null;
+  localStorage.clear();
+});
+
+describe("useAuth with a stored token the server rejects", () => {
+  it("ends the session so the app falls back to the login page", async () => {
+    localStorage.setItem("authToken", "stale@example.com:secret");
+    const { api } = fakePublicApi(createAuthError(AUTH_ERROR_CODES.invalidSessionToken));
+
+    await mountWithStoredToken(api);
+
+    expect(latest!.isAuthenticated).toBe(false);
+    expect(latest!.authenticatedApi).toBeNull();
+    // The token must go too, or the next reload authenticates with it all over again.
+    expect(localStorage.getItem("authToken")).toBeNull();
+  });
+
+  it("releases the rejected capability rather than leaking it", async () => {
+    localStorage.setItem("authToken", "stale@example.com:secret");
+    const { api, disposed } = fakePublicApi(createAuthError(AUTH_ERROR_CODES.invalidSessionToken));
+
+    await mountWithStoredToken(api);
+
+    expect(disposed()).toBeGreaterThan(0);
+  });
+
+  // Signing someone out because their WiFi dropped would be its own bug: the connection manager
+  // owns reconnection, and it re-authenticates with the same token once the socket is back.
+  it("keeps the session when the failure is a lost connection", async () => {
+    localStorage.setItem("authToken", "live@example.com:secret");
+    const { api } = fakePublicApi(new Error("Peer closed WebSocket"));
+
+    await mountWithStoredToken(api);
+
+    expect(latest!.isAuthenticated).toBe(true);
+    expect(localStorage.getItem("authToken")).toBe("live@example.com:secret");
+  });
+});
+
+// Cloudflare Access sessions are deliberately exempt: they carry no local token to forget, and the
+// root shows an "Authenticating…" spinner rather than a login page when unauthenticated, so
+// clearing one would strand the user there instead of offering a way back in.
+describe("useAuth in Cloudflare Access mode", () => {
+  it("leaves the session alone when a call is refused", async () => {
+    vi.stubEnv("VITE_CF_ACCESS_MODE", "true");
+    vi.resetModules();
+    const { useAuth: useAuthInAccessMode } = await import("./useAuth");
+
+    const rejection = createAuthError(AUTH_ERROR_CODES.notAuthenticatedWithAccess);
+    const authenticated = Object.assign(Promise.reject(rejection), {
+      whoami: () => Promise.reject(rejection),
+      [Symbol.dispose]: () => {},
+    });
+    authenticated.catch(() => {});
+    const api = { authenticateFromCfAccess: () => authenticated } as unknown as RpcStub<PublicApi>;
+
+    let accessLatest: ReturnType<typeof useAuth> | null = null;
+    function AccessProbe() {
+      accessLatest = useAuthInAccessMode(api);
+      return null;
     }
 
-    const container = document.createElement('div')
-    document.body.append(container)
-    containers.push(container)
-    const root = createRoot(container)
-    roots.push(root)
-    await act(async () => root.render(<Consumer />))
-    return { controls: captured.controls!, root }
-  }
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    await act(async () => {
+      root = createRoot(container);
+      root.render(<AccessProbe />);
+    });
+    await act(async () => { await Promise.resolve(); });
 
-  it('names the user when a stored token authenticates on mount', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    await mount(stubPublicApi(person))
+    expect(accessLatest!.isAuthenticated).toBe(true);
 
-    expect(setReportedUserId).toHaveBeenCalledExactlyOnceWith('person@example.com')
-  })
-
-  it('names the user after an inline login with no provider mounted', async () => {
-    // The public blueprint page renders outside AuthProvider and logs in through its own useAuth
-    // instance. Attaching identity in the provider left that whole session reporting anonymously.
-    const { controls } = await mount(stubPublicApi(person))
-    expect(setReportedUserId).not.toHaveBeenCalled()
-
-    await act(async () => controls.login('fresh-token'))
-
-    expect(setReportedUserId).toHaveBeenCalledExactlyOnceWith('person@example.com')
-  })
-
-  it('names the user when CF Access authenticates without a token', async () => {
-    vi.stubEnv('VITE_CF_ACCESS_MODE', 'true')
-    vi.resetModules()
-    // Both imports must come from the reset registry, or the assertion would watch a mock instance
-    // that the freshly imported hook never calls.
-    const { setReportedUserId: setId } = await import('./errorReporting')
-    const { useAuth: cfAccessUseAuth } = await import('./useAuth')
-
-    await mount(stubPublicApi(person), cfAccessUseAuth)
-
-    expect(setId).toHaveBeenCalledExactlyOnceWith('person@example.com')
-  })
-
-  it('keeps the identity when one instance unmounts while another stays mounted', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    const api = stubPublicApi(person)
-    await mount(api)
-    const { root: inner } = await mount(api)
-
-    // The blueprint page nests its own instance inside the root's. Clearing on unmount would let
-    // navigating away from that page blank an identity the root still holds.
-    act(() => inner.unmount())
-    roots.splice(roots.indexOf(inner), 1)
-
-    expect(setReportedUserId).not.toHaveBeenCalledWith(undefined)
-  })
-
-  it('clears the identity on logout', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    const { controls } = await mount(stubPublicApi(person))
-
-    act(() => controls.logout())
-
-    expect(setReportedUserId).toHaveBeenLastCalledWith(undefined)
-  })
-
-  it('ignores a lookup that resolves after logout', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    const { api, release } = deferredPublicApi()
-    const { controls } = await mount(api)
-
-    act(() => controls.logout())
-    expect(setReportedUserId).toHaveBeenLastCalledWith(undefined)
-
-    // Disposing the stub is not a defence: capnweb does not guarantee that disposal rejects a call
-    // already in flight, so a slow lookup could otherwise name a user who has just signed out.
-    await act(async () => release(0, person))
-
-    expect(setReportedUserId).not.toHaveBeenCalledWith('person@example.com')
-    expect(setReportedUserId).toHaveBeenLastCalledWith(undefined)
-  })
-
-  it('ignores a lookup superseded by a newer authentication', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    const { api, release } = deferredPublicApi()
-    const { controls } = await mount(api)
-    await act(async () => controls.login('fresh-token'))
-
-    // The newer authentication supersedes the first lookup, so answering that one last must not let
-    // it win. Only the generation distinguishes them; arrival order alone would pick the stale id.
-    await act(async () => release(0, { ...person, id: 'stale@example.com' }))
-    expect(setReportedUserId).not.toHaveBeenCalledWith('stale@example.com')
-
-    await act(async () => release(1, person))
-    expect(setReportedUserId).toHaveBeenLastCalledWith('person@example.com')
-  })
-
-  it('does not name a person for an author that is not a user account', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    await mount(stubPublicApi({ type: 'agent', id: 'gpt-5.1-pro', name: 'GPT' }))
-
-    expect(setReportedUserId).not.toHaveBeenCalled()
-  })
-
-  it('names nobody when the identity lookup fails', async () => {
-    localStorage.setItem('authToken', 'stored-token')
-    await mount(stubPublicApi())
-
-    expect(setReportedUserId).not.toHaveBeenCalled()
-  })
-})
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+});
