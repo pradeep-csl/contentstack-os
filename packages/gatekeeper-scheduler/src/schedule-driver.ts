@@ -2,6 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { RpcStub, RpcTarget } from "cloudflare:workers";
 import { reportIssue } from "@gadgets/backend-utils/error-reporting";
 import type { ApprovalQueue, HookInitiator } from "@gadgets/workshop-shared/gatekeeper";
+import { isHookPausedError } from "@gadgets/workshop-shared/gatekeeper";
 import {
   admitRun,
   beginDueRun,
@@ -9,6 +10,7 @@ import {
   createSchedule,
   failRun,
   rejectRun,
+  releaseRun,
   type EnabledSchedule,
   type ScheduleRegistration,
 } from "./driver-state.js";
@@ -75,6 +77,14 @@ type PreparedRun = {
   runId: string;
   scheduledTime: number;
 };
+
+/**
+ * What one delivery attempt did. `paused` is distinct from `rejected` because the attempt never
+ * happened: the occurrence was released unchanged and the alarm must back off rather than retry.
+ * `rejected` is the admission refusal the batch counts; every other settled path reports
+ * `delivered`.
+ */
+type DeliveryOutcome = "delivered" | "rejected" | "paused";
 
 type PendingState = Extract<EnabledSchedule, { status: "pending" }>;
 type PendingStage = PendingState["stage"];
@@ -238,7 +248,7 @@ export class ScheduleDriver extends DurableObject {
     await obsContext.with({ accountId: this.ctx.id.toString(), operation: "alarm" }, async () => {
       const startedAt = Date.now();
       try {
-        const { dueCount, batchSize, backlogCount, startHookRejectedCount } =
+        const { dueCount, batchSize, backlogCount, startHookRejectedCount, pausedCount } =
           await this.#runAlarm();
         logger.debug("scheduler alarm batch completed", {
           event: "scheduler.alarm.completed",
@@ -247,6 +257,7 @@ export class ScheduleDriver extends DurableObject {
           batchSize,
           backlogCount,
           startHookRejectedCount,
+          pausedCount,
         });
       } catch (error) {
         const durationMs = Date.now() - startedAt;
@@ -268,12 +279,19 @@ export class ScheduleDriver extends DurableObject {
     batchSize: number;
     backlogCount: number;
     startHookRejectedCount: number;
+    pausedCount: number;
   }> {
     const now = Date.now();
     await this.ctx.storage.setAlarm(checkedAdd(now, RECOVERY_DELAY_MS));
     if (this.#requireMetadata().revoked) {
       await this.#cleanupRevokedAccount();
-      return { dueCount: 0, batchSize: 0, backlogCount: 0, startHookRejectedCount: 0 };
+      return {
+        dueCount: 0,
+        batchSize: 0,
+        backlogCount: 0,
+        startHookRejectedCount: 0,
+        pausedCount: 0,
+      };
     }
 
     const due = this.#listSchedules()
@@ -284,18 +302,33 @@ export class ScheduleDriver extends DurableObject {
     // An alarm cannot overlap its own live handler, so an immediate write would not bypass a hung
     // callback. Rev1 relies on the recovery watchdog and replans after a successful batch.
     let startHookRejectedCount = 0;
+    let pausedCount = 0;
     // A hung callback stalls this entire per-account batch. Stronger isolation is deferred beyond
     // rev1; ordinary work remains bounded to four concurrent deliveries.
     await runBounded(batch, DELIVERY_CONCURRENCY, async ([key, schedule]) => {
-      if (await this.#deliverSafely(key, schedule)) startHookRejectedCount++;
+      const outcome = await this.#deliverSafely(key, schedule);
+      if (outcome === "rejected") startHookRejectedCount++;
+      else if (outcome === "paused") pausedCount++;
     });
-    await this.#planAlarm();
-    return {
+    const counts = {
       dueCount: due.length,
       batchSize: batch.length,
       backlogCount: due.length - batch.length,
       startHookRejectedCount,
+      pausedCount,
     };
+    // A released occurrence is still due, so replanning would pull the alarm to ~now and spin the
+    // whole pause away in alarms and cross-worker calls. Leave the recovery alarm armed on entry,
+    // which polls every RECOVERY_DELAY_MS until the deployment resumes.
+    if (pausedCount > 0) {
+      logger.info("scheduler alarm skipped: deployment paused", {
+        event: "scheduler.alarm.paused",
+        pausedCount,
+      });
+      return counts;
+    }
+    await this.#planAlarm();
+    return counts;
   }
 
   async #planAlarmAfterMutation(): Promise<void> {
@@ -373,20 +406,20 @@ export class ScheduleDriver extends DurableObject {
     return stored;
   }
 
-  async #deliver(key: string): Promise<boolean> {
+  async #deliver(key: string): Promise<DeliveryOutcome> {
     const prepared = this.#prepareRun(key, Date.now());
-    if (!prepared) return false;
+    if (!prepared) return "delivered";
     return obsContext.with({ runId: prepared.runId }, async () => {
       try {
         return await this.#deliverPrepared(prepared);
       } catch (error) {
         this.#reportDeliveryFailure(error);
-        return false;
+        return "delivered";
       }
     });
   }
 
-  async #deliverPrepared(prepared: PreparedRun): Promise<boolean> {
+  async #deliverPrepared(prepared: PreparedRun): Promise<DeliveryOutcome> {
     const capabilities = this.ctx.storage.kv.get<StoredCapabilities>(
       capabilitiesKey(prepared.workspaceId, prepared.scheduleId),
     );
@@ -401,7 +434,7 @@ export class ScheduleDriver extends DurableObject {
         attributes: obsContext.get(),
       });
       this.#rejectPending(prepared, Date.now());
-      return false;
+      return "delivered";
     }
 
     let hookResult: HookResult | undefined;
@@ -413,13 +446,19 @@ export class ScheduleDriver extends DurableObject {
         // callback attempt is counted or either returned capability is used.
         // @ts-expect-error Worker RPC's mapped return type wraps the already-stubbed hook result.
         hookResult = await hookCall;
-      } catch {
+      } catch (error) {
+        // A paused deployment is not a refusal of this hook -- the attempt never happened. Release
+        // the occurrence unchanged so it is still due, and let the caller back the alarm off.
+        if (isHookPausedError(error)) {
+          this.#releasePending(prepared);
+          return "paused";
+        }
         this.#rejectPending(prepared, Date.now());
-        return true;
+        return "rejected";
       }
 
       const admitted = this.#markAdmitted(prepared, Date.now());
-      if (!admitted || !hookResult) return false;
+      if (!admitted || !hookResult) return "delivered";
 
       const firing: ScheduledFiring = {
         scheduleId: prepared.scheduleId,
@@ -435,31 +474,31 @@ export class ScheduleDriver extends DurableObject {
         });
       } catch {
         this.#failPending(prepared, "authorization_failed", Date.now());
-        return false;
+        return "delivered";
       }
 
-      if (!this.#isPendingDelivery(prepared)) return false;
+      if (!this.#isPendingDelivery(prepared)) return "delivered";
       try {
         await hookResult.callback.onSchedule(firing);
       } catch {
         this.#failPending(prepared, "callback_failed", Date.now());
-        return false;
+        return "delivered";
       }
       this.#completePending(prepared, Date.now());
-      return false;
+      return "delivered";
     } finally {
       disposeStub(capabilities.initiator);
     }
   }
 
-  async #deliverSafely(key: string, schedule: StoredSchedule): Promise<boolean> {
+  async #deliverSafely(key: string, schedule: StoredSchedule): Promise<DeliveryOutcome> {
     const { workspaceId, scheduleId } = schedule.state;
     return obsContext.with({ workspaceId, scheduleId }, async () => {
       try {
         return await this.#deliver(key);
       } catch (error) {
         this.#reportDeliveryFailure(error);
-        return false;
+        return "delivered";
       }
     });
   }
@@ -524,6 +563,12 @@ export class ScheduleDriver extends DurableObject {
 
   #rejectPending(prepared: PreparedRun, rejectedAt: number): void {
     this.#settle(prepared, undefined, (state) => rejectRun(state, prepared.runId, rejectedAt));
+  }
+
+  /** Undoes an occurrence the paused deployment never accepted, leaving it due unchanged. */
+  #releasePending(prepared: PreparedRun): void {
+    this.#settle(prepared, undefined, (state) =>
+      releaseRun(state, prepared.runId, prepared.scheduledTime));
   }
 
   #failPending(

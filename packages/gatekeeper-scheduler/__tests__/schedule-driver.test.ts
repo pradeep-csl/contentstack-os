@@ -18,7 +18,13 @@ type ScheduleHookTarget = RpcTarget & ScheduledTaskHook;
 
 type TestHooks = HookInitiator<ScheduleHookTarget> & {
   configure(
-    mode: "success" | "start-reject" | "authorization-reject" | "callback-reject",
+    mode:
+      | "success"
+      | "start-reject"
+      | "start-paused"
+      | "authorization-reject"
+      | "authorization-paused"
+      | "callback-reject",
   ): Promise<void>;
   blockAt(point: "start" | "authorization" | "callback"): Promise<void>;
   read(): Promise<{
@@ -1234,6 +1240,164 @@ describe("ScheduleDriver", () => {
       expect(keys).toEqual(["metadata"]);
     });
     expect(keys).toEqual(["metadata"]);
+  });
+
+  // The Workshop backend throws HOOK_PAUSED_MESSAGE from startHook() while the deployment is
+  // paused. The fixture hook throws it across a real Worker RPC boundary, so these also cover the
+  // message surviving that hop.
+  describe("paused deployment", () => {
+    async function seedDriver(
+      name: string,
+      spec: ScheduleActivation["spec"],
+    ): Promise<DurableObjectStub<ScheduleDriver>> {
+      const driver = testEnv.SCHEDULE_DRIVER.getByName(name);
+      await enableSchedule(
+        driver,
+        {
+          workspaceId: "workspace-a",
+          scheduleId: "schedule-a",
+          spec,
+          title: "Paused task",
+          description: "Test delivery while the deployment is paused.",
+          gadgetId,
+        },
+        Date.now(),
+      );
+      // Leaves nextFire at 1, so the released occurrence is recognisably the original one.
+      await makeActiveScheduleDue(driver, "workspace-a", "schedule-a");
+      return driver;
+    }
+
+    it("leaves a once schedule due instead of expiring it", async () => {
+      const driver = await seedDriver("paused-once", {
+        kind: "once",
+        fireAt: Date.now() + 60_000,
+        timeZone: "UTC",
+      });
+      await testEnv.TEST_HOOKS.configure("start-paused");
+
+      await runDurableObjectAlarm(driver);
+
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "active",
+        nextFire: 1,
+      });
+      // A pause is not a delivery failure: the signal is returned, never thrown and reported.
+      expect(reportIssue).not.toHaveBeenCalled();
+    });
+
+    it("delivers that same schedule once after resume, not once per missed alarm", async () => {
+      const driver = await seedDriver("paused-once-resume", {
+        kind: "once",
+        fireAt: Date.now() + 60_000,
+        timeZone: "UTC",
+      });
+      await testEnv.TEST_HOOKS.configure("start-paused");
+      await runDurableObjectAlarm(driver);
+      await runDurableObjectAlarm(driver);
+
+      await testEnv.TEST_HOOKS.configure("success");
+      await runDurableObjectAlarm(driver);
+
+      const { events, callbackScheduleIds } = await testEnv.TEST_HOOKS.read();
+      expect(events.filter((event) => event === "start")).toHaveLength(3);
+      expect(callbackScheduleIds).toEqual(["schedule-a"]);
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state.status).toBe(
+        "completed",
+      );
+    });
+
+    // Finding 2: releasing leaves nextFire in the past, so planAlarm would schedule ~now and spin.
+    it("keeps the 5-minute recovery alarm rather than re-firing immediately", async () => {
+      const driver = await seedDriver("paused-alarm-backoff", {
+        kind: "interval",
+        everyMs: 60_000,
+        anchorMs: Date.now(),
+      });
+      await testEnv.TEST_HOOKS.configure("start-paused");
+
+      const before = Date.now();
+      await runDurableObjectAlarm(driver);
+
+      const alarm = await runInDurableObject(driver, (_instance, state) =>
+        state.storage.getAlarm(),
+      );
+      expect(alarm).toBeGreaterThanOrEqual(before + 5 * 60_000);
+    });
+
+    // Recurring schedules must not accumulate: a long pause spanning many occurrences still
+    // delivers once on resume, then returns to normal cadence.
+    it("delivers a recurring schedule once after a long pause, then resumes cadence", async () => {
+      const driver = await seedDriver("paused-recurring", {
+        kind: "interval",
+        everyMs: 60_000,
+        anchorMs: Date.now(),
+      });
+      await testEnv.TEST_HOOKS.configure("start-paused");
+      for (let index = 0; index < 5; index++) await runDurableObjectAlarm(driver);
+      expect((await testEnv.TEST_HOOKS.read()).callbackScheduleIds).toEqual([]);
+
+      await testEnv.TEST_HOOKS.configure("success");
+      await runDurableObjectAlarm(driver);
+
+      expect((await testEnv.TEST_HOOKS.read()).callbackScheduleIds).toEqual(["schedule-a"]);
+      const stored = await driver.getSchedule("workspace-a", "schedule-a");
+      expect(stored?.state.status).toBe("active");
+      expect(stored?.state.status === "active" ? stored.state.nextFire : 0).toBeGreaterThan(
+        Date.now(),
+      );
+    });
+
+    it("counts the paused batch in the completed alarm log", async () => {
+      const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+      const driver = await seedDriver("paused-count", {
+        kind: "interval",
+        everyMs: 60_000,
+        anchorMs: Date.now(),
+      });
+      await testEnv.TEST_HOOKS.configure("start-paused");
+
+      await runDurableObjectAlarm(driver);
+
+      expect(debug).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: "scheduler.alarm.completed",
+          startHookRejectedCount: 0,
+          pausedCount: 1,
+        }),
+      );
+    });
+
+    // Regression guard: unrecognised failures must keep settling exactly as before.
+    it("still expires a once schedule when the hook is genuinely gone", async () => {
+      const driver = await seedDriver("paused-unrecognised", {
+        kind: "once",
+        fireAt: Date.now() + 60_000,
+        timeZone: "UTC",
+      });
+      await testEnv.TEST_HOOKS.configure("start-reject");
+
+      await runDurableObjectAlarm(driver);
+
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state.status).toBe("expired");
+    });
+
+    // The admission guard means a run already past admission finishes rather than being reverted.
+    it("lets a run already past admission settle normally", async () => {
+      const driver = await seedDriver("paused-after-admission", {
+        kind: "interval",
+        everyMs: 60_000,
+        anchorMs: Date.now(),
+      });
+      await testEnv.TEST_HOOKS.configure("authorization-paused");
+
+      await runDurableObjectAlarm(driver);
+
+      // Past admission: settled by the normal failure path, not released.
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state.status).toBe(
+        "retrying",
+      );
+    });
   });
 });
 

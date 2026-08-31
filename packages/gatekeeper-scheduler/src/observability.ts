@@ -12,6 +12,7 @@ export type SchedulerObservabilityFields = {
   batchSize: number;
   backlogCount: number;
   startHookRejectedCount: number;
+  pausedCount: number;
   vendorId: string;
 };
 

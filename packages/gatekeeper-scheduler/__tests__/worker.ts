@@ -1,4 +1,5 @@
 import { DurableObject, RpcTarget, WorkerEntrypoint } from "cloudflare:workers";
+import { HOOK_PAUSED_MESSAGE } from "@gadgets/workshop-shared/gatekeeper";
 import type { ScheduleDriver } from "../src/schedule-driver.js";
 import type { ScheduleSummary } from "../src/types.js";
 
@@ -12,7 +13,13 @@ type TestExports = {
   SchedulerScopeTestFacet: DurableObjectClass<SchedulerScopeTestFacet>;
 };
 
-type TestMode = "success" | "start-reject" | "authorization-reject" | "callback-reject";
+type TestMode =
+  | "success"
+  | "start-reject"
+  | "start-paused"
+  | "authorization-reject"
+  | "authorization-paused"
+  | "callback-reject";
 type BlockPoint = "start" | "authorization" | "callback";
 
 let mode: TestMode = "success";
@@ -37,6 +44,7 @@ class TestApprovalQueue extends RpcTarget {
   async authorizeObservation(): Promise<void> {
     events.push("authorize");
     await pauseIfBlocked("authorization");
+    if (mode === "authorization-paused") throw new Error(HOOK_PAUSED_MESSAGE);
     if (mode === "authorization-reject") throw new Error("authorization rejected");
   }
 
@@ -70,6 +78,8 @@ export class TestHooks extends WorkerEntrypoint {
   async startHook(): Promise<{ callback: TestCallback; approvalQueue: TestApprovalQueue }> {
     events.push("start");
     await pauseIfBlocked("start");
+    // Thrown across a real Worker RPC boundary, exactly as the paused Workshop backend does.
+    if (mode === "start-paused") throw new Error(HOOK_PAUSED_MESSAGE);
     if (mode === "start-reject") throw new Error("opaque admission rejection");
     return { callback: new TestCallback(), approvalQueue: new TestApprovalQueue() };
   }
