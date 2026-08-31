@@ -1401,20 +1401,21 @@ describe("ScheduleDriver", () => {
       });
     });
 
-    // The over-refund guard: a resumed retry never charged an occurrence, so releasing it must not
-    // hand one back and let a bounded schedule outrun its limit.
-    it("does not refund an occurrence when a released run is a resumed retry", async () => {
+    // A released retry must come back as a retry. Rebuilding it as `active` would drop attempts and
+    // nextAttempt, and the next poll would charge a second occurrence for the same logical one --
+    // spending a {count: 2} budget on a single successful delivery.
+    it("restores a released retry, so a bounded schedule still delivers its full budget", async () => {
       const driver = await seedDriver(
-        "paused-retry-refund",
+        "paused-retry-restore",
         { kind: "interval", everyMs: 60_000, anchorMs: Date.now() },
         { count: 2 },
       );
       await testEnv.TEST_HOOKS.configure("callback-reject");
       await runDurableObjectAlarm(driver);
-      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
-        status: "retrying",
-        occurrenceCount: 1,
-      });
+      const failed = await driver.getSchedule("workspace-a", "schedule-a");
+      expect(failed?.state).toMatchObject({ status: "retrying", attempts: 1, occurrenceCount: 1 });
+      if (failed?.state.status !== "retrying") throw new Error("Expected retrying state");
+      const { runId } = failed.state;
       await updateSchedule(driver, "workspace-a", "schedule-a", (stored) => {
         if (stored.state.status !== "retrying") throw new Error("Expected retrying schedule");
         return { ...stored, state: { ...stored.state, nextAttempt: 1 } };
@@ -1423,6 +1424,76 @@ describe("ScheduleDriver", () => {
       await testEnv.TEST_HOOKS.configure("start-paused");
       await runDurableObjectAlarm(driver);
 
+      // Untouched: still the same retry, not an `active` row that would recharge the occurrence.
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "retrying",
+        runId,
+        attempts: 1,
+        nextAttempt: 1,
+        occurrenceCount: 1,
+      });
+
+      await testEnv.TEST_HOOKS.configure("success");
+      await runDurableObjectAlarm(driver);
+      // The retry delivered: only a successful callback leaves the first occurrence active again.
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "active",
+        occurrenceCount: 1,
+      });
+
+      await makeActiveScheduleDue(driver, "workspace-a", "schedule-a");
+      await runDurableObjectAlarm(driver);
+      // Both budgeted occurrences delivered, so the schedule completes rather than dying early.
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "completed",
+        occurrenceCount: 2,
+      });
+      // Three callback invocations: the deliberate failure, its retry, and the second occurrence.
+      expect((await testEnv.TEST_HOOKS.read()).callbackScheduleIds).toHaveLength(3);
+    });
+
+    // A run whose lease expired is recovered by #prepareRun, not begun: releasing it restores the
+    // pending row it was recovered from, charging nothing.
+    it("restores a recovered pending run and delivers it once on resume", async () => {
+      const driver = await seedDriver(
+        "paused-recovered-lease",
+        { kind: "interval", everyMs: 60_000, anchorMs: Date.now() },
+        { count: 2 },
+      );
+      await updateSchedule(driver, "workspace-a", "schedule-a", (stored) => {
+        if (stored.state.status !== "active") throw new Error("Expected active schedule");
+        return {
+          ...stored,
+          state: {
+            ...stored.state,
+            status: "pending",
+            stage: "admission",
+            runId: "abandoned-admission",
+            scheduledTime: stored.state.nextFire,
+            attempts: 0,
+            occurrenceCount: 1,
+            leaseExpiresAt: 1,
+            nextFire: undefined,
+          },
+        };
+      });
+
+      await testEnv.TEST_HOOKS.configure("start-paused");
+      await runDurableObjectAlarm(driver);
+      await runDurableObjectAlarm(driver);
+
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "pending",
+        stage: "admission",
+        runId: "abandoned-admission",
+        occurrenceCount: 1,
+        leaseExpiresAt: 1,
+      });
+
+      await testEnv.TEST_HOOKS.configure("success");
+      await runDurableObjectAlarm(driver);
+
+      expect((await testEnv.TEST_HOOKS.read()).events).toContain("callback:abandoned-admission");
       expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
         status: "active",
         occurrenceCount: 1,

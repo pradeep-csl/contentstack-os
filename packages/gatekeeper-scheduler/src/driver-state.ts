@@ -163,36 +163,28 @@ export function rejectRun(
 }
 
 /**
- * Undo a prepared-but-undelivered run, returning the schedule to `active` at the occurrence it was
- * already due for.
+ * Undo a prepared-but-undelivered run by restoring `previous` — the exact state the schedule held
+ * before {@link beginDueRun} started this run.
  *
- * The inverse of {@link beginDueRun}, and deliberately not {@link rejectRun}: rejecting *settles*
- * the occurrence, which expires a `once` schedule outright and advances a recurring one. Releasing
- * is for the case where the attempt never happened at all — the deployment is paused — so the
- * schedule must look untouched and come due again unchanged.
+ * Deliberately not {@link rejectRun}: rejecting *settles* the occurrence, which expires a `once`
+ * schedule outright and advances a recurring one. Releasing is for the case where the attempt never
+ * happened at all — the deployment is paused — so the schedule must look untouched.
  *
- * `consumedOccurrence` says whether starting this run charged the occurrence budget, so the release
- * gives that charge back: only the `active` branch of {@link beginDueRun} counts an occurrence, so a
- * released retry must not be refunded or a bounded schedule would outrun its own limit. The caller
- * knows which branch it took; deriving it here from `attempts` or `nextFire` would couple this to
- * `beginDueRun`'s internals and break silently if they change.
+ * Restoring rather than reconstructing is what makes "untouched" hold by construction: a released
+ * retry comes back as a retry with its `attempts` and `nextAttempt`, an occurrence charged on the
+ * way in is uncharged, and a recovered lease returns to the row it was recovered from. Rebuilding an
+ * `active` state instead would have to re-derive all of that from the pending row, which no longer
+ * records where it came from.
  *
- * Guarded like `rejectRun`: only the run that is pending admission under `runId` is released, so a
- * stale caller cannot disturb a newer run.
+ * Guarded like `rejectRun`: only the run that is pending admission under `runId` is released. That
+ * guard is also what keeps `previous` fresh — a run past admission, or a newer run, is left alone.
  */
 export function releaseRun(
   schedule: EnabledSchedule,
   runId: string,
-  scheduledTime: number,
-  consumedOccurrence: boolean,
+  previous: EnabledSchedule,
 ): EnabledSchedule {
-  if (!isPending(schedule, runId, "admission")) return schedule;
-  const progress = copyProgress(schedule);
-  const occurrenceCount =
-    consumedOccurrence && progress.occurrenceCount !== undefined
-      ? Math.max(0, progress.occurrenceCount - 1)
-      : progress.occurrenceCount;
-  return { ...progress, occurrenceCount, status: "active", nextFire: scheduledTime };
+  return isPending(schedule, runId, "admission") ? previous : schedule;
 }
 
 /** Schedules a callback retry or marks an exhausted logical run dead. */

@@ -77,10 +77,10 @@ type PreparedRun = {
   runId: string;
   scheduledTime: number;
   /**
-   * Whether starting this run charged the schedule's occurrence budget, so releasing it can give
-   * that charge back. Only a run begun from `active` counts an occurrence; a resumed retry does not.
+   * The schedule exactly as it was before this run began, so releasing it restores that row rather
+   * than reconstructing one — a paused attempt then leaves no trace of itself at all.
    */
-  consumedOccurrence: boolean;
+  previousState: EnabledSchedule;
 };
 
 /**
@@ -531,8 +531,8 @@ export class ScheduleDriver extends DurableObject {
         this.ctx.storage.kv.put<StoredSchedule>(key, { ...stored, state });
         return undefined;
       }
-      // Read before the transition: only beginDueRun's `active` branch counts an occurrence.
-      const consumedOccurrence = state.status === "active" && Boolean(state.occurrences);
+      // Snapshot before any transition: this is what a paused release puts back.
+      const previousState = stored.state;
       const leaseExpiresAt = checkedAdd(now, RECOVERY_DELAY_MS);
       if (state.status === "active" || state.status === "retrying") {
         state = beginDueRun(state, now, crypto.randomUUID(), leaseExpiresAt);
@@ -546,7 +546,7 @@ export class ScheduleDriver extends DurableObject {
         scheduleId: state.scheduleId,
         runId: state.runId,
         scheduledTime: state.scheduledTime,
-        consumedOccurrence,
+        previousState,
       };
     });
   }
@@ -573,10 +573,10 @@ export class ScheduleDriver extends DurableObject {
     this.#settle(prepared, undefined, (state) => rejectRun(state, prepared.runId, rejectedAt));
   }
 
-  /** Undoes an occurrence the paused deployment never accepted, leaving it due unchanged. */
+  /** Undoes an occurrence the paused deployment never accepted, restoring the pre-run schedule. */
   #releasePending(prepared: PreparedRun): void {
     this.#settle(prepared, undefined, (state) =>
-      releaseRun(state, prepared.runId, prepared.scheduledTime, prepared.consumedOccurrence));
+      releaseRun(state, prepared.runId, prepared.previousState));
   }
 
   #failPending(
