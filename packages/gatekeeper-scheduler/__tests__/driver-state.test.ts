@@ -7,6 +7,7 @@ import {
   createSchedule,
   failRun,
   rejectRun,
+  releaseRun,
   retryDelay,
   type ScheduleRegistration,
 } from "../src/driver-state.js";
@@ -260,6 +261,46 @@ describe("schedule state", () => {
     const admitted = admitRun(pending, "current", 66_000, 366_000);
     expect(rejectRun(admitted, "stale", 72_000)).toBe(admitted);
     expect(completeRun(admitted, "stale", 72_000)).toBe(admitted);
+  });
+});
+
+describe("releaseRun", () => {
+  // The whole point: a one-time schedule must survive a pause. rejectRun expires it.
+  it("returns a once schedule to active with its original nextFire", () => {
+    const active = createSchedule(oneShot, 0);
+    const pending = beginDueRun(active, 120_000, "run-1", 420_000);
+    const released = releaseRun(pending, "run-1", 120_000);
+    expect(released).toEqual({ ...oneShot, status: "active", nextFire: 120_000 });
+  });
+
+  it("returns a recurring schedule to active without advancing it", () => {
+    const active = createSchedule(recurring, 0);
+    const pending = beginDueRun(active, 60_000, "run-1", 360_000);
+    const released = releaseRun(pending, "run-1", 60_000);
+    expect(released).toEqual({ ...recurring, status: "active", nextFire: 60_000 });
+  });
+
+  // Attempts count real delivery attempts. A pause is not one.
+  it("does not consume an attempt", () => {
+    const pending = beginDueRun(createSchedule(recurring, 0), 60_000, "run-1", 360_000);
+    expect(pending).toMatchObject({ attempts: 0 });
+    expect(releaseRun(pending, "run-1", 60_000)).not.toHaveProperty("attempts");
+  });
+
+  // Same guard as rejectRun: a stale runId must not disturb a newer run.
+  it("ignores a runId that is not the pending admission", () => {
+    const pending = beginDueRun(createSchedule(recurring, 0), 60_000, "run-1", 360_000);
+    expect(releaseRun(pending, "other-run", 60_000)).toBe(pending);
+  });
+
+  it("ignores a schedule that is past admission", () => {
+    const admitted = admitRun(
+      beginDueRun(createSchedule(recurring, 0), 60_000, "run-1", 360_000),
+      "run-1",
+      66_000,
+      366_000,
+    );
+    expect(releaseRun(admitted, "run-1", 60_000)).toBe(admitted);
   });
 });
 

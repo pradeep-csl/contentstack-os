@@ -162,6 +162,27 @@ export function rejectRun(
     : { ...common, status: "active", nextFire };
 }
 
+/**
+ * Undo a prepared-but-undelivered run, returning the schedule to `active` at the occurrence it was
+ * already due for.
+ *
+ * The inverse of {@link beginDueRun}, and deliberately not {@link rejectRun}: rejecting *settles*
+ * the occurrence, which expires a `once` schedule outright and advances a recurring one. Releasing
+ * is for the case where the attempt never happened at all — the deployment is paused — so the
+ * schedule must look untouched and come due again unchanged.
+ *
+ * Guarded like `rejectRun`: only the run that is pending admission under `runId` is released, so a
+ * stale caller cannot disturb a newer run.
+ */
+export function releaseRun(
+  schedule: EnabledSchedule,
+  runId: string,
+  scheduledTime: number,
+): EnabledSchedule {
+  if (!isPending(schedule, runId, "admission")) return schedule;
+  return { ...copyProgress(schedule), status: "active", nextFire: scheduledTime };
+}
+
 /** Schedules a callback retry or marks an exhausted logical run dead. */
 export function failRun(
   schedule: EnabledSchedule,
