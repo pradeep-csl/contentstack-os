@@ -196,6 +196,26 @@ const INTENTS: Intent[] = [
     holds: () => matches('packages/workshop-backend/src/user.ts', /getSessionMaxAgeMs/) },
   { id: 'F8.5', intent: 'the deploy harness rejects a config whose admins cannot sign in',
     holds: () => matches('scripts/deploy/deployment-config.ts', /would never be able to reach/) },
+
+  // ---- F9  Admin-controlled deployment pause switch -----------------------------------------
+  // Upstream has no cost-freeze switch: a runaway agent or a compromised account keeps spending
+  // until someone finds and disables it by hand. This deployment can be stopped from `/admin`.
+  { id: 'F9.1', intent: 'paused is part of AdminConfig and reaches the client',
+    holds: () => matches('packages/workshop-backend/src/admin-config.ts', /paused: boolean/)
+              && matches('packages/workshop-shared/src/api.ts', /setPaused\(paused: boolean\): Promise<void>/) },
+  { id: 'F9.2', intent: 'a paused deployment admits only admins',
+    holds: () => matches('packages/workshop-backend/src/server.ts', /isBlockedByPause/)
+              && matches('packages/workshop-backend/src/auth/login-flow.ts', /isBlockedByPause/) },
+  { id: 'F9.3', intent: 'a paused deployment runs no agent turns and delivers no hooks',
+    holds: () => matches('packages/workshop-backend/src/overseer.ts', /#runAgentTurnWithContext/)
+              && matches('packages/workshop-backend/src/overseer.ts', /HOOK_PAUSED_MESSAGE/) },
+  // Both halves of the Finding-1 fix: releaseRun undoes the admission without settling the
+  // schedule, and schedule-driver.ts must recognise the shared paused signal to call it.
+  { id: 'F9.4', intent: 'paused schedules are released, not settled, so a one-time task survives',
+    holds: () => matches('packages/gatekeeper-scheduler/src/driver-state.ts', /export function releaseRun/)
+              && matches('packages/gatekeeper-scheduler/src/schedule-driver.ts', /isHookPausedError/) },
+  { id: 'F9.5', intent: 'the pause state is confirmed from the mirror enforcement reads, never the DO\'s own copy',
+    holds: () => matches('packages/workshop-frontend/src/AdminPage.tsx', /getServerConfig/) },
 ]
 
 test('every fork intent has a unique, stable id', () => {

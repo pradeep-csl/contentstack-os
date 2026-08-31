@@ -64,6 +64,12 @@ Intents currently enforced. Adding fork behaviour worth defending means adding a
 | F8.3 | A configured allowlist disables password auth, failing closed rather than open | `workshop-backend/src/auth/config.ts` |
 | F8.4 | Session tokens expire against a configurable maximum age | `workshop-backend/src/user.ts` |
 | F8.5 | The deploy harness rejects a config whose admins cannot sign in | `scripts/deploy/deployment-config.ts` |
+| **F9** | **An admin-controlled deployment pause switch** | |
+| F9.1 | `paused` is part of AdminConfig and reaches the client | `workshop-backend/src/admin-config.ts`, `workshop-shared/src/api.ts` |
+| F9.2 | A paused deployment admits only admins | `workshop-backend/src/server.ts`, `auth/login-flow.ts` |
+| F9.3 | A paused deployment runs no agent turns and delivers no hooks | `workshop-backend/src/overseer.ts` |
+| F9.4 | Paused schedules are released, not settled, so a one-time task survives | `gatekeeper-scheduler/src/driver-state.ts`, `schedule-driver.ts` |
+| F9.5 | The pause state is confirmed from the mirror enforcement reads, never the DO's own copy | `workshop-frontend/src/AdminPage.tsx` |
 
 ## Ceded
 

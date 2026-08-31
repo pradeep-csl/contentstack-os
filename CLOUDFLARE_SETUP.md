@@ -441,6 +441,55 @@ entire configuration of the connector. Leave `trustAnnotations` off unless every
 behind the portal is itself trusted: a portal is an aggregator, and those annotations are written by
 whichever server it proxies, not by you.
 
+### Pausing the deployment
+
+`/admin` has a **Pause deployment** control for stopping spend without a redeploy — a runaway agent,
+a compromised account, or just wanting things quiet overnight. Flipping it writes `AdminConfig.paused`
+through the `AdminSettings` DO, which mirrors it to the `.adminConfig` key in the `BLUEPRINTS` KV
+namespace that every enforcement path actually reads. The admin panel confirms the pause took effect
+by polling `PublicApi.getServerConfig()` — the mirror, not the DO's own copy — so **it can take up to
+a minute** for the button to report success even though the write itself is immediate; the mirror is
+what every other request path is racing to see.
+
+What pausing does and does not do:
+
+- **No agent turns run for anyone, admins included.** This is a hard gate in the Overseer, not a
+  convenience for non-admins. An admin who wants to confirm a paused instance signs in and inspects
+  it — the pause control itself, `/admin` settings, blueprint browsing — they do not exercise the
+  agent to prove the pause works, because the agent will not run.
+- **Only admins can sign in while paused.** A non-admin's sign-in attempt (password or gatekeeper
+  OAuth) is refused with "This deployment is paused." A **non-admin already connected** keeps their
+  existing session's non-agent access until their WebSocket drops on its own — there is no session
+  registry to forcibly disconnect them, so pausing does not cut an open tab instantly. Their agent
+  turns are refused the same as anyone else's; that refusal is the actual spend control.
+- **Scheduled tasks are skipped, not lost, and do not accumulate.** A schedule due during the pause
+  has its occurrence released rather than consumed, so the schedule looks untouched. Exactly one
+  occurrence fires after resume — never one per slot missed while paused.
+- **Storage keeps billing.** R2 objects, KV entries, and Durable Object storage-at-rest are flat and
+  small and are not affected by pause; it stops compute and inference, which is what spikes.
+- **`getBlueprint` and `downloadBlueprint` stay unauthenticated and open**, paused or not — they carry
+  no user identity to gate and were already public before this feature existed.
+- **Inbound email would be bounced, not queued, if `gatekeeper-email` were ever installed.** Its hook
+  delivery has no failure handling around the same pause gate the scheduler uses, so a message
+  received while paused fails the Email Worker handler outright. This deployment does not install
+  `gatekeeper-email` (Email Routing needs a zone, and this is a `workers.dev` deployment), so it does
+  not apply today — but if a future deployment adds it, know that pause drops mail rather than
+  deferring it.
+
+**Lockout escape hatch.** If `ADMINS` is ever wrong and pausing locks every admin out too, the pause
+flag can be cleared directly in KV without a redeploy:
+
+```sh
+source .envrc
+pnpm exec wrangler kv key get --namespace-id=<BLUEPRINTS id> .adminConfig > cfg.json
+# edit "paused": false
+pnpm exec wrangler kv key put --namespace-id=<BLUEPRINTS id> .adminConfig --path cfg.json
+```
+
+This is a stopgap only — the `AdminSettings` DO owns the authoritative config and will overwrite the
+KV mirror wholesale on its next write, silently undoing the edit. Fix `ADMINS` and redeploy
+afterwards; do not rely on the KV edit persisting.
+
 ### What needs a redeploy, and what does not
 
 | Change | Redeploy? |
