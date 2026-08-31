@@ -319,6 +319,7 @@ export class AdminSettings extends DurableObject<Cloudflare.Env> {
       accentColor: config.accentColor,
       resourceVendors: await this.#listResourceConfig(config, adminUserId),
       formats: await this.#listFormatConfig(config),
+      paused: config.paused,
     };
   }
 
@@ -576,6 +577,10 @@ export class AdminApiImpl extends RpcTarget implements AdminApi {
 
   async setSignupsEnabled(enabled: boolean): Promise<void> {
     await this.admin.updateAdminConfig({ signupsEnabled: enabled });
+  }
+
+  async setPaused(paused: boolean): Promise<void> {
+    await this.admin.updateAdminConfig({ paused });
   }
 
   async setSiteName(name: string): Promise<void> {

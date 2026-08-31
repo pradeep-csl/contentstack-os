@@ -19,9 +19,13 @@ export default defineConfig({
         // Session expiry is env-driven and off by default; the suite sets it so the expiry path is
         // exercised. Tests that create a session and use it immediately are unaffected.
         bindings: { SESSION_MAX_AGE_HOURS: '24' },
+        // BLUEPRINTS mirrors AdminConfig (see admin-config.ts); the admin-settings suite writes and
+        // reads it for real to exercise the KV-mirror path getServerConfig() depends on.
+        kvNamespaces: ['BLUEPRINTS'],
         durableObjects: {
           TEST_OVERSEER: { className: 'OverseerDurableObject', useSQLite: true },
           TEST_USER: { className: 'UserDurableObject', useSQLite: true },
+          TEST_ADMIN_SETTINGS: { className: 'AdminSettings', useSQLite: true },
         },
       },
     }),

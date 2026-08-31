@@ -886,6 +886,11 @@ export type AdminSettingsView = {
   resourceVendors: AdminResourceVendor[];
   /** The blueprints promoted as standard output formats, in menu order (including disabled ones). */
   formats: AdminFormat[];
+  /**
+   * Whether the deployment is paused. While paused only admins may sign in; the client shows a
+   * notice rather than a broken app.
+   */
+  paused: boolean;
 };
 
 /**
@@ -944,6 +949,13 @@ export interface AdminApi {
 
   /** Enable or disable new account signups. Existing users can still log in while signups are closed. */
   setSignupsEnabled(enabled: boolean): Promise<void>;
+
+  /**
+   * Pause or resume the deployment. While paused only admins may sign in or work, and scheduled
+   * tasks drop the occurrence they were due for without altering the schedule. Takes up to a minute
+   * to apply everywhere, because it is read through the admin-config KV mirror.
+   */
+  setPaused(paused: boolean): Promise<void>;
 
   /**
    * Set the site name shown next to the top-bar logo. Pass "" to reset to DEFAULT_SITE_NAME.
@@ -1111,6 +1123,12 @@ export type ServerConfig = {
    * overrides the brand CSS variables with this (and derived shades) at runtime.
    */
   accentColor: string;
+
+  /**
+   * Whether the deployment is paused. While paused only admins may sign in; the client shows a
+   * notice rather than a broken app.
+   */
+  paused: boolean;
 };
 
 /**
