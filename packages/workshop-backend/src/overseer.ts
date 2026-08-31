@@ -4097,6 +4097,19 @@ class OverseerImpl implements AgentHooks {
       // wants it.
       await this.reconcilePendingGadgets(chatId);
 
+      // A paused deployment runs no turns at all -- including callback-initiated continuations,
+      // which the usage limit exempts. Inside the try so the `finally` still clears the active-agent
+      // state and emits a stream "clear"; otherwise the UI spins forever on a block.
+      if ((await readAdminConfig(this.env)).paused) {
+        this.postAgentErrorMessage(chatId, aiModel.profile,
+            "This deployment is paused. Ask an administrator to resume it.", "paused");
+        turnLogger.debug("agent run finished", {
+          event: "agent.run.finished", outcome: "paused",
+          durationMs: Date.now() - startedAt,
+        });
+        return;
+      }
+
       // Enforce the optional free-tier usage limit before starting a user-initiated turn. Callback-
       // initiated continuations are exempt so outstanding callbacks are never stranded mid-flow.
       // When the Cloudflare limits flow is disabled, checkUsageAndBalance() always allows.
