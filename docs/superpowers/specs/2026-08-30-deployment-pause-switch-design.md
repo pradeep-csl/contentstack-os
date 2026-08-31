@@ -10,8 +10,10 @@ A deployment admin can **pause** the instance from `/admin` and **resume** it la
 
 - **no agent turn runs, for anyone** — admins included — so no LLM spend is incurred;
 - **no new sign-in succeeds for a non-admin**, by password, gatekeeper OAuth or Access;
-- **scheduled tasks drop the occurrence they were due for** — the schedule itself is untouched, nothing
-  accumulates, and after resume each schedule fires at its next occurrence as if nothing happened;
+- **a schedule that comes due while paused is not lost** — the run is released rather than settled, so
+  `nextFire` stays exactly where it was; the occurrence that was due delivers as soon as the deployment
+  resumes rather than being skipped to the schedule's next regular slot, and nothing accumulates beyond
+  that one deferred delivery;
 - **admins can still sign in and inspect** the instance — settings, workspaces, gadget contents —
   and are the only people who can resume it.
 
@@ -156,9 +158,14 @@ everyone — including the admin who needs to un-pause.
 **Decision:** the admin check is extracted to a shared helper and pause fails **closed** for
 non-admins (deny on error). The escape hatch is documented rather than coded: an admin can clear the
 flag by writing the reserved KV key (`.adminConfig`) directly with `wrangler`, which does not depend
-on the app being reachable. Verified sound — every enforcement path reads that mirror, so a direct
-write genuinely resumes the deployment even while the UI is unreachable. That is strictly better
-than a code path that fails open under an error nobody noticed.
+on the app being reachable. This is a stopgap, not a verified-sound fix: the `AdminSettings` DO owns
+the authoritative config and overwrites the KV mirror wholesale on its next write, silently undoing
+the edit, so it buys enforcement-side relief only until the next write, never a substitute for fixing
+the root cause. And when the root cause *is* a malformed `ADMINS`, the KV edit alone does not finish
+the job — it gets the admin signed in, but `#isAdmin()` still throws inside `getAdminApi()`, so they
+cannot press Resume from `/admin` either; they must still fix `ADMINS` and redeploy. That is still
+strictly better than a code path that fails open under an error nobody noticed, but it is a bridge to
+a redeploy, not a replacement for one.
 
 ### Finding 4b — case-sensitive identity is a latent lockout that pause arms
 
@@ -251,7 +258,7 @@ schedule be untouched and fire as expected after resume.
 | Admin locked out by malformed `ADMINS` | Finding 4 — documented `wrangler` escape hatch |
 | Admin locked out by a mixed-case verified email | Finding 4b — Task 0 normalises the identity before pause exists |
 | One person ends up with two accounts | Finding 4b — same normalisation; must land before any account is created |
-| Paused deployment silently stays paused | `/admin` shows state prominently; `getServerConfig().paused` drives a banner for admins |
+| Paused deployment silently stays paused | `/admin` shows state prominently, and any turn attempt posts a paused chat message explaining why; `getServerConfig().paused` is what the admin panel itself confirms against (Finding 0) — a signed-in admin sees no banner elsewhere in the app |
 | Existing hook rejections change behaviour | Only the exact paused message takes the new path; everything else is untouched |
 | Admin panel claims paused while enforcement still serves | Finding 0 — the UI polls `getServerConfig()` (the mirror) before claiming success |
 | Inbound email dropped rather than deferred while paused | Finding 5 — documented, not installed here; ledger row F8.5 |

@@ -464,7 +464,10 @@ What pausing does and does not do:
   turns are refused the same as anyone else's; that refusal is the actual spend control.
 - **Scheduled tasks are skipped, not lost, and do not accumulate.** A schedule due during the pause
   has its occurrence released rather than consumed, so the schedule looks untouched. Exactly one
-  occurrence fires after resume — never one per slot missed while paused.
+  occurrence fires after resume — never one per slot missed while paused. On resume, every schedule
+  that came due during the pause delivers its missed occurrence right away, all within about five
+  minutes of resuming — an admin who paused for runaway spend should expect a burst of activity at
+  resume, not a quiet ramp-up.
 - **Storage keeps billing.** R2 objects, KV entries, and Durable Object storage-at-rest are flat and
   small and are not affected by pause; it stops compute and inference, which is what spikes.
 - **`getBlueprint` and `downloadBlueprint` stay unauthenticated and open**, paused or not — they carry
