@@ -54,6 +54,13 @@ export type AdminConfig = {
    * the deployment offers.
    */
   formats: FormatCuration[];
+
+  /**
+   * Whether the deployment is paused. While paused only admins may sign in or work, and scheduled
+   * tasks drop the occurrence they were due for without altering the schedule. A cost circuit
+   * breaker, not an authentication setting: it only ever narrows access.
+   */
+  paused: boolean;
 };
 
 /**
@@ -91,6 +98,7 @@ export const DEFAULT_ADMIN_CONFIG: AdminConfig = {
   disabledGatekeepers: [],
   ambientGatekeeperModes: {},
   formats: [],
+  paused: false,
 };
 
 /**
@@ -313,6 +321,7 @@ export function parseAdminConfig(raw: string | null): AdminConfig {
       disabledGatekeepers: strings(p.disabledGatekeepers).map(v => v.toLowerCase()),
       ambientGatekeeperModes,
       formats: parseFormats(p.formats),
+      paused: p.paused === true,
     };
   } catch {
     return { ...DEFAULT_ADMIN_CONFIG };

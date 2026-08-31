@@ -117,3 +117,26 @@ describe("admin config site logo", () => {
     expect(parseAdminConfig(serializeAdminConfig(config))).toEqual(config);
   });
 });
+
+describe("paused", () => {
+  it("defaults to false", () => {
+    expect(DEFAULT_ADMIN_CONFIG.paused).toBe(false);
+  });
+
+  // Every config stored before this field existed lacks the key. Defaulting it to anything but
+  // false would pause a running deployment on deploy.
+  it("defaults to false when the stored config predates the field", () => {
+    expect(parseAdminConfig(JSON.stringify({ signupsEnabled: true })).paused).toBe(false);
+  });
+
+  it("round-trips true", () => {
+    expect(parseAdminConfig(JSON.stringify({ paused: true })).paused).toBe(true);
+  });
+
+  // A non-boolean must not be coerced: `parseAdminConfig` reads untrusted stored JSON, and
+  // `"false"` is truthy.
+  it("ignores a non-boolean", () => {
+    expect(parseAdminConfig(JSON.stringify({ paused: "false" })).paused).toBe(false);
+    expect(parseAdminConfig(JSON.stringify({ paused: 1 })).paused).toBe(false);
+  });
+});
