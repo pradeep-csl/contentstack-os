@@ -7,6 +7,7 @@ import { getServerConfig } from "./deployment-config.js";
 import {
   emailDomainRejectionMessage, getAuthGatekeeperAllowlist, isEmailAllowed, isPasswordAuthEnabled,
 } from "./auth/config.js";
+import { isAdminUser, normalizeSignInEmail } from "./auth/admin.js";
 import { getAuthVendorBinding } from "./auth/auth-vendors.js";
 import { getUsageInfo } from "./ai-gateway-billing/limits/usage-checker.js";
 import { listConnectedAccounts, selectAccount } from "./ai-gateway-billing/cloudflare/connection-service.js";
@@ -101,21 +102,8 @@ class AuthenticatedApiImpl extends RpcTarget implements AuthenticatedApi {
 
   #isAdmin(): boolean {
     let name = this.#userId.name;
-    let admins = this.env.ADMINS;
-
-    if (!name || !admins) return false;
-
-    if (typeof admins === "string") {
-      // Admins should be a JSON binding of array type, but `.env` doesn't actually let you
-      // specify JSON bindings, so we also support a string that parses as JSON array.
-      admins = JSON.parse(admins);
-    }
-
-    if (!Array.isArray(admins)) {
-      throw new TypeError("ADMINS must be configured as an array of usernames.");
-    }
-
-    return admins.includes(name);
+    if (!name) return false;
+    return isAdminUser(this.env, name);
   }
 
   whoami(): Promise<AiChatAuthorInfo> {
@@ -757,7 +745,7 @@ class PublicApiImpl extends RpcTarget implements PublicApi {
       throw createAuthError(AUTH_ERROR_CODES.notAuthenticatedWithAccess);
     }
 
-    let email = this.accessPayload.email as string;
+    let email = normalizeSignInEmail(this.accessPayload.email as string);
     // The other place an email becomes an account. Gate it too, so the allowlist has no second door.
     if (!isEmailAllowed(email, this.env)) {
       throw new Error(emailDomainRejectionMessage(this.env));

@@ -24,6 +24,7 @@ import { GatekeeperConnectCallback, GatekeeperUser } from "@gadgets/workshop-sha
 import { createWorkshopLogger } from "../observability";
 import { CLOUDFLARE_VENDOR_ID } from "../user.js";
 import { readAdminConfig } from "../admin-config.js";
+import { normalizeSignInEmail } from "./admin.js";
 import { emailDomainRejectionMessage, isEmailAllowed } from "./config.js";
 
 const logger = createWorkshopLogger("workshop.auth");
@@ -100,7 +101,7 @@ export class LoginConnectCallbackImpl
     // returns — no explicit disposal needed. We read the verified email to resolve/create the user.
     // The email's local-part seeds the initial display name, like the Cloudflare Access flow.
     try {
-      const email = await account.getAuthenticatedEmail();
+      let email = await account.getAuthenticatedEmail();
       if (!email) {
         loginLogger.info("gatekeeper login finished", {
           event: "gatekeeper.login.finished", outcome: "no_email",
@@ -108,6 +109,9 @@ export class LoginConnectCallbackImpl
         await pending.fail("This account has no verified email, so it can't be used to sign in.");
         return;
       }
+      // Canonicalise before it's used as the user DO name (idFromName below) or handed back in the
+      // session token, so one person is one account regardless of how the provider capitalised it.
+      email = normalizeSignInEmail(email);
       // Refuse an address outside the deployment's allowlist here, ahead of resolving the user DO,
       // so a rejected sign-in leaves no account behind. The message names the permitted domains.
       if (!isEmailAllowed(email, this.env)) {
