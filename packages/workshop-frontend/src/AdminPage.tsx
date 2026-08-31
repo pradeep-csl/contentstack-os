@@ -1,14 +1,23 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react'
 import { RpcStub } from 'capnweb'
 import { Switch, Textarea, Input, Button, Tabs, useKumoToastManager } from '@cloudflare/kumo'
-import { ShieldWarning, UserPlus } from '@phosphor-icons/react'
+import { ShieldWarning, UserPlus, PauseCircle } from '@phosphor-icons/react'
 import { useAuthenticatedApi } from './AuthContext'
+import { useRpcStub } from './RpcContext'
 import { AdminApi, AdminFormat, AdminResourceVendor, AmbientGatekeeperMode, MAX_INSTANCE_INSTRUCTIONS_LENGTH, MAX_ANNOUNCEMENT_LENGTH, MAX_SITE_NAME_LENGTH, DEFAULT_SITE_NAME, BannerColor, BANNER_COLORS, DEFAULT_BANNER_COLOR } from '@gadgets/workshop-shared/api'
 import { applyAccentColor, DEFAULT_ACCENT_COLOR } from './theme'
 import { cacheBustSiteLogoUrl, prepareSiteLogo } from './siteLogoUtils'
 import SiteLogo from './components/SiteLogo'
 import { useDocumentTitle } from './useDocumentTitle'
 import AdminFormatsPanel from './components/format/AdminFormatsPanel'
+import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
+
+// setPaused() only writes the AdminSettings DO; every enforcement path (sign-in, agent turns,
+// scheduled tasks) reads a KV mirror of it that can lag up to about a minute. Polling
+// PublicApi.getServerConfig() -- built from that same mirror -- is how the admin UI confirms the
+// change actually took effect, rather than trusting the DO's own (immediately-updated) copy.
+const PAUSE_POLL_INTERVAL_MS = 5_000
+const PAUSE_POLL_TIMEOUT_MS = 90_000
 
 // Preset accent colors offered in the Theme section ('' = default brand).
 const ACCENT_PRESETS: { label: string; value: string }[] = [
@@ -31,8 +40,14 @@ const BANNER_SWATCH: Record<BannerColor, string> = {
 
 export default function AdminPage() {
   const { authenticatedApi, isAdmin } = useAuthenticatedApi()
+  const rpcStub = useRpcStub()
   const toasts = useKumoToastManager()
   useDocumentTitle('Admin')
+
+  // Guards state updates from the pause poll (which can run for up to 90s) against firing after
+  // the admin has navigated away.
+  const unmountedRef = useRef(false)
+  useEffect(() => () => { unmountedRef.current = true }, [])
 
   // The admin capability (minted once via getAdminApi; null until loaded / for non-admins). Wrapped
   // in an object so useState doesn't treat the (callable) RPC stub as a state updater function.
@@ -75,6 +90,14 @@ export default function AdminPage() {
   const [signupsEnabled, setSignupsEnabled] = useState(true)
   const [savingSignups, setSavingSignups] = useState(false)
 
+  // Whether the deployment is paused. `pauseApplying` covers both the setPaused() call and the
+  // subsequent poll for the KV mirror to agree; `paused` itself only changes once that poll
+  // confirms it, never off the DO's immediately-updated value alone.
+  const [paused, setPausedState] = useState(false)
+  const [pauseApplying, setPauseApplying] = useState(false)
+  const [pauseTimedOut, setPauseTimedOut] = useState(false)
+  const [confirmPauseOpen, setConfirmPauseOpen] = useState(false)
+
   // Gatekeeper resource config, and the set of resource keys ("vendorId\u0000urlPattern") busy toggling.
   const [resourceVendors, setResourceVendors] = useState<AdminResourceVendor[]>([])
   const [resourceBusy, setResourceBusy] = useState<Set<string>>(new Set())
@@ -89,6 +112,7 @@ export default function AdminPage() {
   // Populate all editor state from a freshly-fetched settings view.
   const applySettings = (view: Awaited<ReturnType<RpcStub<AdminApi>['getSettings']>>) => {
     setSignupsEnabled(view.signupsEnabled)
+    setPausedState(view.paused)
     setSavedSiteName(view.siteName)
     setSiteNameDraft(view.siteName)
     setSiteLogoUrl(view.siteLogo?.url ?? null)
@@ -293,6 +317,52 @@ export default function AdminPage() {
     }
   }
 
+  // Polls PublicApi.getServerConfig() -- built from the same KV mirror every enforcement path
+  // reads -- until it reports `expected`, or gives up after PAUSE_POLL_TIMEOUT_MS. Never resolves
+  // true off AdminSettings' own (immediately-updated) copy; that's the whole point of Task 10's
+  // "applying" state.
+  const waitForPauseMirror = async (expected: boolean): Promise<boolean> => {
+    const deadline = Date.now() + PAUSE_POLL_TIMEOUT_MS
+    for (;;) {
+      const config = await rpcStub.getServerConfig()
+      if (config.paused === expected) return true
+      if (Date.now() >= deadline) return false
+      await new Promise((resolve) => setTimeout(resolve, PAUSE_POLL_INTERVAL_MS))
+    }
+  }
+
+  const applyPaused = async (next: boolean) => {
+    if (!admin) return
+    setPauseApplying(true)
+    setPauseTimedOut(false)
+    try {
+      await admin.api.setPaused(next)
+      const converged = await waitForPauseMirror(next)
+      if (unmountedRef.current) return
+      if (converged) {
+        setPausedState(next)
+      } else {
+        setPauseTimedOut(true)
+      }
+    } catch (err) {
+      if (!unmountedRef.current) {
+        const message = err instanceof Error ? err.message : 'Update failed'
+        toasts.add({ title: message, variant: 'error' })
+      }
+    } finally {
+      if (!unmountedRef.current) setPauseApplying(false)
+    }
+  }
+
+  const handlePauseConfirm = () => {
+    setConfirmPauseOpen(false)
+    applyPaused(true)
+  }
+
+  const handleResume = () => {
+    applyPaused(false)
+  }
+
   const handleSaveSiteName = async () => {
     if (!admin) return
     setSavingSiteName(true)
@@ -436,6 +506,64 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Deployment pause -- shown first so a forgotten pause is impossible to miss. */}
+      {activeTab === 'general' && (
+        <div
+          className={`rounded-xl border p-6 ${
+            paused ? 'border-kumo-danger bg-kumo-danger/5' : 'bg-kumo-elevated border-kumo-line'
+          }`}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className={`w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center ${
+                paused ? 'bg-kumo-danger/15' : 'bg-kumo-tint'
+              }`}
+            >
+              <PauseCircle size={18} className={paused ? 'text-kumo-danger' : 'text-kumo-subtle'} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-ui-xl font-semibold text-kumo-strong">
+                {paused ? 'This deployment is paused' : 'Deployment'}
+              </h2>
+              <p className="text-ui-md text-kumo-subtle mt-0.5">
+                No agent turns run, for anyone. Only admins can sign in. Scheduled tasks are
+                skipped, not lost.
+              </p>
+              {pauseApplying && (
+                <p className="text-ui-xs text-kumo-subtle mt-2">
+                  Applying&hellip;
+                </p>
+              )}
+              {pauseTimedOut && (
+                <p className="text-ui-xs text-kumo-danger mt-2">
+                  Still applying &mdash; enforcement reads a cached config and can lag up to a
+                  minute. Reload to check.
+                </p>
+              )}
+            </div>
+            <Button
+              variant={paused ? 'secondary' : 'primary'}
+              size="sm"
+              loading={pauseApplying}
+              disabled={pauseApplying}
+              onClick={() => (paused ? handleResume() : setConfirmPauseOpen(true))}
+            >
+              {paused ? 'Resume deployment' : 'Pause deployment'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <DeleteConfirmationDialog
+        open={confirmPauseOpen}
+        title="Pause this deployment?"
+        description="No agent turns will run, for anyone, and only admins will be able to sign in until you resume. Scheduled tasks are skipped, not lost."
+        confirmLabel="Pause deployment"
+        confirmingLabel="Pausing…"
+        onOpenChange={setConfirmPauseOpen}
+        onConfirm={handlePauseConfirm}
+      />
 
       {/* Site name */}
       {activeTab === 'general' && (

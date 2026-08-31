@@ -105,6 +105,14 @@ export default function LoginPage({ rpcStub, onLoginSuccess }: LoginPageProps) {
           <p className="text-ui-md text-kumo-subtle mt-1">Sign in to your account</p>
         </div>
 
+        {serverConfig.paused && (
+          <Banner
+            variant="alert"
+            title="This deployment is paused. Only administrators can sign in right now."
+            className="mb-6"
+          />
+        )}
+
         {passwordAuthEnabled && (
           <>
             {/* Username / password form */}
