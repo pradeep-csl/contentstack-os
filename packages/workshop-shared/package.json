@@ -35,13 +35,15 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^5.20260808.1",
     "capnweb": "catalog:"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

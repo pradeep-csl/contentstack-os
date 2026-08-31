@@ -1281,3 +1281,30 @@ export interface HookInitiator<Hook extends RpcTarget> extends WorkerEntrypoint 
    */
   startHook(): Promise<{callback: RpcStub<Hook>, approvalQueue: RpcStub<ApprovalQueue>}>;
 }
+
+/**
+ * The exact message `startHook()` throws while the deployment is paused.
+ *
+ * A gatekeeper must be able to tell "paused, try again later" from "this hook is gone", because the
+ * two demand opposite handling: the first releases the occurrence unchanged, the second settles the
+ * schedule. Custom error properties do not reliably survive a Worker-to-Worker RPC boundary, so the
+ * message is the carrier and this constant is the single definition both sides compile against.
+ */
+export const HOOK_PAUSED_MESSAGE = "Deployment is paused; hook delivery is suspended.";
+
+/**
+ * Whether `err` is the paused-hook refusal, tolerating however RPC delivered it — an `Error`, a
+ * plain object with a `message`, a bare string, and any remote prefix wrapped around it.
+ *
+ * Deliberately narrow: anything it does not recognise keeps the caller's existing behaviour, so a
+ * signal that stops propagating degrades to what the code did before rather than to something worse.
+ */
+export function isHookPausedError(err: unknown): boolean {
+  const message =
+    typeof err === "string" ? err
+    : err instanceof Error ? err.message
+    : typeof (err as { message?: unknown })?.message === "string"
+      ? (err as { message: string }).message
+      : "";
+  return message.includes(HOOK_PAUSED_MESSAGE);
+}
