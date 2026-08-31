@@ -207,7 +207,7 @@ const INTENTS: Intent[] = [
     holds: () => matches('packages/workshop-backend/src/server.ts', /isBlockedByPause/)
               && matches('packages/workshop-backend/src/auth/login-flow.ts', /isBlockedByPause/) },
   { id: 'F9.3', intent: 'a paused deployment runs no agent turns and delivers no hooks',
-    holds: () => matches('packages/workshop-backend/src/overseer.ts', /#runAgentTurnWithContext/)
+    holds: () => matches('packages/workshop-backend/src/overseer.ts', /readAdminConfig\(this\.env\)\)\.paused/)
               && matches('packages/workshop-backend/src/overseer.ts', /HOOK_PAUSED_MESSAGE/) },
   // Both halves of the Finding-1 fix: releaseRun undoes the admission without settling the
   // schedule, and schedule-driver.ts must recognise the shared paused signal to call it.
@@ -215,7 +215,7 @@ const INTENTS: Intent[] = [
     holds: () => matches('packages/gatekeeper-scheduler/src/driver-state.ts', /export function releaseRun/)
               && matches('packages/gatekeeper-scheduler/src/schedule-driver.ts', /isHookPausedError/) },
   { id: 'F9.5', intent: 'the pause state is confirmed from the mirror enforcement reads, never the DO\'s own copy',
-    holds: () => matches('packages/workshop-frontend/src/AdminPage.tsx', /getServerConfig/) },
+    holds: () => matches('packages/workshop-frontend/src/AdminPage.tsx', /config\.paused === expected/) },
 ]
 
 test('every fork intent has a unique, stable id', () => {

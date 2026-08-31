@@ -4695,6 +4695,9 @@ class OverseerImpl implements AgentHooks {
   async generateBindingName(
       subject: string, takenNames: Set<string>,
       quick: {config: AiModelConfig, initiator: AiChatAuthorInfo}): Promise<string | undefined> {
+    // A paused deployment makes no LLM calls at all, not just agent turns. Both callers already
+    // fall back to a deterministic name on `undefined`.
+    if ((await readAdminConfig(this.env)).paused) return undefined;
     try {
       let model = getModel(this.env, quick.config, quick.initiator);
       let result = await completeText(model, {
@@ -5368,6 +5371,9 @@ class OverseerImpl implements AgentHooks {
   async generateThreadTitle(chatId: number, initialMessage: string,
                             modelConfig: AiModelConfig,
                             initiator: AiChatAuthorInfo): Promise<void> {
+    // A paused deployment makes no LLM calls at all, not just agent turns. The title simply stays
+    // unset, same as any other failure to generate one.
+    if ((await readAdminConfig(this.env)).paused) return;
     try {
       let model = getModel(this.env, modelConfig, initiator, {
         metadata: { source: "thread-title", gadgetId: this.ctx.id.toString(), chatId },

@@ -80,6 +80,6 @@ describe("PublicApi.authenticate while the deployment is paused", () => {
     (env as MutableEnv).ADMINS = "not-json";
     await setPaused(true);
 
-    await expect(publicApi.authenticate(account.token)).rejects.toThrow();
+    await expect(publicApi.authenticate(account.token)).rejects.toThrow(/paused/i);
   });
 });
