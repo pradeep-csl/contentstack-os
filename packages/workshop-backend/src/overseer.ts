@@ -5430,6 +5430,12 @@ class OverseerImpl implements AgentHooks {
                             initiator: AiChatAuthorInfo) {
     if (this.storage.titleChosenByUser.get()) return;
 
+    // A paused deployment makes no LLM calls at all, not just agent turns. mergeChanges (the only
+    // caller) has no pause gate of its own -- accepting already-proposed code is allowed while
+    // paused, it's just this quick-model call that isn't. The gadget simply keeps its current
+    // title, same as any other failure to generate one.
+    if ((await readAdminConfig(this.env)).paused) return;
+
     try {
       let parts: string[] = [];
 

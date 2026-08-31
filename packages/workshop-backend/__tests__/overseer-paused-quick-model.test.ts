@@ -11,10 +11,12 @@ declare module "cloudflare:workers" {
   }
 }
 
-// generateThreadTitle and generateBindingName are one-shot LLM calls that sit outside the
-// agent-turn gate (#runAgentTurnWithContext) -- they must independently refuse to spend while
-// paused. Stubbing completeText (rather than reaching a real provider) is what lets "once
-// resumed" assert a call happened without any network I/O.
+// generateThreadTitle, generateBindingName, and generateGadgetTitle are one-shot LLM calls that
+// sit outside the agent-turn gate (#runAgentTurnWithContext) -- they must independently refuse to
+// spend while paused. generateGadgetTitle in particular is reachable from mergeChanges, which has
+// no pause gate of its own (accepting already-proposed code is allowed while paused; only the
+// quick-model call to name it isn't). Stubbing completeText (rather than reaching a real provider)
+// is what lets "once resumed" assert a call happened without any network I/O.
 const completeTextMock = vi.hoisted(() => vi.fn(async () => "a generated result"));
 vi.mock("../src/ai-invoke.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/ai-invoke.js")>();
@@ -42,6 +44,8 @@ type ImplHandle = {
   generateBindingName(
       subject: string, takenNames: Set<string>,
       quick: { config: AiModelConfig; initiator: AiChatAuthorInfo }): Promise<string | undefined>;
+  generateGadgetTitle(
+      chatId: number, modelConfig: AiModelConfig, initiator: AiChatAuthorInfo): Promise<void>;
 };
 
 function implOf(instance: OverseerDurableObject): ImplHandle {
@@ -112,6 +116,32 @@ describe("quick-model one-shots while the deployment is paused", () => {
       await impl.generateBindingName("A quarterly plan", new Set(), {
         config: MODEL_CONFIG, initiator: AUTHOR,
       });
+
+      expect(completeTextMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("generateGadgetTitle makes no model call while paused", async () => {
+    readAdminConfigMock.mockResolvedValue({ ...DEFAULT_ADMIN_CONFIG, paused: true });
+    const chatId = 0;
+    const stub = env.TEST_OVERSEER.getByName(`paused-gadget-title-${crypto.randomUUID()}`);
+    await runInDurableObject(stub, async (instance: OverseerDurableObject) => {
+      const impl = implOf(instance);
+
+      await impl.generateGadgetTitle(chatId, MODEL_CONFIG, AUTHOR);
+
+      expect(completeTextMock).not.toHaveBeenCalled();
+    });
+  });
+
+  it("generateGadgetTitle calls the model once resumed", async () => {
+    readAdminConfigMock.mockResolvedValue({ ...DEFAULT_ADMIN_CONFIG, paused: false });
+    const chatId = 0;
+    const stub = env.TEST_OVERSEER.getByName(`resumed-gadget-title-${crypto.randomUUID()}`);
+    await runInDurableObject(stub, async (instance: OverseerDurableObject) => {
+      const impl = implOf(instance);
+
+      await impl.generateGadgetTitle(chatId, MODEL_CONFIG, AUTHOR);
 
       expect(completeTextMock).toHaveBeenCalledTimes(1);
     });

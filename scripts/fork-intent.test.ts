@@ -207,7 +207,7 @@ const INTENTS: Intent[] = [
     holds: () => matches('packages/workshop-backend/src/server.ts', /isBlockedByPause/)
               && matches('packages/workshop-backend/src/auth/login-flow.ts', /isBlockedByPause/) },
   { id: 'F9.3', intent: 'a paused deployment runs no agent turns and delivers no hooks',
-    holds: () => matches('packages/workshop-backend/src/overseer.ts', /readAdminConfig\(this\.env\)\)\.paused/)
+    holds: () => matches('packages/workshop-backend/src/overseer.ts', /This deployment is paused\. Ask an administrator to resume it\./)
               && matches('packages/workshop-backend/src/overseer.ts', /HOOK_PAUSED_MESSAGE/) },
   // Both halves of the Finding-1 fix: releaseRun undoes the admission without settling the
   // schedule, and schedule-driver.ts must recognise the shared paused signal to call it.
