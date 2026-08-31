@@ -321,12 +321,18 @@ export default function AdminPage() {
   // reads -- until it reports `expected`, or gives up after PAUSE_POLL_TIMEOUT_MS. Never resolves
   // true off AdminSettings' own (immediately-updated) copy; that's the whole point of Task 10's
   // "applying" state.
+  //
+  // Checks unmountedRef before each RPC and before each sleep so the loop itself stops promptly
+  // if the admin navigates away mid-poll, rather than continuing to fire getServerConfig() every
+  // 5s until the full 90s window elapses (the setState guards in applyPaused only silence the
+  // symptom of that -- they don't stop the polling).
   const waitForPauseMirror = async (expected: boolean): Promise<boolean> => {
     const deadline = Date.now() + PAUSE_POLL_TIMEOUT_MS
     for (;;) {
+      if (unmountedRef.current) return false
       const config = await rpcStub.getServerConfig()
       if (config.paused === expected) return true
-      if (Date.now() >= deadline) return false
+      if (unmountedRef.current || Date.now() >= deadline) return false
       await new Promise((resolve) => setTimeout(resolve, PAUSE_POLL_INTERVAL_MS))
     }
   }
@@ -560,7 +566,6 @@ export default function AdminPage() {
         title="Pause this deployment?"
         description="No agent turns will run, for anyone, and only admins will be able to sign in until you resume. Scheduled tasks are skipped, not lost."
         confirmLabel="Pause deployment"
-        confirmingLabel="Pausing…"
         onOpenChange={setConfirmPauseOpen}
         onConfirm={handlePauseConfirm}
       />

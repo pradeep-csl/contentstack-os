@@ -202,4 +202,36 @@ describe('AdminPage deployment pause control', () => {
     expect(pageText(container!)).not.toMatch(/this deployment is paused/i)
     expect(pageButton('Pause deployment')).toBeTruthy()
   })
+
+  // Review finding: unmountedRef previously only suppressed the poll's setState calls -- the loop
+  // itself kept calling getServerConfig() every 5s until its full 90s budget ran out, even after
+  // the admin navigated away. The fix checks unmountedRef inside the loop, before each RPC and
+  // before each sleep, so it stops making calls promptly instead of running to completion.
+  it('stops polling once the admin navigates away mid-poll', async () => {
+    const getServerConfig = vi.fn<() => Promise<ServerConfig>>(async () => ({ paused: false }) as ServerConfig)
+    const setPaused = vi.fn<(paused: boolean) => Promise<void>>(async () => {})
+
+    vi.useFakeTimers()
+    await mount(fakeAdminApi({ paused: false, setPaused }), getServerConfig)
+
+    await act(async () => { pageButton('Pause deployment').click() })
+    await act(async () => { dialogButton('Pause deployment').click() })
+
+    // Let the first poll run (it resolves via microtasks alone, before any timer is due) and land
+    // on its 5s sleep, then navigate away.
+    await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+    const callsBeforeUnmount = getServerConfig.mock.calls.length
+    expect(callsBeforeUnmount).toBeGreaterThan(0)
+
+    act(() => { root!.unmount() })
+    container?.remove()
+    root = undefined
+    container = undefined
+
+    // Advance well past the remaining 90s budget. A loop that only suppressed setState (rather
+    // than actually stopping) would fire several more getServerConfig() calls here.
+    await act(async () => { await vi.advanceTimersByTimeAsync(100_000) })
+
+    expect(getServerConfig).toHaveBeenCalledTimes(callsBeforeUnmount)
+  })
 })
