@@ -22,7 +22,7 @@ export type WorkshopObservabilityFields = {
   operation: string;
   outcome:
       "ok" | "error" | "usage_limit" | "callbacks_stalled" | "no_email" | "signups_disabled" |
-      "domain_not_allowed";
+      "domain_not_allowed" | "paused";
   path: string;
   resourceTitle: string;
   sequence: number;

@@ -7,7 +7,7 @@ import { getServerConfig } from "./deployment-config.js";
 import {
   emailDomainRejectionMessage, getAuthGatekeeperAllowlist, isEmailAllowed, isPasswordAuthEnabled,
 } from "./auth/config.js";
-import { isAdminUser, normalizeSignInEmail } from "./auth/admin.js";
+import { isAdminUser, isBlockedByPause, normalizeSignInEmail } from "./auth/admin.js";
 import { getAuthVendorBinding } from "./auth/auth-vendors.js";
 import { getUsageInfo } from "./ai-gateway-billing/limits/usage-checker.js";
 import { listConnectedAccounts, selectAccount } from "./ai-gateway-billing/cloudflare/connection-service.js";
@@ -732,6 +732,10 @@ class PublicApiImpl extends RpcTarget implements PublicApi {
 
     let userId = this.users.idFromName(split[0]);
     await this.users.get(userId).authenticate(split[1]);
+    // A pause closes sign-in to everyone but admins, so the deployment can always be resumed.
+    if (isBlockedByPause(this.env, (await readAdminConfig(this.env)).paused, split[0])) {
+      throw createAuthError(AUTH_ERROR_CODES.deploymentPaused);
+    }
     recordAnalytics(this.ctx, this.env, {
       event_name: "user_authenticated",
       user_id: userId.toString(),
@@ -750,8 +754,13 @@ class PublicApiImpl extends RpcTarget implements PublicApi {
     if (!isEmailAllowed(email, this.env)) {
       throw new Error(emailDomainRejectionMessage(this.env));
     }
+    let config = await readAdminConfig(this.env);
+    // Same reasoning: the allowlist has no second door, and neither does the pause switch.
+    if (isBlockedByPause(this.env, config.paused, email)) {
+      throw createAuthError(AUTH_ERROR_CODES.deploymentPaused);
+    }
     let userId = this.users.idFromName(email);
-    let signupsEnabled = (await readAdminConfig(this.env)).signupsEnabled;
+    let signupsEnabled = config.signupsEnabled;
     let accountCreated =
         await this.users.get(userId).authenticateFromCfAccess(email, signupsEnabled);
     if (accountCreated) {

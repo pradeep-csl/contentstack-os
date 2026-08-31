@@ -42,3 +42,20 @@ export function isAdminUser(env: Pick<Cloudflare.Env, "ADMINS">, userName: strin
   const name = normalizeSignInEmail(userName);
   return admins.some(admin => normalizeSignInEmail(admin) === name);
 }
+
+/**
+ * Whether a paused deployment should refuse `userName`'s sign-in. Admin sign-in stays open while
+ * paused so the deployment can always be resumed; everyone else is turned away. `isAdminUser`
+ * throws on a malformed `ADMINS` binding, and that must deny rather than propagate here — the
+ * alternative is an unhandled 500 on the session-token/CF-Access paths, or a gatekeeper login the
+ * browser waits on forever.
+ */
+export function isBlockedByPause(
+    env: Pick<Cloudflare.Env, "ADMINS">, paused: boolean, userName: string): boolean {
+  if (!paused) return false;
+  try {
+    return !isAdminUser(env, userName);
+  } catch {
+    return true;
+  }
+}

@@ -21,10 +21,11 @@
 
 import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
 import { GatekeeperConnectCallback, GatekeeperUser } from "@gadgets/workshop-shared/gatekeeper";
+import { AUTH_ERROR_CODES, AUTH_ERROR_MESSAGES } from "@gadgets/workshop-shared/api";
 import { createWorkshopLogger } from "../observability";
 import { CLOUDFLARE_VENDOR_ID } from "../user.js";
 import { readAdminConfig } from "../admin-config.js";
-import { normalizeSignInEmail } from "./admin.js";
+import { isBlockedByPause, normalizeSignInEmail } from "./admin.js";
 import { emailDomainRejectionMessage, isEmailAllowed } from "./config.js";
 
 const logger = createWorkshopLogger("workshop.auth");
@@ -121,11 +122,21 @@ export class LoginConnectCallbackImpl
         await pending.fail(emailDomainRejectionMessage(this.env));
         return;
       }
+      const config = await readAdminConfig(this.env);
+      // Same reasoning as the domain check above: reject before the user DO is resolved, so a
+      // rejected sign-in leaves no account behind.
+      if (isBlockedByPause(this.env, config.paused, email)) {
+        loginLogger.info("gatekeeper login finished", {
+          event: "gatekeeper.login.finished", outcome: "paused",
+        });
+        await pending.fail(AUTH_ERROR_MESSAGES[AUTH_ERROR_CODES.deploymentPaused]);
+        return;
+      }
       const userStub = this.ctx.exports.UserDurableObject.get(
           this.ctx.exports.UserDurableObject.idFromName(email));
       // Closed signups block first-time account creation here too (not just password signup); an
       // existing user signing in is unaffected.
-      const signupsEnabled = (await readAdminConfig(this.env)).signupsEnabled;
+      const signupsEnabled = config.signupsEnabled;
       const secret = await userStub.loginOrCreateViaGatekeeper(email, signupsEnabled);
       if (secret === null) {
         loginLogger.info("gatekeeper login finished", {

@@ -7,6 +7,14 @@ const EXPECTED_OPEN_ERROR_CODES = new Set([
   "WORKSPACE_ACCESS_DENIED",
 ]);
 
+// authenticate() returns a capability (AuthenticatedApi); a rejection there hits the same
+// future-capability doubling as the open-gadget codes above. Kept as a literal (rather than
+// importing AUTH_ERROR_CODES) since this file loads under plain Node ESM, outside the
+// TS-path-resolving pool -- see AUTH_ERROR_CODES.deploymentPaused in workshop-shared/api.ts.
+const EXPECTED_AUTH_ERROR_CODES = new Set([
+  "DEPLOYMENT_PAUSED",
+]);
+
 export default defineConfig({
   esbuild: {
     target: "es2022",
@@ -35,6 +43,7 @@ export default defineConfig({
     onUnhandledError(error) {
       const code = "code" in error ? error.code : undefined;
       if (typeof code === "string" && EXPECTED_OPEN_ERROR_CODES.has(code)) return false;
+      if (typeof code === "string" && EXPECTED_AUTH_ERROR_CODES.has(code)) return false;
       // The reset-recovery tests abort every Durable Object mid-session; capabilities that were
       // held across the abort (e.g. the fire-and-forget AdminSettings install kicked off by the
       // fetch handler) reject on their own schedule, independent of any awaited call.
