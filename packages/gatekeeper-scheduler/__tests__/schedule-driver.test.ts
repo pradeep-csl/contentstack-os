@@ -1249,6 +1249,7 @@ describe("ScheduleDriver", () => {
     async function seedDriver(
       name: string,
       spec: ScheduleActivation["spec"],
+      occurrences?: ScheduleActivation["occurrences"],
     ): Promise<DurableObjectStub<ScheduleDriver>> {
       const driver = testEnv.SCHEDULE_DRIVER.getByName(name);
       await enableSchedule(
@@ -1257,6 +1258,7 @@ describe("ScheduleDriver", () => {
           workspaceId: "workspace-a",
           scheduleId: "schedule-a",
           spec,
+          ...(occurrences ? { occurrences } : {}),
           title: "Paused task",
           description: "Test delivery while the deployment is paused.",
           gadgetId,
@@ -1366,6 +1368,65 @@ describe("ScheduleDriver", () => {
           pausedCount: 1,
         }),
       );
+    });
+
+    // Releasing must give back the occurrence beginDueRun charged, or a five-minute poll would spend
+    // a bounded schedule's whole budget on a long pause and complete it without ever delivering.
+    it("keeps a bounded schedule's occurrence budget across paused polls", async () => {
+      const driver = await seedDriver(
+        "paused-bounded",
+        { kind: "interval", everyMs: 60_000, anchorMs: Date.now() },
+        { count: 2 },
+      );
+      await testEnv.TEST_HOOKS.configure("start-paused");
+      for (let index = 0; index < 3; index++) await runDurableObjectAlarm(driver);
+
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "active",
+        occurrenceCount: 0,
+      });
+
+      await testEnv.TEST_HOOKS.configure("success");
+      await runDurableObjectAlarm(driver);
+      await makeActiveScheduleDue(driver, "workspace-a", "schedule-a");
+      await runDurableObjectAlarm(driver);
+
+      expect((await testEnv.TEST_HOOKS.read()).callbackScheduleIds).toEqual([
+        "schedule-a",
+        "schedule-a",
+      ]);
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "completed",
+        occurrenceCount: 2,
+      });
+    });
+
+    // The over-refund guard: a resumed retry never charged an occurrence, so releasing it must not
+    // hand one back and let a bounded schedule outrun its limit.
+    it("does not refund an occurrence when a released run is a resumed retry", async () => {
+      const driver = await seedDriver(
+        "paused-retry-refund",
+        { kind: "interval", everyMs: 60_000, anchorMs: Date.now() },
+        { count: 2 },
+      );
+      await testEnv.TEST_HOOKS.configure("callback-reject");
+      await runDurableObjectAlarm(driver);
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "retrying",
+        occurrenceCount: 1,
+      });
+      await updateSchedule(driver, "workspace-a", "schedule-a", (stored) => {
+        if (stored.state.status !== "retrying") throw new Error("Expected retrying schedule");
+        return { ...stored, state: { ...stored.state, nextAttempt: 1 } };
+      });
+
+      await testEnv.TEST_HOOKS.configure("start-paused");
+      await runDurableObjectAlarm(driver);
+
+      expect((await driver.getSchedule("workspace-a", "schedule-a"))?.state).toMatchObject({
+        status: "active",
+        occurrenceCount: 1,
+      });
     });
 
     // Regression guard: unrecognised failures must keep settling exactly as before.

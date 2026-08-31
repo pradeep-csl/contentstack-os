@@ -171,6 +171,12 @@ export function rejectRun(
  * is for the case where the attempt never happened at all — the deployment is paused — so the
  * schedule must look untouched and come due again unchanged.
  *
+ * `consumedOccurrence` says whether starting this run charged the occurrence budget, so the release
+ * gives that charge back: only the `active` branch of {@link beginDueRun} counts an occurrence, so a
+ * released retry must not be refunded or a bounded schedule would outrun its own limit. The caller
+ * knows which branch it took; deriving it here from `attempts` or `nextFire` would couple this to
+ * `beginDueRun`'s internals and break silently if they change.
+ *
  * Guarded like `rejectRun`: only the run that is pending admission under `runId` is released, so a
  * stale caller cannot disturb a newer run.
  */
@@ -178,9 +184,15 @@ export function releaseRun(
   schedule: EnabledSchedule,
   runId: string,
   scheduledTime: number,
+  consumedOccurrence: boolean,
 ): EnabledSchedule {
   if (!isPending(schedule, runId, "admission")) return schedule;
-  return { ...copyProgress(schedule), status: "active", nextFire: scheduledTime };
+  const progress = copyProgress(schedule);
+  const occurrenceCount =
+    consumedOccurrence && progress.occurrenceCount !== undefined
+      ? Math.max(0, progress.occurrenceCount - 1)
+      : progress.occurrenceCount;
+  return { ...progress, occurrenceCount, status: "active", nextFire: scheduledTime };
 }
 
 /** Schedules a callback retry or marks an exhausted logical run dead. */

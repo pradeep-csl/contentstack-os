@@ -269,14 +269,14 @@ describe("releaseRun", () => {
   it("returns a once schedule to active with its original nextFire", () => {
     const active = createSchedule(oneShot, 0);
     const pending = beginDueRun(active, 120_000, "run-1", 420_000);
-    const released = releaseRun(pending, "run-1", 120_000);
+    const released = releaseRun(pending, "run-1", 120_000, false);
     expect(released).toEqual({ ...oneShot, status: "active", nextFire: 120_000 });
   });
 
   it("returns a recurring schedule to active without advancing it", () => {
     const active = createSchedule(recurring, 0);
     const pending = beginDueRun(active, 60_000, "run-1", 360_000);
-    const released = releaseRun(pending, "run-1", 60_000);
+    const released = releaseRun(pending, "run-1", 60_000, false);
     expect(released).toEqual({ ...recurring, status: "active", nextFire: 60_000 });
   });
 
@@ -284,13 +284,13 @@ describe("releaseRun", () => {
   it("does not consume an attempt", () => {
     const pending = beginDueRun(createSchedule(recurring, 0), 60_000, "run-1", 360_000);
     expect(pending).toMatchObject({ attempts: 0 });
-    expect(releaseRun(pending, "run-1", 60_000)).not.toHaveProperty("attempts");
+    expect(releaseRun(pending, "run-1", 60_000, false)).not.toHaveProperty("attempts");
   });
 
   // Same guard as rejectRun: a stale runId must not disturb a newer run.
   it("ignores a runId that is not the pending admission", () => {
     const pending = beginDueRun(createSchedule(recurring, 0), 60_000, "run-1", 360_000);
-    expect(releaseRun(pending, "other-run", 60_000)).toBe(pending);
+    expect(releaseRun(pending, "other-run", 60_000, false)).toBe(pending);
   });
 
   it("ignores a schedule that is past admission", () => {
@@ -300,7 +300,46 @@ describe("releaseRun", () => {
       66_000,
       366_000,
     );
-    expect(releaseRun(admitted, "run-1", 60_000)).toBe(admitted);
+    expect(releaseRun(admitted, "run-1", 60_000, false)).toBe(admitted);
+  });
+
+  // A pause must not spend the schedule's occurrence budget: beginDueRun charged one on the way in.
+  it("refunds the occurrence a released admission consumed", () => {
+    const bounded = { ...recurring, occurrences: { count: 3 } as const };
+    const active = createSchedule(bounded, 0);
+    expect(active).toMatchObject({ occurrenceCount: 0 });
+    const pending = beginDueRun(active, 60_000, "run-1", 360_000);
+    expect(pending).toMatchObject({ occurrenceCount: 1 });
+
+    expect(releaseRun(pending, "run-1", 60_000, true)).toEqual({
+      ...bounded,
+      occurrenceCount: 0,
+      status: "active",
+      nextFire: 60_000,
+    });
+  });
+
+  // The other half: beginDueRun's retrying branch charges nothing, so refunding would let a bounded
+  // schedule run more times than configured.
+  it("does not refund a released retry, which never consumed an occurrence", () => {
+    const bounded = { ...recurring, occurrences: { count: 3 } as const };
+    const admitted = admitRun(
+      beginDueRun(createSchedule(bounded, 0), 60_000, "run-1", 360_000),
+      "run-1",
+      66_000,
+      366_000,
+    );
+    const retrying = failRun(admitted, "run-1", "callback_failed", 70_000);
+    expect(retrying).toMatchObject({ status: "retrying", occurrenceCount: 1 });
+    if (retrying.status !== "retrying") throw new Error("Expected retrying state");
+    const resumed = beginDueRun(retrying, retrying.nextAttempt, "unused", 500_000);
+    expect(resumed).toMatchObject({ status: "pending", stage: "admission", occurrenceCount: 1 });
+
+    expect(releaseRun(resumed, "run-1", 60_000, false)).toMatchObject({
+      status: "active",
+      nextFire: 60_000,
+      occurrenceCount: 1,
+    });
   });
 });
 
