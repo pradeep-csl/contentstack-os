@@ -3,8 +3,6 @@ import { useParams, useNavigate, useSearch, Link } from '@tanstack/react-router'
 import { useKumoToastManager } from '@cloudflare/kumo'
 import {
   ShareNetwork,
-  Pencil,
-  Check,
   X,
   Blueprint,
   Trash,
@@ -16,6 +14,11 @@ import { RpcStub, RpcTarget } from 'capnweb'
 import { useAuthenticatedApi } from './AuthContext'
 import UserMenu from './components/UserMenu'
 import SiteLogo from './components/SiteLogo'
+import WorkspaceBreadcrumb from './components/WorkspaceBreadcrumb'
+import ChatListScopeFilter, {
+  type ChatListScope,
+  type ChatListScopeOption,
+} from './components/chat/ChatListScopeFilter'
 
 import {
   GadgetClient,
@@ -47,7 +50,7 @@ import ShareModal from './ShareModal'
 import { GadgetPresence } from './components/GadgetPresence'
 import BlueprintModal from './BlueprintModal'
 import TopBarNotice from './TopBarNotice'
-import { WorkshopButton, WorkshopIconButton, WorkshopInput } from './components/WorkshopControls'
+import { WorkshopButton, WorkshopIconButton } from './components/WorkshopControls'
 import { useActions } from './useActions'
 import DeleteConfirmationDialog from './components/DeleteConfirmationDialog'
 import ReconnectingChip from './components/ReconnectingChip'
@@ -440,11 +443,12 @@ export default function GadgetEditor() {
   // has no (visible) gadgets.
   const [gadget, setGadget] = useState<{ id: WorkpieceId; stub: RpcStub<GadgetClient> } | null>(null)
 
-  // ── title editing ────────────────────────────────────────────────────────────
-  const [isEditingTitle, setIsEditingTitle] = useState(false)
-  const isEditingTitleRef = useRef(false)
-  isEditingTitleRef.current = isEditingTitle
-  const [titleInput, setTitleInput] = useState('')
+  // ── chat list header state ───────────────────────────────────────────────────
+  // The scope filter renders in the top bar but filters ChatInterface's list, so the selection
+  // lives here and the live counts are reported back up.
+  const [chatListScope, setChatListScope] = useState<ChatListScope>('all')
+  const [chatListScopes, setChatListScopes] = useState<ChatListScopeOption[]>([])
+  const [selectedChatTitle, setSelectedChatTitle] = useState<string | null>(null)
 
   const {
     overseer,
@@ -458,9 +462,6 @@ export default function GadgetEditor() {
   } = useWorkspaceOpen({
     id,
     authenticatedApi,
-    onMetadata: nextMetadata => {
-      if (!isEditingTitleRef.current) setTitleInput(nextMetadata.title)
-    },
     onShareKeyConsumed: () => {
       if (id) navigate({ to: '/workspace/$id', params: { id }, search: {}, replace: true })
     },
@@ -1209,22 +1210,17 @@ export default function GadgetEditor() {
     authenticatedApi.whoami().then(setUserInfo).catch(() => {})
   }, [authenticatedApi])
 
-  // ── title save/cancel ─────────────────────────────────────────────────────────
+  // ── title save ────────────────────────────────────────────────────────────────
   const titleSaveInFlight = useRef(false)
-  const handleSaveTitle = async () => {
-    if (!overseer || !titleInput.trim()) return
+  const handleRenameWorkspace = async (title: string) => {
+    if (!overseer) return
     if (titleSaveInFlight.current) return
     titleSaveInFlight.current = true
     try {
-      await overseer.stub.setTitle(titleInput.trim())
-      updateTitle(titleInput.trim())
-      setIsEditingTitle(false)
+      await overseer.stub.setTitle(title)
+      updateTitle(title)
     } catch { toasts.add({ title: 'Failed to update title', variant: 'error' }) }
     finally { titleSaveInFlight.current = false }
-  }
-  const handleCancelEdit = () => {
-    setTitleInput(metadata?.title || '')
-    setIsEditingTitle(false)
   }
 
   // ── back ──────────────────────────────────────────────────────────────────────
@@ -1331,7 +1327,7 @@ export default function GadgetEditor() {
         style={{ height: TOPBAR_H, backgroundColor: 'color-mix(in srgb, var(--color-kumo-base) 80%, transparent)' }}
       >
         <TopBarNotice />
-        {/* Left: logo / title */}
+        {/* Left: logo / workspace / chat */}
         <div className="flex items-center gap-2 min-w-0">
           <Link
             to="/"
@@ -1343,50 +1339,17 @@ export default function GadgetEditor() {
 
           <span className="text-kumo-subtle flex-shrink-0">/</span>
 
-          {isEditingTitle ? (
-            <div className="flex items-center gap-1">
-              <WorkshopInput
-                type="text"
-                value={titleInput}
-                onChange={e => setTitleInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleSaveTitle()
-                  if (e.key === 'Escape') handleCancelEdit()
-                }}
-                autoFocus
-                className="!h-7 w-56 bg-kumo-tint text-ui-md font-medium"
-              />
-              <WorkshopIconButton
-                onClick={handleSaveTitle}
-                disabled={!titleInput.trim()}
-                className="!h-7 !w-7 hover:text-kumo-brand disabled:opacity-30"
-                aria-label="Save workspace title"
-              >
-                <Check size={14} />
-              </WorkshopIconButton>
-              <WorkshopIconButton
-                onClick={handleCancelEdit}
-                className="!h-7 !w-7"
-                aria-label="Cancel title edit"
-              >
-                <X size={14} />
-              </WorkshopIconButton>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="text-ui-md font-medium text-kumo-default truncate">
-                {metadata.title}
-              </span>
-              <WorkshopIconButton
-                onClick={() => setIsEditingTitle(true)}
-                className="!h-7 !w-7 flex-shrink-0"
-                title="Rename workspace"
-                aria-label="Rename workspace"
-              >
-                <Pencil size={16} />
-              </WorkshopIconButton>
-            </div>
-          )}
+          <WorkspaceBreadcrumb
+            workspaceTitle={metadata.title}
+            // `selectedChatTitle` is reported from an effect, so it trails a navigation by a
+            // frame. Falling back rather than passing null keeps the header from flashing its
+            // chat-list form (and its rename pencil) on the way into a chat.
+            chatTitle={
+              effectiveSelectedChatId === null ? null : (selectedChatTitle ?? 'Chat')
+            }
+            onOpenChatList={() => navigateToChat(null)}
+            onRenameWorkspace={handleRenameWorkspace}
+          />
 
           {metadata.owner && (
             <span className="text-ui-xs text-kumo-subtle flex-shrink-0">
@@ -1397,6 +1360,14 @@ export default function GadgetEditor() {
 
         {/* Right: presence, cost, workspace, share, blueprints */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          {effectiveSelectedChatId === null && (
+            <ChatListScopeFilter
+              scope={chatListScope}
+              scopes={chatListScopes}
+              onScopeChange={setChatListScope}
+            />
+          )}
+
           <GadgetPresence
             overseer={overseer.stub}
             authenticatedApi={authenticatedApi}
@@ -1502,6 +1473,10 @@ export default function GadgetEditor() {
                   onConsumeConsoleLogs={consumeConsoleLogs}
                   onDiscardConsoleLogs={discardConsoleLogs}
                   constrainChatWidth
+                  chatListScope={chatListScope}
+                  onChatListScopeChange={setChatListScope}
+                  onChatListScopesChange={setChatListScopes}
+                  onSelectedChatTitleChange={setSelectedChatTitle}
                   onChatCountChange={handleChatCountChange}
                   onAgentActiveChange={handleAgentActiveChange}
                   onAutoApproveChange={() => setAutoApproveReloadTrigger(t => t + 1)}

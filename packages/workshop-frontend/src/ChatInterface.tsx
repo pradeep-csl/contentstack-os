@@ -24,7 +24,6 @@ import {
 
 import {
   CaretDown,
-  CaretLeft,
   CaretRight,
   Check,
   X,
@@ -98,6 +97,10 @@ import {
   slashCommandTokenKey,
   stripSlashCommandToken
 } from "./components/chat/slash-command-input";
+import type {
+  ChatListScope,
+  ChatListScopeOption
+} from "./components/chat/ChatListScopeFilter";
 import {
   ComposerMirror,
   composerTextareaClass,
@@ -132,9 +135,14 @@ import AutoApproveConfirmDialog from "./components/AutoApproveConfirmDialog";
 import { AlwaysApproveButton, ResolveButton } from "./components/ResolveButton";
 import {
   WorkshopButton,
-  WorkshopIconButton,
-  WorkshopInput
+  WorkshopIconButton
 } from "./components/WorkshopControls";
+import {
+  MENU_CONTENT,
+  MENU_ITEM,
+  MENU_ITEM_DANGER,
+  MENU_POSITIONER_STYLE
+} from "./components/menuStyles";
 import { useActionEntries } from "./useActions";
 import { useAlwaysApproveTag } from "./useAlwaysApproveTag";
 import { useResolveAction } from "./useResolveAction";
@@ -237,14 +245,6 @@ type DraftUpdateEntry = {
 type DraftChatState = {
   entries: DraftUpdateEntry[];
   latestAuthor: AiChatAuthorInfo | null;
-};
-
-type ChatListScope = "direct" | "agents" | "all";
-
-const CHAT_LIST_SCOPE_LABELS: Record<ChatListScope, string> = {
-  all: "All",
-  direct: "Started by people",
-  agents: "Started by agents"
 };
 
 const SHOW_THINKING_TRACES_KEY = "showThinkingTraces";
@@ -5081,6 +5081,13 @@ interface ChatInterfaceProps {
     hasProposedChanges: boolean
   ) => void;
   constrainChatWidth?: boolean;
+  // The workspace top bar renders the chat list's scope filter and names the open chat in its
+  // breadcrumb, so the scope is controlled from there and the selected chat's title is reported
+  // back up. The list's own header row went away with the chat sub-header.
+  chatListScope: ChatListScope;
+  onChatListScopeChange: (scope: ChatListScope) => void;
+  onChatListScopesChange?: (scopes: ChatListScopeOption[]) => void;
+  onSelectedChatTitleChange?: (title: string | null) => void;
   onOpenGadget: (gadgetId: WorkpieceId) => void;
 
   // The output format a workpiece was built as, so a created-app card can name and draw it as the
@@ -5276,6 +5283,10 @@ function ChatInterface({
   onHasAnyCodeChange,
   onSelectedChatHasProposedChangesChange,
   constrainChatWidth,
+  chatListScope,
+  onChatListScopeChange,
+  onChatListScopesChange,
+  onSelectedChatTitleChange,
   onOpenGadget,
   outputOfWorkpiece
 }: ChatInterfaceProps) {
@@ -5304,7 +5315,6 @@ function ChatInterface({
   // we've already auto-opened for, so dismissing it doesn't immediately reopen.
   const [usageModalOpen, setUsageModalOpen] = useState(false);
   const usageModalShownForRef = useRef<number | null>(null);
-  const [chatListScope, setChatListScope] = useState<ChatListScope>("all");
   const [chatListVersion, setChatListVersion] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   // Fetching the page before the selected chat's compaction boundary.
@@ -5312,8 +5322,6 @@ function ChatInterface({
   const [updateCounter, setUpdateCounter] = useState(0); // Force re-render when cache updates
   const [proposedChangesVersion, setProposedChangesVersion] = useState(0); // Incremented only for change-affecting messages
   const [draftChangesVersion, setDraftChangesVersion] = useState(0);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [titleInput, setTitleInput] = useState("");
   const [renamingChatId, setRenamingChatId] = useState<number | null>(null);
   const renamingChatIdRef = useRef<number | null>(null);
   const [renamingInput, setRenamingInput] = useState("");
@@ -5575,6 +5583,16 @@ function ChatInterface({
     }
   }, [chatList.length, chatListReady, hasChatZero]);
 
+  // Notify the workspace header of the scopes its filter offers, so its menu can show live
+  // counts. Same `chatListReady` gate as above: the counts are all zero until listChats() lands.
+  const onChatListScopesChangeRef = useRef(onChatListScopesChange);
+  onChatListScopesChangeRef.current = onChatListScopesChange;
+  useEffect(() => {
+    if (chatListReady) {
+      onChatListScopesChangeRef.current?.(chatListScopes);
+    }
+  }, [chatListScopes, chatListReady]);
+
   // Notify parent when any chat has proposed changes (code written but not merged).
   const onHasAnyCodeChangeRef = useRef(onHasAnyCodeChange);
   onHasAnyCodeChangeRef.current = onHasAnyCodeChange;
@@ -5723,6 +5741,16 @@ function ChatInterface({
   // Get metadata for selected chat
   const currentChatMetadata =
     selectedChatId !== null ? cacheRef.current.chats.get(selectedChatId) : null;
+
+  // Name the open chat in the workspace header's breadcrumb. `null` means the chat list is
+  // showing, which is what tells the header to fall back to the workspace's own crumb.
+  const onSelectedChatTitleChangeRef = useRef(onSelectedChatTitleChange);
+  onSelectedChatTitleChangeRef.current = onSelectedChatTitleChange;
+  const selectedChatTitle =
+    selectedChatId === null ? null : (currentChatMetadata?.title ?? "Chat");
+  useEffect(() => {
+    onSelectedChatTitleChangeRef.current?.(selectedChatTitle);
+  }, [selectedChatTitle]);
 
   // Download a committed chat attachment. Image bytes are already inlined on the message; other
   // attachments are fetched on demand over the authenticated RPC connection.
@@ -5912,13 +5940,6 @@ function ChatInterface({
   useEffect(() => {
     setDiscardChangesTarget(null);
   }, [selectedChatId]);
-
-  // Initialize title input when selecting a chat
-  useEffect(() => {
-    if (currentChatMetadata) {
-      setTitleInput(currentChatMetadata.title);
-    }
-  }, [currentChatMetadata?.title]);
 
   // Update selected model when switching chats
   useEffect(() => {
@@ -6376,7 +6397,6 @@ function ChatInterface({
     setExpandedActions(new Set());
     setExpandedErrors(new Set());
     setIsLoadingEarlier(false);
-    setIsEditingTitle(false);
     setSidebarActiveTab("chat");
   }, [selectedChatId]);
 
@@ -6573,42 +6593,6 @@ function ChatInterface({
       console.error("Failed to stop agent:", err);
       toasts.add({ title: "Failed to stop agent", variant: "error" });
     }
-  };
-
-  // Handle saving chat title
-  const handleSaveChatTitle = async () => {
-    if (selectedChatId === null || !titleInput.trim()) {
-      return;
-    }
-
-    try {
-      await overseer.setChatTitle(selectedChatId, titleInput.trim());
-
-      // Update the cache with the new title
-      const chat = cacheRef.current.chats.get(selectedChatId);
-      if (chat) {
-        cacheRef.current.chats.set(selectedChatId, {
-          ...chat,
-          title: titleInput.trim()
-        });
-        forceUpdate();
-      }
-
-      setIsEditingTitle(false);
-      toasts.add({
-        title: "Chat title updated successfully",
-        variant: "success"
-      });
-    } catch (err) {
-      console.error("Failed to update chat title:", err);
-      toasts.add({ title: "Failed to update chat title", variant: "error" });
-    }
-  };
-
-  // Handle canceling title edit
-  const handleCancelTitleEdit = () => {
-    setTitleInput(currentChatMetadata?.title || "");
-    setIsEditingTitle(false);
   };
 
   // Handle deleting a chat. Can be called from the chat header (no args) or the
@@ -7652,53 +7636,12 @@ function ChatInterface({
   // ─── sidebar list content (reused in both modes) ──────────────────────────
   const chatListPanel = (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Chat list header — title doubles as the scope switcher */}
-      <div className="flex h-12 flex-shrink-0 items-center border-b border-kumo-line px-4">
-        <DropdownMenu>
-          <DropdownMenu.Trigger
-            render={
-              <button
-                type="button"
-                className="group flex h-8 -ml-1.5 cursor-pointer items-center gap-1.5 rounded-md px-1.5 text-left transition-colors duration-150 ease-out hover:bg-kumo-tint/60 focus-visible:bg-kumo-tint/60 focus-visible:outline-none data-[popup-open]:bg-kumo-tint/60"
-                aria-label="Filter conversations"
-              >
-                <span className="text-ui-md font-medium text-kumo-default">
-                  {CHAT_LIST_SCOPE_LABELS[chatListScope]}
-                </span>
-                <CaretDown
-                  size={10}
-                  weight="bold"
-                  className="text-kumo-subtle transition-transform duration-150 ease-out group-data-[popup-open]:rotate-180"
-                />
-              </button>
-            }
-          />
-          <DropdownMenu.Content className="themed-floating-shadow !z-[1100] !min-w-[200px] rounded-lg border border-kumo-line bg-kumo-base p-1">
-            {chatListScopes.map((scope) => {
-              const active = chatListScope === scope.value;
-              return (
-                <DropdownMenu.Item
-                  key={scope.value}
-                  onClick={() => setChatListScope(scope.value)}
-                  className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
-                >
-                  <span className="mr-2 inline-flex h-3 w-3 items-center justify-center text-kumo-default">
-                    {active ? <Check size={11} weight="bold" /> : null}
-                  </span>
-                  <span className="flex-1">
-                    {CHAT_LIST_SCOPE_LABELS[scope.value]}
-                  </span>
-                  <span className="ml-3 font-mono text-ui-2xs text-kumo-subtle">
-                    {scope.count}
-                  </span>
-                </DropdownMenu.Item>
-              );
-            })}
-          </DropdownMenu.Content>
-        </DropdownMenu>
-      </div>
-      {/* Chat list */}
-      <div className="chat-panel flex-1 overflow-y-auto bg-kumo-base p-3">
+      {/* Chat list. The scroll container stays full-bleed so the scrollbar rides the pane edge;
+          the rows inside share the composer's measure. */}
+      <div className="chat-panel flex-1 overflow-y-auto bg-kumo-base">
+        <div
+          className={`p-3 ${useConstrainedChatWidth ? "mx-auto w-full max-w-[920px]" : ""}`}
+        >
         {!chatListReady ? (
           <div className="flex items-center justify-center py-10">
             <div className="w-5 h-5 border-2 border-kumo-brand border-t-transparent rounded-full animate-spin" />
@@ -7719,7 +7662,7 @@ function ChatInterface({
                 </p>
                 <button
                   type="button"
-                  onClick={() => setChatListScope("all")}
+                  onClick={() => onChatListScopeChange("all")}
                   className="mt-2 cursor-pointer rounded-md px-2 py-1 text-ui-xs font-medium text-kumo-subtle transition-colors duration-150 ease-out hover:text-kumo-default focus-visible:text-kumo-default focus-visible:outline-none"
                 >
                   Show all
@@ -7845,37 +7788,34 @@ function ChatInterface({
                                       <WorkshopIconButton
                                         aria-label={`Actions for ${chat.title}`}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="!h-7 !w-7 flex-shrink-0 text-kumo-subtle opacity-0 focus:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100"
+                                        className="!h-7 !w-7 flex-shrink-0 text-kumo-subtle hover:text-kumo-default focus:text-kumo-default data-[popup-open]:text-kumo-default"
                                       >
-                                        <DotsThreeVertical size={14} />
+                                        <DotsThreeVertical size={20} weight="bold" />
                                       </WorkshopIconButton>
                                     }
                                   />
                                   <DropdownMenu.Content
                                     onClick={(event) => event.stopPropagation()}
-                                    className="themed-floating-shadow !z-[1100] !min-w-[144px] rounded-lg border border-kumo-line bg-kumo-base p-1"
+                                    className={MENU_CONTENT}
+                                    style={MENU_POSITIONER_STYLE}
                                   >
                                     <DropdownMenu.Item
-                                      icon={
-                                        <Pencil size={12} className="mr-2" />
-                                      }
                                       onClick={() =>
                                         startListRename(chat.id, chat.title)
                                       }
-                                      className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs text-kumo-default transition-colors data-highlighted:bg-kumo-tint"
+                                      className={MENU_ITEM}
                                     >
+                                      <Pencil size={13} className="mr-2" />
                                       Rename
                                     </DropdownMenu.Item>
                                     <DropdownMenu.Item
-                                      icon={
-                                        <Trash size={12} className="mr-2" />
-                                      }
                                       variant="danger"
                                       onClick={() =>
                                         handleDeleteChat(chat.id, chat.title)
                                       }
-                                      className="!h-auto rounded-md !px-2.5 !py-1.5 text-ui-xs transition-colors data-highlighted:bg-kumo-danger-tint"
+                                      className={MENU_ITEM_DANGER}
                                     >
+                                      <Trash size={13} className="mr-2" />
                                       Delete
                                     </DropdownMenu.Item>
                                   </DropdownMenu.Content>
@@ -7892,6 +7832,7 @@ function ChatInterface({
             )}
           </div>
         )}
+        </div>
       </div>
 
       {/* New chat input — pinned to bottom. ChatInput supplies its own
@@ -8005,75 +7946,6 @@ function ChatInterface({
           {/* Chat content — hidden when connections tab is active in sidebar mode */}
           {(!sidebarMode || sidebarActiveTab === "chat") && (
             <>
-              {/* Chat sub-header — hidden in sidebar mode (list is always visible) */}
-              {!sidebarMode && (
-                <div className="flex h-12 flex-shrink-0 items-center justify-between gap-2 border-b border-kumo-line px-4">
-                  <WorkshopIconButton
-                    onClick={() => onNavigateToChat(null)}
-                    className="!h-8 !w-8 flex-shrink-0"
-                    title="Back to conversations"
-                    aria-label="Back to conversations"
-                  >
-                    <CaretLeft size={14} />
-                  </WorkshopIconButton>
-
-                  {isEditingTitle ? (
-                    <div className="flex items-center gap-1 flex-1 min-w-0">
-                      <WorkshopInput
-                        type="text"
-                        value={titleInput}
-                        onChange={(e) => setTitleInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveChatTitle();
-                          if (e.key === "Escape") handleCancelTitleEdit();
-                        }}
-                        autoFocus
-                        className="!h-8 min-w-0 flex-1 bg-kumo-tint text-ui-md font-medium"
-                      />
-                      <WorkshopIconButton
-                        onClick={handleSaveChatTitle}
-                        disabled={!titleInput.trim()}
-                        className="!h-8 !w-8 hover:text-kumo-brand disabled:opacity-30"
-                        aria-label="Save chat title"
-                      >
-                        <Check size={13} />
-                      </WorkshopIconButton>
-                      <WorkshopIconButton
-                        onClick={handleCancelTitleEdit}
-                        className="!h-8 !w-8"
-                        aria-label="Cancel title edit"
-                      >
-                        <X size={13} />
-                      </WorkshopIconButton>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="min-w-0 flex-1 truncate text-ui-md font-medium text-kumo-default">
-                        {currentChatMetadata?.title || "Chat"}
-                      </span>
-                      <WorkshopIconButton
-                        onClick={() => setIsEditingTitle(true)}
-                        className="!h-8 !w-8 flex-shrink-0 text-kumo-subtle hover:text-kumo-default"
-                        title="Rename chat"
-                        aria-label="Rename chat"
-                      >
-                        <Pencil size={11} />
-                      </WorkshopIconButton>
-                    </>
-                  )}
-
-                  <WorkshopIconButton
-                    onClick={() => handleDeleteChat()}
-                    danger
-                    className="!h-8 !w-8 flex-shrink-0 text-kumo-subtle"
-                    title="Delete chat"
-                    aria-label="Delete chat"
-                  >
-                    <Trash size={14} />
-                  </WorkshopIconButton>
-                </div>
-              )}
-
               {/* Messages */}
               <div
                 ref={messagesContainerRef}

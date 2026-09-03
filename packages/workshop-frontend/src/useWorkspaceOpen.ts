@@ -30,7 +30,9 @@ type ObserverConfigState = {
 type Options = {
   id: string | undefined
   authenticatedApi: RpcStub<AuthenticatedApi>
-  onMetadata: (metadata: GadgetMetadata) => void
+  /** Fired on every metadata refresh, not just the first. Optional: most callers read
+   *  `metadata` from the returned state instead. */
+  onMetadata?: (metadata: GadgetMetadata) => void
   onShareKeyConsumed: () => void
   onInvalidShareKey: () => void
 }
@@ -121,7 +123,7 @@ export function useWorkspaceOpen({
         const resolvedSubscription = await overseerStub.subscribeToMetadata((nextMetadata) => {
           if (cancelled) return
           setMetadata(nextMetadata)
-          callbacksRef.current.onMetadata(nextMetadata)
+          callbacksRef.current.onMetadata?.(nextMetadata)
         })
         if (cancelled) {
           resolvedSubscription[Symbol.dispose]()
