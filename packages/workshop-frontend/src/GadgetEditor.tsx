@@ -1426,17 +1426,6 @@ export default function GadgetEditor() {
       {/* ═══ BODY ═════════════════════════════════════════════════════════════ */}
       <div className="flex flex-1 min-h-0 relative overflow-hidden">
 
-        {isAgentActive && (
-          <div
-            className="absolute left-0 h-0 z-10"
-            style={{ top: simpleMode ? 0 : TABBAR_H, right: outputRailWidth }}
-          >
-            <div className="absolute left-0 right-0 h-0.5 bg-kumo-fill overflow-hidden">
-              <div className="absolute inset-y-0 w-1/3 bg-kumo-brand animate-[thinking_1.5s_ease-in-out_infinite]" />
-            </div>
-          </div>
-        )}
-
         {/* ── LEFT: Chat pane ──────────────────────────────────────────────────── */}
         <div
           className={`flex flex-col flex-shrink-0 ${workspaceTransitionClass} ${showFullEditor ? 'border-r border-kumo-line' : ''}`}

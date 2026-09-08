@@ -1,0 +1,71 @@
+/* The spark turns slowly while it breathes. Rotation and breathing live on two elements because
+ * they run on different clocks -- one continuous, one oscillating -- and a single `transform`
+ * animation could not carry both. */
+.spark {
+  display: inline-flex;
+  color: var(--text-color-kumo-subtle);
+  animation: spark-turn 6s linear infinite;
+}
+
+.spark svg {
+  animation: spark-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes spark-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spark-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.86);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+}
+
+/* A highlight sweeping along the gray ramp, painted through the glyphs. Its 1.8s period matches the
+ * spark's, so the two read as one object breathing rather than two animations sharing a row. */
+.label {
+  color: var(--text-color-kumo-inactive);
+  background: linear-gradient(
+    90deg,
+    var(--text-color-kumo-inactive) 0%,
+    var(--text-color-kumo-subtle) 45%,
+    var(--text-color-kumo-inactive) 90%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: label-shimmer 1.8s linear infinite;
+}
+
+@keyframes label-shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -80% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark,
+  .spark svg {
+    animation: none;
+  }
+  .spark svg {
+    opacity: 0.7;
+  }
+  .label {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}

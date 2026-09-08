@@ -151,6 +151,7 @@ import { useAuthenticatedApi } from "./AuthContext";
 import { useVendorBranding } from "./useVendorBranding";
 import OutOfCreditsModal from "./components/billing/OutOfCreditsModal";
 import { useSlashCommandPicker } from "./components/chat/SlashCommandPicker";
+import { AgentStatusLine } from "./components/chat/AgentStatusLine";
 import { formatFullTimestamp } from "./utils/formatTimestamp";
 import { copyToClipboard } from "./clipboard";
 import {
@@ -5503,6 +5504,10 @@ function ChatInterface({
   // Ref for auto-scrolling messages
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isScrolledToBottomRef = useRef(true);
+  // The ref drives auto-scroll on every scroll event, so it stays a ref. This mirror exists only for
+  // rendering, and is written on transitions alone -- the scroll handler must not re-render the
+  // transcript on every pixel of a drag.
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
 
   const scrollMessagesToBottom = useCallback(() => {
     const el = messagesContainerRef.current;
@@ -5855,6 +5860,7 @@ function ChatInterface({
   }, [selectedChatId, currentStreamingChanges, currentStreamingChangesCount]);
 
   const isCompacting = currentProvisionalState?.compacting === true;
+  const agentStatusLabel = isCompacting ? "Compacting…" : "Thinking";
 
   const hasVisibleProvisionalContent =
     !!currentProvisionalState &&
@@ -5900,8 +5906,11 @@ function ChatInterface({
     const el = messagesContainerRef.current;
     if (!el) return;
     // Allow a small tolerance for fractional scroll positions and layout rounding.
-    isScrolledToBottomRef.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight <= 8;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 8;
+    if (atBottom !== isScrolledToBottomRef.current) {
+      isScrolledToBottomRef.current = atBottom;
+      setIsScrolledToBottom(atBottom);
+    }
     // Approaching the top pulls in the previous page, so a compacted thread reads as one continuous
     // scroll rather than making the user ask for their own history.
     if (el.scrollTop <= EARLIER_PAGE_PREFETCH_PX) loadEarlierRef.current();
@@ -5935,6 +5944,7 @@ function ChatInterface({
   // Always scroll to bottom and close transient chat UI when switching chats.
   useLayoutEffect(() => {
     isScrolledToBottomRef.current = true;
+    setIsScrolledToBottom(true);
     scrollMessagesToBottom();
   }, [selectedChatId, scrollMessagesToBottom]);
   useEffect(() => {
@@ -8973,29 +8983,6 @@ function ChatInterface({
                     {isAgentActive &&
                       activeAgent &&
                       (() => {
-                        // Placeholder shown only while the agent is active but hasn't produced
-                        // visible output yet; once real output appears, that speaks for itself.
-                        const hasShownReasoning =
-                          showThinkingTraces &&
-                          !!currentProvisionalState?.reasoning;
-                        // Only while awaiting the agent's first output this turn; otherwise it
-                        // flashes again in the gap after the last message finalizes but before
-                        // isAgentActive clears.
-                        const lastMessage =
-                          currentMessages.length > 0
-                            ? currentMessages[currentMessages.length - 1]
-                            : null;
-                        const awaitingFirstResponse =
-                          !lastMessage ||
-                          lastMessage.author.type === "user" ||
-                          lastMessage.author.type === "gadget";
-                        const showThinking =
-                          !isCompacting &&
-                          awaitingFirstResponse &&
-                          !currentProvisionalState?.text &&
-                          !hasShownReasoning &&
-                          provisionalToolCalls.length === 0;
-
                         // Match the spacing this response gets once finalized (see rhythmTopClass)
                         // so it doesn't shift when streaming completes.
                         const lastEntry =
@@ -9034,28 +9021,6 @@ function ChatInterface({
                                 className={RAIL_BRIDGE_LINE}
                               />
                             )}
-                            {/* Rail-aligned so these placeholders don't shift sideways once real
-                              steps arrive and take over the gutter. */}
-                            {isCompacting && (
-                              <RailAligned>
-                                <div
-                                  className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}
-                                >
-                                  Compacting…
-                                </div>
-                              </RailAligned>
-                            )}
-
-                            {showThinking && (
-                              <RailAligned>
-                                <div
-                                  className={`inline-flex px-1.5 py-1 text-ui-md ${styles.thinkingShimmer}`}
-                                >
-                                  Thinking
-                                </div>
-                              </RailAligned>
-                            )}
-
                             {streamingReasoning && (
                               <RailNode
                                 node={{ type: "thinking", inFlight: true }}
@@ -9198,6 +9163,22 @@ function ChatInterface({
                                   </RailNode>
                                 );
                               })()}
+
+                            {/* Rail-aligned so it doesn't shift sideways once real steps arrive and
+                              take over the gutter. It trails the steps rather than leading them: it
+                              is the tail of the work so far, not a step of its own. */}
+                            <RailAligned>
+                              <AgentStatusLine
+                                label={agentStatusLabel}
+                                className={
+                                  streamingReasoning ||
+                                  streamingText ||
+                                  streamingTools
+                                    ? "mt-1"
+                                    : ""
+                                }
+                              />
+                            </RailAligned>
                           </div>
                         );
                       })()}
@@ -9206,7 +9187,20 @@ function ChatInterface({
               </div>
 
               {/* ── Bottom: input, update state, and cost ──────────────── */}
-              <div className={`shrink-0 bg-kumo-base`}>
+              <div className="relative shrink-0 bg-kumo-base">
+                {/* The inline status line rides the tail of the transcript, so it says nothing to a
+                  reader who has scrolled up into history. This carries the same signal to the live
+                  edge of the viewport, and doubles as the way back down. */}
+                {isAgentActive && activeAgent && !isScrolledToBottom && (
+                  <button
+                    type="button"
+                    onClick={scrollMessagesToBottom}
+                    aria-label="Jump to the latest message"
+                    className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 cursor-pointer rounded-full border border-kumo-line bg-kumo-base/85 px-2 py-0.5 shadow-sm backdrop-blur-sm transition-colors hover:border-kumo-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kumo-brand"
+                  >
+                    <AgentStatusLine label={agentStatusLabel} presentational />
+                  </button>
+                )}
                 <div
                   className={
                     useConstrainedChatWidth
